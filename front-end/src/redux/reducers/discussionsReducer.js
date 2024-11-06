@@ -151,16 +151,18 @@ export default function discussionsReducer(state = initialState, action = {}) {
 
     case actions.ADD_DISCUSSION_REPLY_SUCCESS: {
       const { entry } = action.payload;
+      console.log(entry);
       return state.withMutations((state) => {
-        state
+        console.log(state.toJS());
+        return state
           .set('isLoading', false)
           .set('discussionsError', null)
-          .updateIn(['replies', entry.questionId], (replies = fromJS([])) =>
+          .updateIn(['replies', entry.questionId, 'repliesList'], (replies) =>
             replies.unshift(fromJS(entry))
-          );
+        );
       });
     }
-
+    
     default: {
       return state;
     }

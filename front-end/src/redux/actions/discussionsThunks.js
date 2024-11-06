@@ -163,11 +163,10 @@ export const fetchReplies = (questionId) => async (dispatch) => {
 export const addDiscussionReply =
   (questionId, body) => async (dispatch, getState) => {
     dispatch(discussionsActions.addDiscussionReplyRequest());
-    dispatch(toggleLoading());
 
     const userId = getState().ui.getIn(['user', 'id']) || 'testId';
     try {
-      const response = await toast.promise(
+      const data = await toast.promise(
         fetch(`${DOMAIN}/questions/${questionId}/replies`, {
           method: 'POST',
           headers: {
@@ -177,6 +176,11 @@ export const addDiscussionReply =
             userId,
             body,
           }),
+        }).then(response => {
+          if (!response.ok) {
+            throw new Error(data.message);
+          }
+          return response.json();
         }),
         {
           loading: 'Sending reply',
@@ -184,12 +188,6 @@ export const addDiscussionReply =
           error: 'Error sending reply',
         }
       );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message);
-      }
 
       dispatch(discussionsActions.addDiscussionReplySuccess(data));
     } catch (error) {
@@ -199,7 +197,5 @@ export const addDiscussionReply =
           `Error adding reply: ${error.message}`
         )
       );
-    } finally {
-      dispatch(toggleLoading());
     }
   };

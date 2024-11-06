@@ -4,7 +4,7 @@ import Loading from '../utilityComponents/Loading';
 import TextEditor from '../TextEditor/TextEditor';
 import { replaceTempImageUrls } from '../../utils/utilFunctions';
 import { setError, toggleLoading } from '../../redux/actions/uiActionCreators';
-import { fetchReplies } from '../../redux/actions/discussionsThunks';
+import { addDiscussionReply, fetchReplies } from '../../redux/actions/discussionsThunks';
 import {
   selectDiscussionsIsLoading,
   makeRepliesSelector,
@@ -25,24 +25,24 @@ export default function Replies() {
     state.ui.getIn(['user', 'picture'])
   );
 
-  const replisList = replies?.get('repliesList');
   useEffect(() => {
     // again... pass the logic of offline experience and also
     // real time pinging if new reply addid
-    if (!replies || !replies.get('repliesList')?.size)
       dispatch(fetchReplies(QUESTION_ID));
-  }, [dispatch, replisList, QUESTION_ID]);
+  }, [dispatch, QUESTION_ID]);
 
   const handleSubmission = async () => {
     try {
       dispatch(toggleLoading());
-      const newContent = await replaceTempImageUrls(reply);
-      console.log(newContent);
+      const newContent = await replaceTempImageUrls(reply, replyFiles, dispatch);
+
+      dispatch(addDiscussionReply(QUESTION_ID, newContent, replyFiles));
     } catch (error) {
       console.error(error);
       dispatch(setError('discussion', 'Failed to submit reply.'));
     } finally {
       setShowReplyEditor(false);
+      setReply('');
       dispatch(toggleLoading());
     }
   };
