@@ -24,8 +24,11 @@ export const loginFailure = (errorMessage) => (dispatch) => {
   dispatch(toggleLoading());
 };
 
-export function formLogin(email, password) {
-  const request = new Request(`${DOMAIN}/auth/login`, {
+export function formLogin(email, password, isAdmin) {
+  const url = isAdmin
+    ? `${DOMAIN}/auth/admin/login`
+    : `${DOMAIN}/auth/login`
+  const request = new Request(url, {
     method: 'POST',
     body: JSON.stringify({ email, password }),
     headers: {
@@ -36,8 +39,11 @@ export function formLogin(email, password) {
   return login(request);
 }
 
-export function googleLogin(idToken) {
-  const request = new Request(`${DOMAIN}/auth/oauth/google`, {
+export function googleLogin(idToken, isAdmin) {
+  const url = isAdmin
+    ? `${DOMAIN}/auth/admin/oauth/google/`
+    : `${DOMAIN}/auth/oauth/google`
+  const request = new Request(url, {
     method: 'POST',
     body: JSON.stringify({ token: idToken }),
     headers: {

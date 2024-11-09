@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import {User, University} from 'lucide-react';
 import { formLogin, googleLogin, loginFailure } from '../../redux/actions/uiActionCreators';
 import { GoogleLogin } from '@react-oauth/google';
 import { useNavigate } from 'react-router-dom';
 
 export default function Login({ setType }) {
+	const [adminLogin, setAdminLogin] = useState(false);
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
 	const isLoading = useSelector((state) => state.ui.get('isLoading'));
@@ -27,11 +29,11 @@ export default function Login({ setType }) {
 		const email = event.target.email.value;
 		const password = event.target.password.value;
 
-		dispatch(formLogin(email, password));
+		dispatch(formLogin(email, password, adminLogin));
 	}
 
 	function handleGoogleLoginSuccess(response) {
-		dispatch(googleLogin(response.credential));
+		dispatch(googleLogin(response.credential, adminLogin));
 	}
 
 	function handleGoogleLoginFailure(error) {
@@ -40,8 +42,24 @@ export default function Login({ setType }) {
 	}
 
 	return <>
+	{/* May be put this in top right corner */}
+	<button type="button" onClick={() => setAdminLogin(!adminLogin)}>
+		{adminLogin ? (
+			<>
+			<University />
+			'Admin Login'
+			</>
+		) : (
+			<>
+			<User />
+			'Student Login' 
+			</>
+		)
+	}
+	</button>
+
 	<h1>ProLearningHub</h1>
-	<p>Please login to continue</p>
+	<p>Please login to continue as {adminLogin ? 'admin' : 'student'}</p>
 	<form onSubmit={handleSubmit}>
 		<label htmlFor='email'>Email</label>
 		<input name='email' id='email' type='text' placeholder='Here insert your mail please' />
