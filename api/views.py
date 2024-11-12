@@ -9,6 +9,8 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework import viewsets
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
 from django.db.models import Q
 from django.http import JsonResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.contrib.auth.hashers import make_password, check_password
@@ -54,6 +56,10 @@ class UserListView(APIView):
     #         serializer.save()
     #         return Response(serializer.data, status=status.HTTP_201_CREATED)
     #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
 
 
 class UserIdView(APIView):
@@ -171,8 +177,8 @@ def login(request):
         if user and not check_password(password, user.password_hash):
             return Response({'message': 'Invalid password'}, status=status.HTTP_406_NOT_ACCEPTABLE)
         if user and check_password(password, user.password_hash):
-            request.session['user_id'] = user.user_id
-            request.session.save()
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
             print("Session ID:", request.session.session_key)
             dictList = {
                 'userid': user.user_id,
@@ -183,7 +189,9 @@ def login(request):
                 'pictureThumbnail': user.pictureThumbnail if user.pictureThumbnail else None
             }
             # Create a list and append dictList directly
-            response_data = {'message': 'Login successful'}
+            response_data = {'message': 'Login successful',
+                             'access_token': access_token,
+                             'refresh_token': str(refresh), }
             user_response = {"user": dictList}
             response_data.update(user_response)
             return Response(response_data, status=status.HTTP_200_OK)

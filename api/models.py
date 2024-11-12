@@ -1,3 +1,4 @@
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.db import models
 
 # Create your models here.
@@ -144,3 +145,26 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = '__all__'
         read_only_fields = ['announcement', 'user']
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        # Include user_id in the token payload
+        token['user_id'] = user.user_id
+        return token
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        # Add additional user information to the response data
+        data.update({
+            'user': {
+                'userid': self.user.user_id,
+                'firstname': self.user.first_name,
+                'lastname': self.user.last_name,
+                'email': self.user.email,
+                'pictureURL': self.user.pictureURL,
+                'pictureThumbnail': self.user.pictureThumbnail,
+            }
+        })
