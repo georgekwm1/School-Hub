@@ -168,8 +168,11 @@ def login(request):
         email = serializer.validated_data.get('email')
         password = serializer.validated_data.get('password_hash')
         user = Users.objects.filter(email=email).first()
+        if user and not check_password(password, user.password_hash):
+            return Response({'message': 'Invalid password'}, status=status.HTTP_406_NOT_ACCEPTABLE)
         if user and check_password(password, user.password_hash):
             request.session['user_id'] = user.user_id
+            request.session.save()
             print("Session ID:", request.session.session_key)
             dictList = {
                 'userid': user.user_id,
@@ -190,8 +193,10 @@ def login(request):
 
 @api_view(['GET'])
 def logout(request):
+    print("Session ID:", request.session.session_key)
     if request.session.get('user_id') is None:
         return Response({'message': 'You are already Logged out'}, status=status.HTTP_401_UNAUTHORIZED)
+    print("Afer Session ID:", request.session.session_key)
     request.session.flush()
     return Response({'message': 'Logout successful'}, status=status.HTTP_200_OK)
 
