@@ -80,16 +80,17 @@ export default function DiscussionEntryEditor({
           placeholder="Short title/summary or your entry... "
         />
       </label>
-      <label>
+      <label htmlFor='text-editor'>
         Details (optional):
-        <TextEditor
-          placeholder={editorPlaceholder}
-          value={details}
-          setValue={setDetails}
-          files={files}
-          setFiles={setFiles}
-        />
       </label>
+      <TextEditor
+        id='text-editor'
+        placeholder={editorPlaceholder}
+        value={details}
+        setValue={setDetails}
+        files={files}
+        setFiles={setFiles}
+        />
 
       <button type="submit">Publish</button>
     </form>
