@@ -10,7 +10,7 @@ const {
   mockReplies,
   question,
   mockDiscussion,
-  
+
   mockSections,
   repliesList,
 } = require('./mockData');
@@ -65,7 +65,7 @@ app.post('/auth/login', (req, res) => {
 	console.log(req.body);
   const { email, password } = req.body;
   if (email === 'admin' && password === 'admin') {
-    res.send({ message: 'Logged in successfully', 
+    res.send({ message: 'Logged in successfully',
 			user: {
 				email, password, id: 'testId',
         role: 'student'
@@ -86,7 +86,7 @@ app.post('/auth/oauth/google', (req, res) => {
     .then(response => response.json())
     .then(data => {
       if (data.email_verified) {
-        res.send({ message: 'Logged in successfully', 
+        res.send({ message: 'Logged in successfully',
           user: {
             email: data.email,
             id: data.sub,
@@ -113,7 +113,7 @@ app.post('/auth/oauth/googleRegister', (req, res) => {
     .then(data => {
       console.log(data)
       if (data.email_verified) {
-        res.send({ message: 'Logged in successfully', 
+        res.send({ message: 'Logged in successfully',
           user: {
             email: data.email,
             id: data.sub,
@@ -133,7 +133,7 @@ app.post('/auth/oauth/googleRegister', (req, res) => {
 app.post('/auth/admin/login', (req, res) => {
   const { email, password } = req.body;
   if (email === 'admin' && password === 'admin') {
-    res.send({ message: 'Logged in successfully', 
+    res.send({ message: 'Logged in successfully',
       user: {
         email,
         password,
@@ -153,7 +153,7 @@ app.post('/auth/admin/OAuth/google', (req, res) => {
     .then(response => response.json())
     .then(data => {
       if (data.email_verified) {
-        res.send({ message: 'Logged in successfully', 
+        res.send({ message: 'Logged in successfully',
           user: {
             email: data.email,
             id: data.sub,
@@ -202,12 +202,12 @@ app.get('/courses/:courseId/lectures/:lectureId', (req, res) => {
       id: lectureId,
       title: 'Week 4',
       videoLink: 'https://youtu.be/F9-yqoS7b8w',
-      notes: 'https://example.com/lecture-notes',
+      notes: 'https://cs50.harvard.edu/x/2024/notes/4/',
       audioLink: 'https://cs50.harvard.edu/college/2022/spring/lectures/4/wav/lecture4.wav',
       slides: 'https://cs50.harvard.edu/college/2022/spring/lectures/4/slides/lecture4.pdf',
       subtitles: 'https://cs50.harvard.edu/college/2022/spring/lectures/4/subtitles/lecture4.srt',
       transcript: 'https://cs50.harvard.edu/college/2022/spring/lectures/4/transcript',
-      description: 'HTML, CSS, JavaScript',
+      description: 'Pointers. Segmentation Faults. Dynamic Memory Allocation. Stack. Heap. Buffer Overflow. File I/O. Images.',
       demos: [
         {
           title: 'Demo: HTML/CSS',
@@ -320,13 +320,15 @@ app.post('/lectures/:id/discussion', (req, res) => {
     upvotes: 0,
     upvoted: false,
     repliesCount: 0,
+    body,
+    lectureId
   };
 
   // Here you would typically add the newEntry to your database or data store.
   // For this example, we'll just return it in the response.
   mockDiscussion.unshift(newEntry);
-  
-  
+
+
   res.status(201).json(newEntry);
 });
 
@@ -364,7 +366,7 @@ app.post('/courses/:id/general_discussion', (req, res) => {
   // Here you would typically add the newEntry to your database or data store.
   // For this example, we'll just return it in the response.
   mockDiscussion.push(newEntry);
-  
+
   res.status(201).json(newEntry);
 });
 
@@ -376,7 +378,7 @@ app.get('/questions/:id/replies', (req, res) => {
   if (!question) {
     return res.status(404).send({ message: 'Question not found' });
   }
-  
+
   res.json({ question: {...question, lectureId: 'cs50-lecture-0'}, repliesList });
 });
 
