@@ -59,12 +59,12 @@ export default function discussionsReducer(state = initialState, action = {}) {
     }
 
     case actions.ADD_DISCUSSION_ENTRY_SUCCESS: {
-      const { lectureId, entry } = action.payload;
+      const { entry } = action.payload;
       return state.withMutations((state) => {
         state
           .set('isEntryBeingSent', false)
           .set('discussionsError', null)
-          .updateIn(['lecturesDiscussions', lectureId], (entries) =>
+          .updateIn(['lecturesDiscussions', entry.lectureId], (entries) =>
             entries.unshift(fromJS(entry))
           );
       });
