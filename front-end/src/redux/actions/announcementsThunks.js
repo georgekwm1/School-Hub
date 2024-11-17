@@ -108,3 +108,27 @@ export const addNewAnnouncement =
       dispatch(creators.addAnnouncementFailure(error.message));
     }
   };
+
+export const deleteAnnouncementComment =
+  (announcementId, commentId) => async (dispatch) => {
+    try {
+      await toast.promise(
+        fetch(`${DOMAIN}/comments/${commentId}`, {
+          method: 'DELETE',
+        }).then((response) => {
+          if (!response.ok) {
+            throw new Error('Failed to delete comment');
+          }
+        }),
+        {
+          loading: 'Deleting comment...',
+          success: 'Comment deleted successfully',
+          error: 'Failed to delete the comment',
+        }
+      );
+      dispatch(creators.deleteAnnouncementCommentSuccess(announcementId, commentId));
+    } catch (error) {
+      console.error(error.message);
+      dispatch(creators.deleteAnnouncementCommentFailure(error.message));
+    }
+  };
