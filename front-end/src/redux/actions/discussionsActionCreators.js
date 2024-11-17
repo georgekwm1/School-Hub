@@ -227,11 +227,11 @@ export const deleteQuestionSuccess = (questionId, lectureId='') => ({
 
 
 export const deleteReplyRequest = () => ({
-  type: actions.FETCH_DISCUSSION_REPLIES_REQUEST,
+  type: actions.DELETE_REPLY_REQUEST,
 });
 
 export const deleteReplyFailure = (errorMessage) => ({
-  type: actions.FETCH_DISCUSSION_REPLIES_FAILURE,
+  type: actions.DELETE_REPLY_FAILURE,
   payload: {
     errorMessage,
   },
@@ -239,7 +239,7 @@ export const deleteReplyFailure = (errorMessage) => ({
 
 
 export const deleteReplySuccess = (questionId, replyId) => ({
-  type: actions.FETCH_DISCUSSION_REPLIES_SUCCESS,
+  type: actions.DELETE_REPLY_SUCCESS,
   payload: {
     questionId,
     replyId

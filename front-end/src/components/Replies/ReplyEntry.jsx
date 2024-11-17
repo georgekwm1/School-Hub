@@ -11,21 +11,13 @@ import {
   selectUserRole,
   selectUserId
 } from '../../redux/selectors/uiSelectors';
-import { toggleReplyVote } from '../../redux/actions/discussionsThunks';
+import { toggleReplyVote, deleteReply } from '../../redux/actions/discussionsThunks';
 
 export default function ReplyEntry({ content, questionId }) {
   const userRole = useSelector(selectUserRole);
   const userId = useSelector(selectUserId);
   const [showOptions, setShowOptions] = useState(false);
-
-  
-  const handleDeleteReply = () => {
-    if (window.confirm(`Are you sure you are deleting reply ${content.get('id')}`)) {
-      console.log(content.get('id'));
-    }
-
-    setShowOptions(false);
-  }
+  const dispatch = useDispatch();
 
   const upvotes = useSelector(
     makeReplyUpvotesSelector(questionId, content.get('id'))
@@ -34,7 +26,14 @@ export default function ReplyEntry({ content, questionId }) {
     makeReplyIsUpvotedSelector(questionId, content.get('id'))
   );
   const date = formatDate(content.get('updatedAt'));
-  const dispatch = useDispatch();
+  const handleDeleteReply = () => {
+    if (window.confirm(`Are you sure you are deleting reply ${content.get('id')}`)) {
+      dispatch(deleteReply(questionId, content.get('id')));
+    }
+
+    setShowOptions(false);
+  }
+
   function toggleVote() {
     dispatch(toggleReplyVote(content.get('id'), questionId));
   }
