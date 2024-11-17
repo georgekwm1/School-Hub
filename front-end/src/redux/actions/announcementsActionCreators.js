@@ -73,3 +73,17 @@ export const addAnnouncementSuccess = (newAnnouncement) => ({
   type: actions.ADD_ANNOUNCEMENT_SUCCESS,
   payload: { newAnnouncement },
 });
+
+export const deleteAnnouncementCommentRequest = () => ({
+  type: actions.DELETE_ANNOUNCEMENT_COMMENT_REQUEST,
+});
+
+export const deleteAnnouncementCommentFailure = (errorMessage) => ({
+  type: actions.DELETE_ANNOUNCEMENT_COMMENT_FAILURE,
+  payload: { errorMessage },
+});
+
+export const deleteAnnouncementCommentSuccess = (announcementId, commentId) => ({
+  type: actions.DELETE_ANNOUNCEMENT_COMMENT_SUCCESS,
+  payload: { announcementId, commentId },
+});
