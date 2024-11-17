@@ -1,8 +1,26 @@
-import React from 'react';
-import { Minus, Dot } from 'lucide-react';
+import React, { useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { Minus, Dot, Trash2, EllipsisVertical } from 'lucide-react';
 import { formatDate } from '../../utils/utilFunctions';
+import { selectUserRole } from '../../redux/selectors/uiSelectors';
+import { deleteAnnouncementEntry } from '../../redux/actions/announcementsThunks';
 
 export default function AnnouncementHeader({ content }) {
+  const userRole = useSelector(selectUserRole);
+  const [showOptions, setShowOptions] = useState(false);
+  const dispatch = useDispatch()
+  const handleDeleteAnnouncement = () => {
+    if (
+      window.confirm(
+        `Are you sure you are deleting announcement ${content.get('id')}`
+      )
+    ) {
+      dispatch(deleteAnnouncementEntry(content.get('id')));
+    }
+
+    setShowOptions(false);
+  };
+
   const announcementBody = content.get('body');
   return (
     <div className="announcement-header mb-3">
@@ -23,6 +41,30 @@ export default function AnnouncementHeader({ content }) {
             Posted an announcement <Dot /> {formatDate(content.get('updatedAt'))}
           </p>
         </div>
+        {
+          userRole !== 'student' &&
+          <>
+          
+        <button type="button" className="btn btn-light mt-2"
+          onClick={() => setShowOptions(!showOptions)}
+          >
+          <EllipsisVertical />
+        </button>
+        {
+          showOptions &&
+          <div>          
+          <ul>
+              <li>
+              <button type='button' onClick={handleDeleteAnnouncement} >
+                <Trash2 color='red' />
+                Delete reply
+              </button>
+            </li>
+          </ul>
+        </div>
+        }
+        </>
+        }
       </div>
       <div className='mt-2 p-3'>
         <h5 className='fs-4'>{content.get('title')}</h5>
