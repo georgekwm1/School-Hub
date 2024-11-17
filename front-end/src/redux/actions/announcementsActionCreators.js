@@ -87,3 +87,18 @@ export const deleteAnnouncementCommentSuccess = (announcementId, commentId) => (
   type: actions.DELETE_ANNOUNCEMENT_COMMENT_SUCCESS,
   payload: { announcementId, commentId },
 });
+
+export const deleteAnnouncementRequest = (announcementId) => ({
+  type: actions.DELETE_ANNOUNCEMENT_REQUEST,
+  payload: { announcementId },
+});
+
+export const deleteAnnouncementFailure = (errorMessage) => ({
+  type: actions.DELETE_ANNOUNCEMENT_FAILURE,
+  payload: { errorMessage },
+});
+
+export const deleteAnnouncementSuccess = (announcementId) => ({
+  type: actions.DELETE_ANNOUNCEMENT_SUCCESS,
+  payload: { announcementId },
+});
