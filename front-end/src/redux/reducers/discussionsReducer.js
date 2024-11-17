@@ -333,6 +333,31 @@ export default function discussionsReducer(state = initialState, action = {}) {
       });
     }
 
+    case actions.DELETE_REPLY_REQUEST: {
+      return state.set('isLoading', true);
+    }
+
+    case actions.DELETE_REPLY_FAILURE: {
+      return state.withMutations((state) => {
+        state
+          .set('isLoading', false)
+          .set('discussionsError', action.payload.errorMessage);
+      });
+    }
+
+    case actions.DELETE_REPLY_SUCCESS: {
+      const { questionId, replyId } = action.payload;
+      return state.withMutations((state) => {
+        return state
+          .set('isLoading', false)
+          .set('discussionsError', null)
+          .updateIn(['replies', questionId, 'repliesList'], (replies) =>
+            replies.filter((reply) => reply.get('id') !== replyId)
+          )
+          .setIn(['replies', questionId, 'question', 'repliesCount'], (count) => count - 1)
+      });
+    }
+
     default: {
       return state;
     }
