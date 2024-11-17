@@ -237,9 +237,11 @@ export const deleteReplyFailure = (errorMessage) => ({
   },
 });
 
-export const deleteReplySuccess = (replyId) => ({
+
+export const deleteReplySuccess = (questionId, replyId) => ({
   type: actions.FETCH_DISCUSSION_REPLIES_SUCCESS,
   payload: {
+    questionId,
     replyId
   },
 });
