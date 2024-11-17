@@ -413,3 +413,34 @@ export const deleteQuestion = (questionId, lectureId = null) => async (dispatch)
     );
   }
 };
+
+
+export const deleteReply = (questionId, replyId) => async (dispatch) => {
+  try {
+    await toast.promise(
+      fetch(`${DOMAIN}/replies/${replyId}`, {
+        method: 'DELETE',
+      }).then((response) => {
+        const data = response.json();
+        if (!response.ok) {
+          throw new Error(data.message);
+        }
+        return data;
+      }),
+      {
+        loading: 'Deleting reply',
+        success: 'Reply deleted',
+        error: 'Error deleting reply',
+      }
+    );
+
+    dispatch(discussionsActions.deleteReplySuccess(questionId, replyId));
+  } catch (error) {
+    console.error(error);
+    dispatch(
+      discussionsActions.deleteReplyFailure(
+        `Error deleting the reply: ${error.message}`
+      )
+    );
+  }
+};
