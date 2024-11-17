@@ -224,3 +224,22 @@ export const deleteQuestionSuccess = (questionId, lectureId='') => ({
     lectureId,
   }
 });
+
+
+export const deleteReplyRequest = () => ({
+  type: actions.FETCH_DISCUSSION_REPLIES_REQUEST,
+});
+
+export const deleteReplyFailure = (errorMessage) => ({
+  type: actions.FETCH_DISCUSSION_REPLIES_FAILURE,
+  payload: {
+    errorMessage,
+  },
+});
+
+export const deleteReplySuccess = (replyId) => ({
+  type: actions.FETCH_DISCUSSION_REPLIES_SUCCESS,
+  payload: {
+    replyId
+  },
+});
