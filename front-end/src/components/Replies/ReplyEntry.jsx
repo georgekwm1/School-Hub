@@ -1,15 +1,32 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
-import { CircleArrowUp, EllipsisVertical } from 'lucide-react';
+import { CircleArrowUp, EllipsisVertical, Trash2 } from 'lucide-react';
 import { formatDate } from '../../utils/utilFunctions';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   makeReplyIsUpvotedSelector,
   makeReplyUpvotesSelector,
 } from '../../redux/selectors/DiscussionsSelectors';
+import {
+  selectUserRole,
+  selectUserId
+} from '../../redux/selectors/uiSelectors';
 import { toggleReplyVote } from '../../redux/actions/discussionsThunks';
 
 export default function ReplyEntry({ content, questionId }) {
+  const userRole = useSelector(selectUserRole);
+  const userId = useSelector(selectUserId);
+  const [showOptions, setShowOptions] = useState(false);
+
+  
+  const handleDeleteReply = () => {
+    if (window.confirm(`Are you sure you are deleting reply ${content.get('id')}`)) {
+      console.log(content.get('id'));
+    }
+
+    setShowOptions(false);
+  }
+
   const upvotes = useSelector(
     makeReplyUpvotesSelector(questionId, content.get('id'))
   );
@@ -55,10 +72,26 @@ export default function ReplyEntry({ content, questionId }) {
         </button>
         {/* Let the menue menu empty for now */}
         <button type="button" className="btn btn-light mt-2"
-          onClick={() => toast('options for ' + content.get('id'))}
+          onClick={() => setShowOptions(!showOptions)}
           >
           <EllipsisVertical />
         </button>
+        {
+          showOptions &&
+          <div>          
+          <ul>
+            {
+              (userRole !== 'student' || userId === content.getIn(['user', 'id'])) &&
+              <li>
+              <button type='button' onClick={handleDeleteReply} >
+                <Trash2 color='red' />
+                Delete reply
+              </button>
+            </li>
+            }
+          </ul>
+        </div>
+        }
       </div>
     </div>
 

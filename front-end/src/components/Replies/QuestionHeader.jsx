@@ -76,7 +76,16 @@ export default function QuestionHeader({ question, isLecture }) {
         <button className="btn btn-light" onClick={() => setShowOptions(!showOptions)}>
           <EllipsisVertical />
         </button>
+{/* I think there must be a way to make this a share ocmpoennt..
+because this can be used in different places.. 
+but what I need to figuere ou tis that.. it may diffete nin the condission of showing 
+different optons.. liek here and also. in the tex tin lines. and also in teh anldes
+so.. Is it worth it?
 
+I need to learn more about different patters.. 
+And what is the best way to do this.. 
+
+ */}
         {
           showOptions &&
           <div>          
