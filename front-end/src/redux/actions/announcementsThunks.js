@@ -133,7 +133,7 @@ export const deleteAnnouncementComment =
     }
   };
 
-const deleteAnnouncementEntry = (announcementId) => async (dispatch) => {
+export const deleteAnnouncementEntry = (announcementId) => async (dispatch) => {
   try {
     await toast.promise(
       fetch(`${DOMAIN}/announcements/${announcementId}`,{

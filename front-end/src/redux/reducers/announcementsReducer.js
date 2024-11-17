@@ -142,6 +142,32 @@ export default function announcementsReducer(
         );
     }
 
+    case actions.DELETE_ANNOUNCEMENT_REQUEST:
+      return state.merge({
+        isLoading: true,
+      });
+
+    case actions.DELETE_ANNOUNCEMENT_FAILURE: {
+      const { errorMessage } = action.payload;
+      return state.merge({
+        isLoading: false,
+        announcementsError: errorMessage,
+      });
+    }
+    
+    case actions.DELETE_ANNOUNCEMENT_SUCCESS: {
+      const { announcementId } = action.payload;
+      
+      return state
+        .update('announcements', (announcements) =>
+          announcements.filter((announcement) => announcement.get('id') !== announcementId)
+        )
+        .deleteIn(['comments', announcementId])
+        .merge({
+          isLoading: false,
+          announcementsError: null,
+        });
+    }
     default:
       return state;
   }
