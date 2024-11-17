@@ -132,3 +132,31 @@ export const deleteAnnouncementComment =
       dispatch(creators.deleteAnnouncementCommentFailure(error.message));
     }
   };
+
+const deleteAnnouncementEntry = (announcementId) => async (dispatch) => {
+  try {
+    await toast.promise(
+      fetch(`${DOMAIN}/announcements/${announcementId}`,{
+        method: 'DELETE',
+      })
+      .then(response => {
+        const data = response.json();
+        if (!response.ok) {
+          throw new Error(data.message);
+        }
+        
+        return data;
+      }),
+      {
+        loading: 'Deleting announcement...',
+        success: 'Announcement deleted successfully',
+        error: 'Failed to delete the announcement',
+      }
+    )
+
+    dispatch(creators.deleteAnnouncementSuccess(announcementId));
+  } catch (error) {
+    console.error(error);
+    dispatch(creators.deleteAnnouncementFailure(error.message))
+  }
+}
