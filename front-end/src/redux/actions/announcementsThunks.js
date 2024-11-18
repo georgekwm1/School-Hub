@@ -161,3 +161,32 @@ export const deleteAnnouncementEntry = (announcementId) => async (dispatch) => {
   }
 }
 
+export const editAnnouncement =
+  (announcementId, title, details) => async (dispatch) => {
+    try {
+      const data = await toast.promise(
+        fetch(`${DOMAIN}/announcements/${announcementId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({title, details}),
+        }).then((response) => {
+          const data = response.json();
+          if (!response.ok) {
+            throw new Error(data.message);
+          }
+          return data;
+        }),
+        {
+          loading: 'Updating announcement...',
+          success: 'Announcement updated successfully',
+          error: 'Failed to update the announcement',
+        }
+      );
+      dispatch(creators.editAnnouncementSuccess(data));
+    } catch (error) {
+      console.error(error.message);
+      dispatch(creators.editAnnouncementFailure(error.message));
+    }
+  };
