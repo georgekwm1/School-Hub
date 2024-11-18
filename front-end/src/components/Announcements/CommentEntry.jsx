@@ -6,7 +6,7 @@ import {
   selectUserId
 } from '../../redux/selectors/uiSelectors';
 import { formatDate } from '../../utils/utilFunctions';
-import { deleteAnnouncementComment } from '../../redux/actions/announcementsThunks';
+import { deleteAnnouncementComment, editComment } from '../../redux/actions/announcementsThunks';
 
 export default function CommentEntry({ content }) {
   const userRole = useSelector(selectUserRole);
@@ -14,13 +14,12 @@ export default function CommentEntry({ content }) {
   const date = formatDate(content.get('updatedAt'));
   const dispatch = useDispatch();
 
-  
   const [edit, setEdit] = useState(false);
   const [newValue, setNewValue] = useState(content.get('body'));
 
   const handleEditComment = async () => {
     setEdit(false);
-    console.log(newValue);
+    dispatch(editComment(content.get('id'), newValue));
   };
 
   const hanldeCancelEdit = () => {
