@@ -64,7 +64,7 @@ export default function TextEditor({
         placeholder={placeholder}
         ref={quillRef}
         modules={modules}
-        theme={ bubble ? 'bubble' : 'snow' }
+        theme={bubble ? 'bubble' : 'snow'}
         value={value}
         onChange={setValue}
       />
