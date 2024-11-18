@@ -2,16 +2,19 @@ import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { EllipsisVertical, Trash2 } from 'lucide-react';
+import { deleteLecture } from '../../redux/actions/lecturesThunks';
+
 
 export default function TempStyledLectureEntry({ lecture, sectionId }) {
 	const userRole = useSelector((state) => state.ui.getIn(['user', 'role']));
 	const [showOptions, setShowOptions] = useState(false);
   const dispatch = useDispatch();
   
-	const handleDeleteLecture = ({ lecture }) => {
+	const handleDeleteLecture = () => {
     if (window.confirm('Are you sure you are deleting this lecture ')) {
-      console.log('test');
+      dispatch(deleteLecture(sectionId, lecture.id));
     }
+
     setShowOptions(false);
   }
 
