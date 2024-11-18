@@ -124,21 +124,19 @@ export default function announcementsReducer(
         announcementsError: errorMessage,
       });
     }
-    
+
     case actions.DELETE_ANNOUNCEMENT_COMMENT_SUCCESS: {
       const { announcementId, commentId } = action.payload;
       return state
         .updateIn(['comments', announcementId], (commentsList) =>
           commentsList.filter((comment) => comment.get('id') !== commentId)
         )
-        .update(
-          'announcements',
-          (announcements) =>
-            announcements.map((announcement) =>
-              announcement.get('id') === announcementId
-                ? announcement.update('commentsCount', (count) => count - 1)
-                : announcement
-            )
+        .update('announcements', (announcements) =>
+          announcements.map((announcement) =>
+            announcement.get('id') === announcementId
+              ? announcement.update('commentsCount', (count) => count - 1)
+              : announcement
+          )
         );
     }
 
@@ -154,13 +152,15 @@ export default function announcementsReducer(
         announcementsError: errorMessage,
       });
     }
-    
+
     case actions.DELETE_ANNOUNCEMENT_SUCCESS: {
       const { announcementId } = action.payload;
-      
+
       return state
         .update('announcements', (announcements) =>
-          announcements.filter((announcement) => announcement.get('id') !== announcementId)
+          announcements.filter(
+            (announcement) => announcement.get('id') !== announcementId
+          )
         )
         .deleteIn(['comments', announcementId])
         .merge({
@@ -181,10 +181,10 @@ export default function announcementsReducer(
         announcementsError: errorMessage,
       });
     }
-    
+
     case actions.EDIT_ANNOUNCEMENT_SUCCESS: {
       const { editedAnnouncement } = action.payload;
-      
+
       return state
         .update('announcements', (announcements) =>
           announcements.map((announcement) =>

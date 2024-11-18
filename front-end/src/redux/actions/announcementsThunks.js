@@ -126,7 +126,9 @@ export const deleteAnnouncementComment =
           error: 'Failed to delete the comment',
         }
       );
-      dispatch(creators.deleteAnnouncementCommentSuccess(announcementId, commentId));
+      dispatch(
+        creators.deleteAnnouncementCommentSuccess(announcementId, commentId)
+      );
     } catch (error) {
       console.error(error.message);
       dispatch(creators.deleteAnnouncementCommentFailure(error.message));
@@ -136,15 +138,14 @@ export const deleteAnnouncementComment =
 export const deleteAnnouncementEntry = (announcementId) => async (dispatch) => {
   try {
     await toast.promise(
-      fetch(`${DOMAIN}/announcements/${announcementId}`,{
+      fetch(`${DOMAIN}/announcements/${announcementId}`, {
         method: 'DELETE',
-      })
-      .then(response => {
+      }).then((response) => {
         const data = response.json();
         if (!response.ok) {
           throw new Error(data.message);
         }
-        
+
         return data;
       }),
       {
@@ -152,14 +153,14 @@ export const deleteAnnouncementEntry = (announcementId) => async (dispatch) => {
         success: 'Announcement deleted successfully',
         error: 'Failed to delete the announcement',
       }
-    )
+    );
 
     dispatch(creators.deleteAnnouncementSuccess(announcementId));
   } catch (error) {
     console.error(error);
-    dispatch(creators.deleteAnnouncementFailure(error.message))
+    dispatch(creators.deleteAnnouncementFailure(error.message));
   }
-}
+};
 
 export const editAnnouncement =
   (announcementId, title, details) => async (dispatch) => {
@@ -170,7 +171,7 @@ export const editAnnouncement =
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({title, details}),
+          body: JSON.stringify({ title, details }),
         }).then((response) => {
           const data = response.json();
           if (!response.ok) {

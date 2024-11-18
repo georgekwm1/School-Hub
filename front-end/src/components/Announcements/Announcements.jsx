@@ -30,22 +30,21 @@ export default function Announcements() {
     dispatch(addNewAnnouncement(title, details));
   };
 
-		return (
-			<div>
-			<h1>Announcements</h1>
-			{
-				isLoading ? (
-					<Loading />
-				) : (
-					announcements.size === 0 ? (
-						<h1>No announcements yet</h1>
-					) : (
-						announcements.map((announcement) => (
-							<AnnouncementEntry key={announcement.get('id')} content={announcement} />
-						))
-					)
-				)
-			}
+  return (
+    <div>
+      <h1>Announcements</h1>
+      {isLoading ? (
+        <Loading />
+      ) : announcements.size === 0 ? (
+        <h1>No announcements yet</h1>
+      ) : (
+        announcements.map((announcement) => (
+          <AnnouncementEntry
+            key={announcement.get('id')}
+            content={announcement}
+          />
+        ))
+      )}
       {userRole !== 'student' && (
         <div className="d-flex justify-content-end">
           {!showAnnouncementsEditor ? (
@@ -61,6 +60,6 @@ export default function Announcements() {
           )}
         </div>
       )}
-		</div>
-	);
+    </div>
+  );
 }

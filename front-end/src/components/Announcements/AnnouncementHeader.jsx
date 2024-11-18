@@ -4,7 +4,10 @@ import { Minus, Dot, Trash2, EllipsisVertical, SquarePen } from 'lucide-react';
 import TextEditor from '../TextEditor/TextEditor';
 import { formatDate, replaceTempImageUrls } from '../../utils/utilFunctions';
 import { selectUserRole } from '../../redux/selectors/uiSelectors';
-import { deleteAnnouncementEntry, editAnnouncement } from '../../redux/actions/announcementsThunks';
+import {
+  deleteAnnouncementEntry,
+  editAnnouncement,
+} from '../../redux/actions/announcementsThunks';
 
 export default function AnnouncementHeader({ content }) {
   const userRole = useSelector(selectUserRole);
@@ -18,8 +21,12 @@ export default function AnnouncementHeader({ content }) {
 
   const handleEditAnnouncement = async () => {
     setEdit(false);
-    const contentWithFileUrls = await replaceTempImageUrls(newValue, newFiles, dispatch);
-    dispatch(editAnnouncement(content.get('id'), newTitle, newValue))
+    const contentWithFileUrls = await replaceTempImageUrls(
+      newValue,
+      newFiles,
+      dispatch
+    );
+    dispatch(editAnnouncement(content.get('id'), newTitle, newValue));
   };
 
   const hanldeCancelEdit = () => {
@@ -27,7 +34,7 @@ export default function AnnouncementHeader({ content }) {
     setNewTitle(content.get('title'));
     setNewValue(content.get('body'));
     setNewFiles([]);
-  }
+  };
 
   const handleDeleteAnnouncement = () => {
     if (
@@ -139,7 +146,6 @@ export default function AnnouncementHeader({ content }) {
             >
               Confirm Edit
             </button>
-            
           </>
         )}
       </div>

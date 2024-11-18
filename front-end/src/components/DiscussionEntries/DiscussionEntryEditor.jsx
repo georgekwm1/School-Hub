@@ -69,27 +69,33 @@ export default function DiscussionEntryEditor({
     onPublish(title, newDetails);
   };
 
-	return (
-		<form className="discussion-entry-form" onSubmit={handleSubmit}>
-			<label className="form-label">
-				Title or summary:
-				<input className="form-input" type="text" id='title' name='title'  required placeholder='Short title/summary or your entry... '/>
-			</label>
-			<label htmlFor='text-editor' className="form-label">
-				Details (optional):
-        </label>
+  return (
+    <form className="discussion-entry-form" onSubmit={handleSubmit}>
+      <label className="form-label">
+        Title or summary:
+        <input
+          className="form-input"
+          type="text"
+          id="title"
+          name="title"
+          required
+          placeholder="Short title/summary or your entry... "
+        />
+      </label>
+      <label htmlFor="text-editor" className="form-label">
+        Details (optional):
+      </label>
       <TextEditor
-        id='text-editor'
+        id="text-editor"
         className="form-text-editor"
-
         placeholder={editorPlaceholder}
         value={details}
         setValue={setDetails}
         files={files}
         setFiles={setFiles}
-        />
+      />
 
       <button type="submit">Publish</button>
-		</form>
-	)
+    </form>
+  );
 }
