@@ -72,3 +72,22 @@ export const createLectureFailure = (errorMessage) => ({
     errorMessage,
   },
 });
+
+export const deleteLectureRequest = () => ({
+  type: actions.DELETE_LECTURE_REQUEST,
+});
+
+export const deleteLectureFailure = (errorMessage) => ({
+  type: actions.DELETE_LECTURE_FAILURE,
+  payload: {
+    errorMessage,
+  },
+});
+
+export const deleteLectureSuccess = (sectionId, lectureId) => ({
+  type: actions.DELETE_LECTURE_SUCCESS,
+  payload: {
+    sectionId,
+    lectureId,
+  },
+});
