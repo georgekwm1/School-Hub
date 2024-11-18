@@ -7,7 +7,9 @@ export const getLectureById = (lectureId) => async (dispatch) => {
   dispatch(actionCreators.lectureRequest());
 
   try {
-    const response = await fetch(`${DOMAIN}/courses/testId/lectures/${lectureId}`);
+    const response = await fetch(
+      `${DOMAIN}/courses/testId/lectures/${lectureId}`
+    );
     const data = await response.json();
 
     if (!response.ok) {
@@ -67,10 +69,9 @@ export const createLecture = (lectureData, navigate) => async (dispatch) => {
     navigate('/lectures');
   } catch (error) {
     console.error(error.message);
-    dispatch(actionCreators.createLectureFailure(error.message));    
+    dispatch(actionCreators.createLectureFailure(error.message));
   }
 };
-
 
 export const deleteLecture = (sectionId, lectureId) => async (dispatch) => {
   dispatch(actionCreators.deleteLectureRequest());

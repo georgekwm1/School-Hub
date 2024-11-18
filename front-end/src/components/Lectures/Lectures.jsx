@@ -23,8 +23,6 @@ export default function Lectures() {
     dispatch(getCourseLectures());
   }, [dispatch]);
 
-
-
   const handleShowModal = (section) => {
     setSelectedSection(section);
     setShowModal(true);
@@ -136,7 +134,11 @@ export default function Lectures() {
 
               <div className="list-group">
                 {selectedSection?.lectures.map((lecture) => (
-                 <TempStyledLectureEntry lecture={lecture} sectionId={selectedSection.id} key={lecture.id} />
+                  <TempStyledLectureEntry
+                    lecture={lecture}
+                    sectionId={selectedSection.id}
+                    key={lecture.id}
+                  />
                 ))}
               </div>
             </div>

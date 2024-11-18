@@ -117,7 +117,9 @@ export default function lecturesReducer(state = initialState, action = {}) {
           .update('sections', (sections) =>
             sections.map((section) =>
               section.get('id') === sectionId
-                ? section.update('lectures', (lectures) => lectures.filter((lec) => lec.get('id') !== lectureId))
+                ? section.update('lectures', (lectures) =>
+                    lectures.filter((lec) => lec.get('id') !== lectureId)
+                  )
                 : section
             )
           );
