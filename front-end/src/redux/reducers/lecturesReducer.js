@@ -115,9 +115,10 @@ export default function lecturesReducer(state = initialState, action = {}) {
           .set('lectureError', null)
           .removeIn(['lectures', lectureId])
           .update('sections', (sections) =>
-            sections.find((section) => section.get('id') === sectionId)
-            .update('lectures', (lectures) =>
-              lectures.filter((lecture) => lecture.get('id') !== lectureId)
+            sections.map((section) =>
+              section.get('id') === sectionId
+                ? section.update('lectures', (lectures) => lectures.filter((lec) => lec.get('id') !== lectureId))
+                : section
             )
           );
       });
