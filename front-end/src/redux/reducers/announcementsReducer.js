@@ -168,6 +168,37 @@ export default function announcementsReducer(
           announcementsError: null,
         });
     }
+
+    case actions.EDIT_ANNOUNCEMENT_REQUEST:
+      return state.merge({
+        isLoading: true,
+      });
+
+    case actions.EDIT_ANNOUNCEMENT_FAILURE: {
+      const { errorMessage } = action.payload;
+      return state.merge({
+        isLoading: false,
+        announcementsError: errorMessage,
+      });
+    }
+    
+    case actions.EDIT_ANNOUNCEMENT_SUCCESS: {
+      const { editedAnnouncement } = action.payload;
+      
+      return state
+        .update('announcements', (announcements) =>
+          announcements.map((announcement) =>
+            announcement.get('id') === editedAnnouncement.id
+              ? fromJS(editedAnnouncement)
+              : announcement
+          )
+        )
+        .merge({
+          isLoading: false,
+          announcementsError: null,
+        });
+    }
+
     default:
       return state;
   }
