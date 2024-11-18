@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Minus, Dot, Trash2, EllipsisVertical } from 'lucide-react';
+import { Minus, Dot, Trash2, EllipsisVertical, SquarePen } from 'lucide-react';
+import TextEditor from '../TextEditor/TextEditor';
 import { formatDate } from '../../utils/utilFunctions';
 import { selectUserRole } from '../../redux/selectors/uiSelectors';
 import { deleteAnnouncementEntry } from '../../redux/actions/announcementsThunks';
@@ -8,7 +9,20 @@ import { deleteAnnouncementEntry } from '../../redux/actions/announcementsThunks
 export default function AnnouncementHeader({ content }) {
   const userRole = useSelector(selectUserRole);
   const [showOptions, setShowOptions] = useState(false);
-  const dispatch = useDispatch()
+  const dispatch = useDispatch();
+
+  const [edit, setEdit] = useState(false);
+  const [newTitle, setNewTitle] = useState(content.get('title'));
+  const [newValue, setNewValue] = useState(content.get('body'));
+  const [newFiles, setNewFiles] = useState([]);
+
+  const handleEditAnnouncement = () => {
+    setEdit(false);
+    console.log(newTitle);
+    console.log(newFiles);
+    console.log(newValue);
+  };
+
   const handleDeleteAnnouncement = () => {
     if (
       window.confirm(
@@ -38,42 +52,82 @@ export default function AnnouncementHeader({ content }) {
             {content.get('role') || 'Instructor'}
           </p>
           <p className="text-muted mb-0">
-            Posted an announcement <Dot /> {formatDate(content.get('updatedAt'))}
+            Posted an announcement <Dot />{' '}
+            {formatDate(content.get('updatedAt'))}
           </p>
         </div>
-        {
-          userRole !== 'student' &&
+        {userRole !== 'student' && (
           <>
-          
-        <button type="button" className="btn btn-light mt-2"
-          onClick={() => setShowOptions(!showOptions)}
-          >
-          <EllipsisVertical />
-        </button>
-        {
-          showOptions &&
-          <div>          
-          <ul>
-              <li>
-              <button type='button' onClick={handleDeleteAnnouncement} >
-                <Trash2 color='red' />
-                Delete reply
-              </button>
-            </li>
-          </ul>
-        </div>
-        }
-        </>
-        }
+            <button
+              type="button"
+              className="btn btn-light mt-2"
+              onClick={() => setShowOptions(!showOptions)}
+            >
+              <EllipsisVertical />
+            </button>
+            {showOptions && (
+              <div>
+                <ul>
+                  <li>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEdit(!edit);
+                        setShowOptions(false);
+                      }}
+                    >
+                      <SquarePen />
+                      Edit
+                    </button>
+                  </li>
+
+                  <li>
+                    <button type="button" onClick={handleDeleteAnnouncement}>
+                      <Trash2 color="red" />
+                      Delete reply
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            )}
+          </>
+        )}
       </div>
-      <div className='mt-2 p-3'>
-        <h5 className='fs-4'>{content.get('title')}</h5>
-        <div
-          className="announcement-body mt-2 txt2 fs-6"
-          dangerouslySetInnerHTML={{
-            __html: announcementBody,
-          }}
-        />
+      <div className="mt-2 p-3">
+        {!edit ? (
+          <>
+            <h5 className="fs-4">{content.get('title')}</h5>
+            <div
+              className="announcement-body mt-2 txt2 fs-6"
+              dangerouslySetInnerHTML={{
+                __html: announcementBody,
+              }}
+            />
+          </>
+        ) : (
+          <>
+            <input
+              type="text"
+              defaultValue={content.get('title')}
+              className="form-control"
+              onChange={(e) => setNewTitle(e.target.value)}
+            />
+            <TextEditor
+              value={newValue}
+              setValue={setNewValue}
+              files={newFiles}
+              setFiles={setNewFiles}
+              bubble
+            />
+            <button
+              type="button"
+              onClick={handleEditAnnouncement}
+              className="btn btn-sm btn-outline-primary"
+            >
+              Confirm Edit
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
