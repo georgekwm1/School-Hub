@@ -4,7 +4,7 @@ import { Minus, Dot, Trash2, EllipsisVertical, SquarePen } from 'lucide-react';
 import TextEditor from '../TextEditor/TextEditor';
 import { formatDate, replaceTempImageUrls } from '../../utils/utilFunctions';
 import { selectUserRole } from '../../redux/selectors/uiSelectors';
-import { deleteAnnouncementEntry } from '../../redux/actions/announcementsThunks';
+import { deleteAnnouncementEntry, editAnnouncement } from '../../redux/actions/announcementsThunks';
 
 export default function AnnouncementHeader({ content }) {
   const userRole = useSelector(selectUserRole);
@@ -18,11 +18,9 @@ export default function AnnouncementHeader({ content }) {
 
   const handleEditAnnouncement = async () => {
     setEdit(false);
-    console.log(newTitle);
-    console.log(newFiles);
-    console.log(newValue);
     const contentWithFileUrls = await replaceTempImageUrls(newValue, newFiles, dispatch);
-    console.log(contentWithFileUrls);
+    dispatch(editAnnouncement(content.get('id'), newTitle, newValue))
+    
   };
 
   const handleDeleteAnnouncement = () => {
