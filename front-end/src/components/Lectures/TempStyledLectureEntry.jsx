@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { EllipsisVertical, Trash2 } from 'lucide-react';
 
-export default function TempStyledLectureEntry({ lecture }) {
+export default function TempStyledLectureEntry({ lecture, sectionId }) {
 	const userRole = useSelector((state) => state.ui.getIn(['user', 'role']));
 	const [showOptions, setShowOptions] = useState(false);
   const dispatch = useDispatch();
