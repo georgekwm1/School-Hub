@@ -132,6 +132,7 @@ export default function AnnouncementHeader({ content }) {
               setFiles={setNewFiles}
               bubble
             />
+            <p className="text-muted">Select some text to see the editor options.</p>
             <button
               type="button"
               onClick={hanldeCancelEdit}

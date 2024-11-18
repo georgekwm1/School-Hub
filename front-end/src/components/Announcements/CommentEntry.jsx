@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Dot, Trash2 } from 'lucide-react';
+import { Dot, Trash2, SquarePen } from 'lucide-react';
 import {
   selectUserRole,
   selectUserId
@@ -13,6 +13,20 @@ export default function CommentEntry({ content }) {
   const userId = useSelector(selectUserId);
   const date = formatDate(content.get('updatedAt'));
   const dispatch = useDispatch();
+
+  
+  const [edit, setEdit] = useState(false);
+  const [newValue, setNewValue] = useState(content.get('body'));
+
+  const handleEditComment = async () => {
+    setEdit(false);
+    console.log(newValue);
+  };
+
+  const hanldeCancelEdit = () => {
+    setEdit(false);
+    setNewValue(content.get('body'));
+  };
 
   const handleDeleteComment = () => {
     if (window.confirm(`Are you sure you are deleting this comment ${content.get('id')}`)) {
@@ -43,9 +57,45 @@ export default function CommentEntry({ content }) {
         </p>
         
         {/* Comment Text */}
-        <p className="mb-0">{content.get('body')}</p>
+        {edit ? (
+          <>
+          <input
+            className="form-control mb-0"
+            type="text"
+            value={newValue}
+            onChange={(e) => setNewValue(e.target.value)}
+          />
+          <button
+              type="button"
+              onClick={hanldeCancelEdit}
+              className="btn btn-sm btn-outline-secondary"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleEditComment}
+              className="btn btn-sm btn-outline-primary"
+            >
+              Confirm Edit
+            </button>
+            </>
+        ) : (
+          <p className="mb-0">{content.get('body')}</p>
+        )}
       </div>
       <div>          
+        {
+          (!edit && userId === content.getIn(['user', 'id'])) &&
+          <button
+          type="button"
+          onClick={() => {
+            setEdit(!edit);
+          }}
+        >
+          <SquarePen />
+        </button>
+        }
         {
           (userRole !== 'student' || userId === content.getIn(['user', 'id'])) &&
             <button type='button' onClick={handleDeleteComment} >
