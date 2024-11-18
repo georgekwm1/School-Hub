@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Minus, Dot, Trash2, EllipsisVertical, SquarePen } from 'lucide-react';
 import TextEditor from '../TextEditor/TextEditor';
-import { formatDate } from '../../utils/utilFunctions';
+import { formatDate, replaceTempImageUrls } from '../../utils/utilFunctions';
 import { selectUserRole } from '../../redux/selectors/uiSelectors';
 import { deleteAnnouncementEntry } from '../../redux/actions/announcementsThunks';
 
@@ -16,11 +16,13 @@ export default function AnnouncementHeader({ content }) {
   const [newValue, setNewValue] = useState(content.get('body'));
   const [newFiles, setNewFiles] = useState([]);
 
-  const handleEditAnnouncement = () => {
+  const handleEditAnnouncement = async () => {
     setEdit(false);
     console.log(newTitle);
     console.log(newFiles);
     console.log(newValue);
+    const contentWithFileUrls = await replaceTempImageUrls(newValue, newFiles, dispatch);
+    console.log(contentWithFileUrls);
   };
 
   const handleDeleteAnnouncement = () => {
