@@ -20,8 +20,14 @@ export default function AnnouncementHeader({ content }) {
     setEdit(false);
     const contentWithFileUrls = await replaceTempImageUrls(newValue, newFiles, dispatch);
     dispatch(editAnnouncement(content.get('id'), newTitle, newValue))
-    
   };
+
+  const hanldeCancelEdit = () => {
+    setEdit(false);
+    setNewTitle(content.get('title'));
+    setNewValue(content.get('body'));
+    setNewFiles([]);
+  }
 
   const handleDeleteAnnouncement = () => {
     if (
@@ -121,11 +127,19 @@ export default function AnnouncementHeader({ content }) {
             />
             <button
               type="button"
+              onClick={hanldeCancelEdit}
+              className="btn btn-sm btn-outline-secondary"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
               onClick={handleEditAnnouncement}
               className="btn btn-sm btn-outline-primary"
             >
               Confirm Edit
             </button>
+            
           </>
         )}
       </div>
