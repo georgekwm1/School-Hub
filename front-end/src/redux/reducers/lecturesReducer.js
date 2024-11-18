@@ -95,7 +95,34 @@ export default function lecturesReducer(state = initialState, action = {}) {
           );
       });
     }
-  
+
+    case actions.DELETE_LECTURE_REQUEST: {
+      return state.set('isLoading', true);
+    }
+
+    case actions.DELETE_LECTURE_FAILURE: {
+      return state.withMutations((state) => {
+        return state
+          .set('isLoading', false)
+          .set('lectureError', action.payload.errorMessage);
+      });
+    }
+    case actions.DELETE_LECTURE_SUCCESS: {
+      const { lectureId, sectionId } = action.payload;
+      return state.withMutations((state) => {
+        return state
+          .set('isLoading', false)
+          .set('lectureError', null)
+          .removeIn(['lectures', lectureId])
+          .update('sections', (sections) =>
+            sections.find((section) => section.get('id') === sectionId)
+            .update('lectures', (lectures) =>
+              lectures.filter((lecture) => lecture.get('id') !== lectureId)
+            )
+          );
+      });
+    }
+
     default: {
       return state;
     }
