@@ -191,3 +191,35 @@ export const editAnnouncement =
       dispatch(creators.editAnnouncementFailure(error.message));
     }
   };
+
+export const editComment =
+  (commentId, comment) => async (dispatch) => {
+    try {
+      const data = await toast.promise(
+        fetch(`${DOMAIN}/comments/${commentId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ comment }),
+        }).then((response) => {
+          const data = response.json();
+          if (!response.ok) {
+            throw new Error(data.message);
+          }
+          return data;
+        }),
+        {
+          loading: 'Updating comment...',
+          success: 'Comment updated successfully',
+          error: 'Failed to update the comment',
+        }
+      );
+      dispatch(creators.editCommentSuccess(data));
+    } catch (error) {
+      console.error(error.message);
+      dispatch(
+        creators.editCommentFailure(error.message)
+      );
+    }
+  };
