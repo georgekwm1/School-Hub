@@ -1,0 +1,66 @@
+import React, { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { useParams, useNavigate } from 'react-router-dom';
+import LectureForm from '../LectureForm/LectureForm';
+import Loading from '../utilityComponents/Loading';
+import { selectCourseId } from '../../redux/selectors/uiSelectors';
+import { selectLecturesIsLoading } from '../../redux/actions/lecturesSelectors';
+import { DOMAIN } from '../../utils/constants';
+
+export default function EditLectureForm() {
+	const { lectureId } = useParams();
+	const courseId = useSelector(selectCourseId) || 'testId';
+	// unfortunately.. I really forgot why did I make isLoading in ui state and
+	// in lectures state...
+	// Also, recently after relying so much at toast.promise..
+	// and I think i kinda mixed between the spinners and the actually
+	// loading text or screen that shows at teh center of teh screen
+	// and when to use them!
+	const isLoading = useSelector(selectLecturesIsLoading);
+	const [lectureData, setLectureData] = useState({});
+	const navigate = useNavigate()
+	const dispatch = useDispatch();
+
+	useEffect(() => {
+		dispatch(setLectureLoading(true));
+		fetch(`${DOMAIN}/lectures/${lectureId}`)
+			.then((response) => response.json())
+			.then((data) => {
+				setLectureData(data);
+			})
+			.catch((e) => {
+				console.error(e);
+				toast.error('Failed to fetch lecture ' + lectureId);
+			})
+			.finally(() => {
+				dispatch(setLectureLoading(false));
+			})
+	}, [dispatch, lectureId])
+
+	const handleSubmit = (lectureData) => {
+		console.log(lectureData);
+	};
+
+	if (isLoading) {
+		return <Loading />
+	} else if (!lectureData) {
+		navigate('/lectures')
+	}
+
+  return (
+    <div className="container mt-5 p-4 ">
+			<button className='btn btn-secondary mb-3' onClick={() => navigate('/lectures')}>
+        Back
+      </button>
+
+      <h1>Edit Lecture Lecture Name</h1>
+      <p className="txt1 fs-5 pb-4">
+        Don't forget to renew your Intention behind what you are doing .... Good
+        luck with your students... Yet another change to make the world a better
+        place
+      </p>
+
+      <LectureForm onSubmit={handleSubmit} lectureData={lectureData} />
+    </div>
+  );
+}
