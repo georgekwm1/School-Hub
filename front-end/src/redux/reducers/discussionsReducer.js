@@ -398,6 +398,34 @@ export default function discussionsReducer(state = initialState, action = {}) {
       });
     }
 
+    case actions.EDIT_REPLY_REQUEST: {
+      return state.set('isLoading', true);
+    }
+
+    case actions.EDIT_REPLY_FAILURE: {
+      return state.withMutations((state) => {
+        state
+          .set('isLoading', false)
+          .set('discussionsError', action.payload.errorMessage);
+      });
+    }
+
+    case actions.EDIT_REPLY_SUCCESS: {
+      const { questionId, editedReply } = action.payload;
+      const replyId = editedReply.id;
+
+      return state.withMutations((state) => {
+        return state
+          .set('isLoading', false)
+          .set('discussionsError', null)
+          .updateIn(['replies', questionId, 'repliesList'], (replies) => {
+            const index = replies.findIndex(reply => reply.get('id') === replyId);
+
+            return replies.set(index, editedReply)
+          })
+      });
+    }
+
     default: {
       return state;
     }
