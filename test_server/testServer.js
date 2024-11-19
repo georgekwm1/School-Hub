@@ -276,7 +276,8 @@ app.post('/courses/:id/lectures', (req, res) => {
     if (existingSection) {
       existingSection.lectures.push(newLecture);
     } else {
-      mockSections.push({ title: section, lectures: [newLecture] });
+      const newId = `section-${Date.now()}`;
+      mockSections.push({ id: newId, title: section, lectures: [newLecture] });
     }
     res.json(newLecture);
   } else {
@@ -504,7 +505,8 @@ app.get('/announcements/:id/comments', (req, res) => {
   // at first.. may be i wanted to test erro rmesages or
   ids.push(announcementId);
   if (ids.includes(announcementId)) {
-    res.json(mockComments.map(com => ({...com, announcementId})));
+    const comments = mockComments.filter(com => com.announcementId === announcementId);
+    res.json(comments.map(com => ({...com, announcementId})));
   } else {
     res.status(404).send({ message: 'Announcement not found' });
   }
@@ -522,6 +524,7 @@ app.post('/announcements/:id/comments', (req, res) => {
     announcementId,
     id: `comment-${Date.now()}`,
     user: {
+      id: Math.random() < 0.5 ? 'testId' : 'somethingElse',
       name: 'Anonymous',
       pictureThumbnail: `https://picsum.photos/100`,
     },
@@ -581,6 +584,66 @@ app.delete('/announcements/:id', (req, res) => {
   mockAnnouncements.splice(index, 1);
   res.status(200).json({ message: 'Announcement deleted successfully' });
 });
+
+app.delete('/lectures/:id', (req, res) => {
+  const lectureId = req.params.id;
+  const index = mockSections.findIndex((section) => section.lectures.findIndex((lecture) => lecture.id === lectureId) !== -1);
+
+  if (index === -1) {
+    return res.status(404).send({ message: 'Lecture not found' });
+  }
+  const lectureIndex = mockSections[index].lectures.findIndex((lecture) => lecture.id === lectureId);
+  mockSections[index].lectures.splice(lectureIndex, 1);
+  res.status(200).json({ message: 'Lecture deleted successfully' });
+});
+
+app.put('/announcements/:id', (req, res) => {
+  const { id } = req.params;
+  const { title, details } = req.body;
+
+  const index = mockAnnouncements.findIndex((announcement) => announcement.id === id);
+
+  if (index === -1) {
+    return res.status(404).send({ message: 'Announcement not found' });
+  }
+
+  mockAnnouncements[index].title = title;
+  mockAnnouncements[index].body = details;
+
+  res.status(200).json(mockAnnouncements[index]);
+});
+
+app.put('/comments/:id', (req, res) => {
+  const { id } = req.params;
+  const { body } = req.body;
+
+  const index = mockComments.findIndex((comment) => comment.id === id);
+
+  if (index === -1) {
+    return res.status(404).send({ message: 'Comment not found' });
+  }
+
+  mockComments[index].body = body;
+
+  res.status(200).json(mockComments[index]);
+});
+
+app.put('/questions/:id', (req, res) => {
+  const { id } = req.params;
+  const { title, body } = req.body;
+
+  const index = mockDiscussion.findIndex((question) => question.id === id);
+
+  if (index === -1) {
+    return res.status(404).send({ message: 'Question not found' });
+  }
+
+  mockDiscussion[index].title = title;
+  mockDiscussion[index].body = body;
+
+  res.status(200).json(mockDiscussion[index]);
+});
+
 
 app.use((req, res, next) => {
   res.status(404).send({ message: 'Not found' });

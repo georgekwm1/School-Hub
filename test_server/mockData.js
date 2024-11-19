@@ -1,7 +1,7 @@
 const mockComments = [
   {
     id: 'comment-1',
-    announcementId: 'testId',
+    announcementId: 'announcement-1',
     user: {
       id: 'testId',
       name: 'John Doe',
@@ -14,7 +14,7 @@ const mockComments = [
   },
   {
     id: 'comment-2',
-    announcementId: 'testId',
+    announcementId: 'announcement-1',
     user: {
       id: 'testId',
       name: 'Jane Doe',
@@ -27,7 +27,7 @@ const mockComments = [
   },
   {
     id: 'comment-3',
-    announcementId: 'testId',
+    announcementId: 'announcement-2',
     user: {
       id: 'testId',
       name: 'John Doe',
@@ -40,7 +40,7 @@ const mockComments = [
   },
   {
     id: 'comment-4',
-    announcementId: 'testId',
+    announcementId: 'announcement-2',
     user: {
       name: 'Jane Doe',
       pictureThumbnail: 'https://picsum.photos/103',
@@ -52,7 +52,70 @@ const mockComments = [
   },
   {
     id: 'comment-5',
-    announcementId: 'testId',
+    announcementId: 'announcement-1',
+    user: {
+      name: 'John Doe',
+      pictureThumbnail: 'https://picsum.photos/104',
+    },
+    updatedAt: '2024-11-06T07:00:00.000Z',
+    upvotes: 5,
+    upvoted: false,
+    body: 'How does react useState work?',
+  },
+  {
+    id: 'comment-6',
+    announcementId: 'announcement-2',
+    user: {
+      id: 'testId',
+      name: 'John Doe',
+      pictureThumbnail: 'https://picsum.photos/100',
+    },
+    updatedAt: '2024-11-02T07:00:00.000Z',
+    upvotes: 50,
+    upvoted: true,
+    body: 'How does react hooks work?',
+  },
+  {
+    id: 'comment-7',
+    announcementId: 'announcement-2',
+    user: {
+      id: 'testId',
+      name: 'Jane Doe',
+      pictureThumbnail: 'https://picsum.photos/101',
+    },
+    updatedAt: '2022-01-03T00:00:00.000Z',
+    upvotes: 30,
+    upvoted: false,
+    body: 'How does react context work?',
+  },
+  {
+    id: 'comment-8',
+    announcementId: 'announcement-1',
+    user: {
+      id: 'testId',
+      name: 'John Doe',
+      pictureThumbnail: 'https://picsum.photos/102',
+    },
+    updatedAt: '2024-11-04T07:00:00.000Z',
+    upvotes: 20,
+    upvoted: false,
+    body: 'How does react useState work?',
+  },
+  {
+    id: 'comment-9',
+    announcementId: 'announcement-1',
+    user: {
+      name: 'Jane Doe',
+      pictureThumbnail: 'https://picsum.photos/103',
+    },
+    updatedAt: '2022-01-05T00:00:00.000Z',
+    upvotes: 10,
+    upvoted: true,
+    body: 'How does react hooks work?',
+  },
+  {
+    id: 'comment-10',
+    announcementId: 'announcement-2',
     user: {
       name: 'John Doe',
       pictureThumbnail: 'https://picsum.photos/104',
@@ -435,6 +498,8 @@ const mockDiscussion = [
 
 const mockSections = [
   {
+    id: 'section-1',
+
     title: 'Low Level Programming',
     lectures: [
       {
@@ -460,6 +525,7 @@ const mockSections = [
     ],
   },
   {
+    id: 'section-2',
     title: 'Data Structures and Algorithms',
     lectures: [
       {
@@ -483,6 +549,7 @@ const mockSections = [
     ],
   },
   {
+    id: 'section-3',
     title: 'High Level Programming',
     lectures: [
       {
@@ -508,6 +575,7 @@ const mockSections = [
     ],
   },
   {
+    id: 'section-4',
     title: 'Frontend Development',
     lectures: [
       {
@@ -531,6 +599,7 @@ const mockSections = [
     ],
   },
   {
+    id: 'section-5',
     title: 'Backend Development',
     lectures: [
       {
