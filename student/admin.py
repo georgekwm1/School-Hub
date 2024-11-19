@@ -17,7 +17,7 @@ class CourseResourcesAdmin(admin.ModelAdmin):
 
 
 class ForumAdmin(admin.ModelAdmin):
-    list_display = ('forum_id', 'title', 'course')
+    list_display = ('forum_id', 'title', 'lecture')
 
 
 class ThreadAdmin(admin.ModelAdmin):
@@ -36,6 +36,10 @@ class CommentAdmin(admin.ModelAdmin):
     list_display = ('comment_id', 'announcement', 'user')
 
 
+class BlacklistAdmin(admin.ModelAdmin):
+    list_display = ('token',)
+
+
 admin.site.register(models.Users, UsersAdmin)
 admin.site.register(models.Students, StudentsAdmin)
 admin.site.register(models.Course_Resources, CourseResourcesAdmin)
@@ -44,3 +48,4 @@ admin.site.register(models.Thread, ThreadAdmin)
 admin.site.register(models.Chats, ChatsAdmin)
 admin.site.register(models.Announcement, AnnouncementAdmin)
 admin.site.register(models.Comment, CommentAdmin)
+admin.site.register(models.BlacklistedToken, BlacklistAdmin)

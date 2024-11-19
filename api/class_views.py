@@ -30,12 +30,16 @@ class CustomJWTAuthentication(JWTAuthentication):
         # Get token from request header (Authorization: Bearer <token>)
         token = self.get_header(request)
         print(f"Auth Access Token: {token}")
+        # Decodes the token from bytes format to string format
         if isinstance(token, bytes):
             token = token.decode('utf-8')
         print(f"Decoded Auth Access Token: {token}")
         if not token:
             raise AuthenticationFailed("No token provided")
 
+        # Removes the "Bearer " prefix from the token
+        token = token.split(' ')[-1]
+        print(f"New Token: {token}")
         # Check if token is blacklisted
         if BlacklistedToken.objects.filter(token=token).exists():
             raise AuthenticationFailed("Token is blacklisted")
@@ -186,19 +190,6 @@ class CoursesListView(APIView):
 
     def get(self, request):
         courses = Courses.objects.all()
-        serializer = CoursesSerializer(courses, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-class CoursesListByLecturerView(APIView):
-    permission_classes = (IsAuthenticated,)
-    authentication_classes = [CustomJWTAuthentication]
-
-    def get(self, request, user_id):
-        user = request.user
-        if user.role == 'tutor':
-            lecturer = Lecturer.objects.filter(user=user).first()
-            courses = Courses.objects.filter(lecturer=lecturer)
         serializer = CoursesSerializer(courses, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

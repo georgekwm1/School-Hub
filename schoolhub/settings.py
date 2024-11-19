@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'social_django',
     'rest_framework',
     'corsheaders',
+    'rest_framework_simplejwt.token_blacklist',
 ]
 
 MIDDLEWARE = [
@@ -223,9 +224,11 @@ SIMPLE_JWT = {
     'USER_ID_FIELD': 'user_id',  # Use 'user_id' as the identifier
     'USER_ID_CLAIM': 'user_id',  # Set the claim name to 'user_id' in the JWT
     'AUTH_HEADER_TYPES': ('Bearer',),
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_BLACKLIST_ENABLED': True,
 }
 AUTH_USER_MODEL = 'student.Users'

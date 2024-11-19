@@ -103,11 +103,21 @@ class Courses(models.Model):
         return f"{self.course_name}  ({self.course_code})"
 
 
+class Chapter(models.Model):
+    chapter_id = models.BigAutoField(auto_created=True, primary_key=True)
+    chapter_name = models.CharField(max_length=100)
+    chapter_description = models.TextField(null=True, blank=True)
+    course = models.ForeignKey(Courses, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.chapter_name}"
+
+
 class Lecture(models.Model):
     lecture_id = models.BigAutoField(auto_created=True, primary_key=True)
     lecture_name = models.CharField(max_length=100)
     lecture_description = models.TextField(null=True, blank=True)
-    course = models.ForeignKey(Courses, on_delete=models.CASCADE)
+    chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE)
 
     def __str__(self):
         return f"{self.lecture_name}"
@@ -123,7 +133,7 @@ class Course_Resources(models.Model):
     upload_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.resource_name}  ({self.lecture.course.course_code})"
+        return f"{self.resource_name}  ({self.lecture.lecture_name})"
 
 
 class Enrollments(models.Model):
@@ -152,14 +162,15 @@ class Facial_Recognition(models.Model):
 
 class Forum(models.Model):
     forum_id = models.BigAutoField(auto_created=True, primary_key=True)
-    course = models.ForeignKey(Courses, on_delete=models.CASCADE)
+    lecture = models.ForeignKey(Lecture, on_delete=models.CASCADE)
     title = models.CharField(max_length=100)
     description = models.TextField(null=True, blank=True)
+    thread_counts = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     creator = models.ForeignKey(Users, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.title + " - " + self.course.course_name
+        return self.title + " - " + self.lecture.lecture_name
 
 
 class Thread(models.Model):
@@ -168,6 +179,7 @@ class Thread(models.Model):
     user = models.ForeignKey(Users, on_delete=models.CASCADE)
     title = models.CharField(max_length=100,  null=True, blank=True)
     description = models.TextField(null=True, blank=True)
+    chat_counts = models.IntegerField(default=0)
     upvotes = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -190,6 +202,24 @@ class Chats(models.Model):
 
     def __str__(self):
         return self.sender.first_name + " " + self.sender.last_name + " - " + self.receiver.first_name + " " + self.receiver.last_name
+
+
+class ThreadVote(models.Model):
+    user = models.ForeignKey(Users, on_delete=models.CASCADE)
+    thread = models.ForeignKey(Thread, on_delete=models.CASCADE)
+    vote = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.user.first_name + " " + self.user.last_name + " - " + self.thread.title
+
+
+class ChatVote(models.Model):
+    user = models.ForeignKey(Users, on_delete=models.CASCADE)
+    chat = models.ForeignKey(Chats, on_delete=models.CASCADE)
+    vote = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.user.first_name + " " + self.user.last_name + " - " + self.chat.message
 
 
 class Announcement(models.Model):
