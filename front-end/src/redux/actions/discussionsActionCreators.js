@@ -256,9 +256,9 @@ export const editQuestionFailure = (errorMessage) => ({
     errorMessage,
   },
 });
-export const editQuestionSuccess = (updatedQuestion) => ({
+export const editQuestionSuccess = (editedQuestion) => ({
   type: actions.EDIT_QUESTION_SUCCESS,
   payload: {
-    updatedQuestion,
+    editedQuestion,
   },
 });

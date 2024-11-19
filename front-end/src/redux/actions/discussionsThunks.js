@@ -444,3 +444,40 @@ export const deleteReply = (questionId, replyId) => async (dispatch) => {
     );
   }
 };
+
+export const editQuestion = (questionId, title, body) => async (dispatch) => {
+  try {
+    const data = await toast.promise(
+      fetch(`${DOMAIN}/questions/${questionId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title,
+          body,
+        }),
+      }).then((response) => {
+        const data = response.json();
+        if (!response.ok) {
+          throw new Error(data.message);
+        }
+        return data;
+      }),
+      {
+        loading: 'Editing question',
+        success: 'Question edited',
+        error: 'Error editing question',
+      }
+    );
+
+    dispatch(discussionsActions.editQuestionSuccess(data));
+  } catch (error) {
+    console.error(error);
+    dispatch(
+      discussionsActions.editQuestionFailure(
+        `Error editing the question: ${error.message}`
+      )
+    );
+  }
+};
