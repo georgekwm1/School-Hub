@@ -18,8 +18,8 @@ export default function LectureForm({ onSubmit }) {
   const [notesFile, setNotesFile] = useState(null);
   const [slidesLink, setSlidesLink] = useState('');
   const [slidesFile, setSlidesFile] = useState(null);
-  const [demos, setDemos] = useState([{ name: '', link: '' }]);
-  const [extras, setExtras] = useState([{ name: '', link: '' }]);
+  const [demos, setDemos] = useState([{ title: '', url: '' }]);
+  const [extras, setExtras] = useState([{ title: '', url: '' }]);
   const [slidesOption, setSlidesOption] = useState('link');
 
   const dispatch = useDispatch();
@@ -69,14 +69,14 @@ export default function LectureForm({ onSubmit }) {
 
   const handleRemoveDemo = (index) => {
     if (demos.length <= 1) {
-      setDemos([{ name: '', link: '' }]);
+      setDemos([{ title: '', url: '' }]);
     } else {
       const updatedDemos = demos.filter((_, i) => i !== index);
       setDemos(updatedDemos);
     }
   }
 
-  const handleAddDemo = () => setDemos([...demos, { name: '', link: '' }]);
+  const handleAddDemo = () => setDemos([...demos, { title: '', url: '' }]);
   
   const handleDemoChange = (index, field, value) => {
     const updatedDemos = demos.map((demo, i) =>
@@ -87,14 +87,14 @@ export default function LectureForm({ onSubmit }) {
 
 const handleRemoveExtra = (index) => {
   if (extras.length <= 1) {
-    setExtras([{ name: '', link: '' }]);
+    setExtras([{ title: '', url: '' }]);
   } else {
     const filteredExtras = extras.filter((_, i) => i !== index);
     setExtras(filteredExtras);
   }
 }
 
-const handleAddExtra = () => setExtras([...extras, { name: '', link: '' }]);
+const handleAddExtra = () => setExtras([...extras, { title: '', url: '' }]);
   const handleExtraChange = (index, field, value) => {
     const updatedExtras = extras.map((extra, i) =>
       i === index ? { ...extra, [field]: value } : extra
@@ -104,10 +104,10 @@ const handleAddExtra = () => setExtras([...extras, { name: '', link: '' }]);
 
   const handleMissingDemosNames = () => {
     return demos.map(demo => {
-      if (!demo.name) {
+      if (!demo.title) {
         return {
           ...demo,
-          name: demo.link
+          title: demo.url
         };
       }
       return demo;
@@ -118,7 +118,7 @@ const handleAddExtra = () => setExtras([...extras, { name: '', link: '' }]);
     return extras.map(extra => {
       return extra.name 
       ? extra
-      : {...extra, name: extra.link}
+      : {...extra, name: extra.url}
     })
   }
 
@@ -328,15 +328,15 @@ const handleAddExtra = () => setExtras([...extras, { name: '', link: '' }]);
           className='form-control'
             type="text"
             placeholder="Demo name"
-            value={demo.name}
-            onChange={(e) => handleDemoChange(index, 'name', e.target.value)}
+            value={demo.title}
+            onChange={(e) => handleDemoChange(index, 'title', e.target.value)}
           />
           <input
           className='form-control'
             type="url"
             placeholder="Demo link"
-            value={demo.link}
-            onChange={(e) => handleDemoChange(index, 'link', e.target.value)}
+            value={demo.url}
+            onChange={(e) => handleDemoChange(index, 'url', e.target.value)}
           />
           <button className="btn btn-secondary btn-danger" type="button" onClick={() => handleRemoveDemo(index)}>&times;</button>
         </div>
@@ -355,16 +355,16 @@ const handleAddExtra = () => setExtras([...extras, { name: '', link: '' }]);
           <input
           className='form-control'
             type="text"
-            placeholder="Extra name"
-            value={extra.name}
-            onChange={(e) => handleExtraChange(index, 'name', e.target.value)}
+            placeholder="Extra title"
+            value={extra.title}
+            onChange={(e) => handleExtraChange(index, 'title', e.target.value)}
           />
           <input
           className='form-control'
             type="url"
-            placeholder="Extra link"
-            value={extra.link}
-            onChange={(e) => handleExtraChange(index, 'link', e.target.value)}
+            placeholder="Extra url"
+            value={extra.url}
+            onChange={(e) => handleExtraChange(index, 'url', e.target.value)}
           />
           <button type="button"  className="btn btn-secondary btn-danger" onClick={() => handleRemoveExtra(index)}>&times;</button>
         </div>
