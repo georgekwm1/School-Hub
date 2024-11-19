@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dot, CircleArrowUp, EllipsisVertical, Trash2, SquarePen } from 'lucide-react';
-import { formatDate } from '../../utils/utilFunctions';
+import { formatDate, replaceTempImageUrls } from '../../utils/utilFunctions';
 import {
   makeRepliesQuestionUpvotesSelector,
   makeRepliesQuestionIsUpvotedSelector,
@@ -13,6 +13,7 @@ import {
 import {
   toggleQuestionVote,
   deleteQuestion,
+  editQuestion,
 } from '../../redux/actions/discussionsThunks';
 import TextEditor from '../TextEditor/TextEditor';
 
@@ -34,13 +35,20 @@ export default function QuestionHeader({ question, isLecture }) {
   const [newValue, setNewValue] = useState(question.get('body'));
   const [newFiles, setNewFiles] = useState([]);
 
-  const hanldeCancelEdit = () => {
+  const resetEditState = () => {
     setEdit(false);
     setNewTitle(question.get('title'));
     setNewValue(question.get('body'));
     setNewFiles([]);
   };
 
+  const handleEditQuestion = async () => {
+    resetEditState();
+    const body = await replaceTempImageUrls(newValue, newFiles, dispatch);
+    dispatch(
+      editQuestion(question.get('id'), newTitle, body)
+    )
+  }
 
   const handleDeleteQuestion = () => {
     if (
@@ -113,8 +121,8 @@ export default function QuestionHeader({ question, isLecture }) {
               bubble
               />
               <p>Select some text to show the toolbar</p>
-            <button type="button" className="btn btn-secondary" onClick={hanldeCancelEdit}>Cancel</button>
-            <button type="button" className="btn btn-primary" onClick={() => setEdit(false)}>Confirm edit</button>
+            <button type="button" className="btn btn-secondary" onClick={resetEditState}>Cancel</button>
+            <button type="button" className="btn btn-primary" onClick={handleEditQuestion}>Confirm edit</button>
             </>
 
           )
