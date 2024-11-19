@@ -245,3 +245,20 @@ export const deleteReplySuccess = (questionId, replyId) => ({
     replyId
   },
 });
+
+export const editQuestionRequest = () => ({
+  type: actions.EDIT_QUESTION_REQUEST,
+});
+
+export const editQuestionFailure = (errorMessage) => ({
+  type: actions.EDIT_QUESTION_FAILURE,
+  payload: {
+    errorMessage,
+  },
+});
+export const editQuestionSuccess = (updatedQuestion) => ({
+  type: actions.EDIT_QUESTION_SUCCESS,
+  payload: {
+    updatedQuestion,
+  },
+});
