@@ -1,5 +1,10 @@
 import React, { useState } from 'react';
-import { CircleArrowUp, EllipsisVertical, Trash2, SquarePen } from 'lucide-react';
+import {
+  CircleArrowUp,
+  EllipsisVertical,
+  Trash2,
+  SquarePen,
+} from 'lucide-react';
 import TextEditor from '../TextEditor/TextEditor';
 import { formatDate, replaceTempImageUrls } from '../../utils/utilFunctions';
 import { useDispatch, useSelector } from 'react-redux';
@@ -14,6 +19,7 @@ import {
 import {
   toggleReplyVote,
   deleteReply,
+  editReply,
 } from '../../redux/actions/discussionsThunks';
 
 export default function ReplyEntry({ content, questionId }) {
@@ -43,8 +49,7 @@ export default function ReplyEntry({ content, questionId }) {
   const handleEditReply = async () => {
     setEdit(true);
     const body = await replaceTempImageUrls(newValue, newFiles, dispatch);
-    // dispatch();
-
+    dispatch(editReply(questionId, content.get('id'), body));
     handleResetEdit();
   };
 
