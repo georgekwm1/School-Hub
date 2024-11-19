@@ -421,7 +421,7 @@ export default function discussionsReducer(state = initialState, action = {}) {
           .updateIn(['replies', questionId, 'repliesList'], (replies) => {
             const index = replies.findIndex(reply => reply.get('id') === replyId);
 
-            return replies.set(index, editedReply)
+            return replies.set(index, fromJS(editedReply))
           })
       });
     }
