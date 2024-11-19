@@ -34,6 +34,13 @@ export default function QuestionHeader({ question, isLecture }) {
   const [newValue, setNewValue] = useState(question.get('body'));
   const [newFiles, setNewFiles] = useState([]);
 
+  const hanldeCancelEdit = () => {
+    setEdit(false);
+    setNewTitle(question.get('title'));
+    setNewValue(question.get('body'));
+    setNewFiles([]);
+  };
+
 
   const handleDeleteQuestion = () => {
     if (
@@ -106,7 +113,7 @@ export default function QuestionHeader({ question, isLecture }) {
               bubble
               />
               <p>Select some text to show the toolbar</p>
-            <button type="button" className="btn btn-secondary" onClick={() => setEdit(false)}>Cancel</button>
+            <button type="button" className="btn btn-secondary" onClick={hanldeCancelEdit}>Cancel</button>
             <button type="button" className="btn btn-primary" onClick={() => setEdit(false)}>Confirm edit</button>
             </>
 
