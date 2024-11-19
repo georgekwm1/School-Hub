@@ -358,6 +358,43 @@ export default function discussionsReducer(state = initialState, action = {}) {
       });
     }
 
+    case actions.EDIT_QUESTION_REQUEST: {
+      return state.set('isLoading', true);
+    }
+
+    case actions.EDIT_QUESTION_FAILURE: {
+      return state.withMutations((state) => {
+        state
+          .set('isLoading', false)
+          .set('discussionsError', action.payload.errorMessage);
+      });
+    }
+
+    case actions.EDIT_QUESTION_SUCCESS: {
+      const { editedQuestion } = action.payload;
+      const questionId = editedQuestion.id;
+
+      return state.withMutations((state) => {
+        return state
+          .set('isLoading', false)
+          .set('discussionsError', null)
+          .setIn(['replies', questionId, 'question'], fromJS(editedQuestion))
+          .update(state => {
+            let path = editedQuestion.lectureId
+              ? ['lecturesDiscussions', editedQuestion.lectureId]
+              : ['courseGeneralDiscussion'];
+            
+            return state.updateIn(path, (questions) => {
+              const index = questions.findIndex(
+                (question) => question.get('id') === questionId
+              );
+
+              return questions.set(index, fromJS(editedQuestion));
+            })
+          })
+      });
+    }
+
     default: {
       return state;
     }
