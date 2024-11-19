@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Dot, CircleArrowUp, EllipsisVertical, Trash2 } from 'lucide-react';
-import { formatDate } from '../../utils/utilFunctions';
+import {
+  Dot,
+  CircleArrowUp,
+  EllipsisVertical,
+  Trash2,
+  SquarePen,
+} from 'lucide-react';
+import { formatDate, replaceTempImageUrls } from '../../utils/utilFunctions';
 import {
   makeRepliesQuestionUpvotesSelector,
   makeRepliesQuestionIsUpvotedSelector,
@@ -13,7 +19,9 @@ import {
 import {
   toggleQuestionVote,
   deleteQuestion,
+  editQuestion,
 } from '../../redux/actions/discussionsThunks';
+import TextEditor from '../TextEditor/TextEditor';
 
 export default function QuestionHeader({ question, isLecture }) {
   const upvoted = useSelector(
@@ -27,6 +35,24 @@ export default function QuestionHeader({ question, isLecture }) {
   const date = formatDate(question.get('updatedAt'));
   const [showOptions, setShowOptions] = useState(false);
   const dispatch = useDispatch();
+
+  const [edit, setEdit] = useState(false);
+  const [newTitle, setNewTitle] = useState(question.get('title'));
+  const [newValue, setNewValue] = useState(question.get('body'));
+  const [newFiles, setNewFiles] = useState([]);
+
+  const resetEditState = () => {
+    setEdit(false);
+    setNewTitle(question.get('title'));
+    setNewValue(question.get('body'));
+    setNewFiles([]);
+  };
+
+  const handleEditQuestion = async () => {
+    resetEditState();
+    const body = await replaceTempImageUrls(newValue, newFiles, dispatch);
+    dispatch(editQuestion(question.get('id'), newTitle, body));
+  };
 
   const handleDeleteQuestion = () => {
     if (
@@ -71,11 +97,47 @@ export default function QuestionHeader({ question, isLecture }) {
         height="50"
       />
       <div className="flex-grow-1">
-        <h5 className="mb-1">{question.get('title')}</h5>
+        {!edit ? (
+          <h5 className="mb-1">{question.get('title')}</h5>
+        ) : (
+          <input
+            type="text"
+            className="form-control"
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+          />
+        )}
         <p className="text-muted mb-1">
           {question.getIn(['user', 'name'])} <Dot /> {date}
         </p>
-        <div dangerouslySetInnerHTML={{ __html: question.get('body') }}></div>
+        {!edit ? (
+          <div dangerouslySetInnerHTML={{ __html: question.get('body') }}></div>
+        ) : (
+          <>
+            <TextEditor
+              value={newValue}
+              setValue={setNewValue}
+              files={newFiles}
+              setFiles={setNewFiles}
+              bubble
+            />
+            <p>Select some text to show the toolbar</p>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={resetEditState}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleEditQuestion}
+            >
+              Confirm edit
+            </button>
+          </>
+        )}
       </div>
       <div className="text-end">
         <button type="button" className="btn btn-light" onClick={toggleUpvote}>
@@ -105,6 +167,21 @@ And what is the best way to do this..
         {showOptions && (
           <div>
             <ul>
+              {userId === question.getIn(['user', 'id']) && (
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEdit(true);
+                      setShowOptions(false);
+                    }}
+                  >
+                    <SquarePen />
+                    Edit question
+                  </button>
+                </li>
+              )}
+
               {(userRole !== 'student' ||
                 userId === question.getIn(['user', 'id'])) && (
                 <li>

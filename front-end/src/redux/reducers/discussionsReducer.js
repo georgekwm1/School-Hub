@@ -292,14 +292,14 @@ export default function discussionsReducer(state = initialState, action = {}) {
         return state
           .set('isLoading', false)
           .set('discussionsError', null)
-          .updateIn(['replies', id, 'question'], (question) =>{
+          .updateIn(['replies', id, 'question'], (question) => {
             return question.merge({
               upvoted: isUpvoted,
               upvotes: isUpvoted
                 ? question.get('upvotes') + 1
-                : question.get('upvotes') - 1
-            })
-          })
+                : question.get('upvotes') - 1,
+            });
+          });
       });
     }
 
@@ -329,7 +329,7 @@ export default function discussionsReducer(state = initialState, action = {}) {
             return state.updateIn([...path], (questions) =>
               questions.filter((question) => question.get('id') !== questionId)
             );
-          })
+          });
       });
     }
 
@@ -354,7 +354,47 @@ export default function discussionsReducer(state = initialState, action = {}) {
           .updateIn(['replies', questionId, 'repliesList'], (replies) =>
             replies.filter((reply) => reply.get('id') !== replyId)
           )
-          .setIn(['replies', questionId, 'question', 'repliesCount'], (count) => count - 1)
+          .setIn(
+            ['replies', questionId, 'question', 'repliesCount'],
+            (count) => count - 1
+          );
+      });
+    }
+
+    case actions.EDIT_QUESTION_REQUEST: {
+      return state.set('isLoading', true);
+    }
+
+    case actions.EDIT_QUESTION_FAILURE: {
+      return state.withMutations((state) => {
+        state
+          .set('isLoading', false)
+          .set('discussionsError', action.payload.errorMessage);
+      });
+    }
+
+    case actions.EDIT_QUESTION_SUCCESS: {
+      const { editedQuestion } = action.payload;
+      const questionId = editedQuestion.id;
+
+      return state.withMutations((state) => {
+        return state
+          .set('isLoading', false)
+          .set('discussionsError', null)
+          .setIn(['replies', questionId, 'question'], fromJS(editedQuestion))
+          .update((state) => {
+            let path = editedQuestion.lectureId
+              ? ['lecturesDiscussions', editedQuestion.lectureId]
+              : ['courseGeneralDiscussion'];
+
+            return state.updateIn(path, (questions) => {
+              const index = questions.findIndex(
+                (question) => question.get('id') === questionId
+              );
+
+              return questions.set(index, fromJS(editedQuestion));
+            });
+          });
       });
     }
 

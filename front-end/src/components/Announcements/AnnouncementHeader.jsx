@@ -26,7 +26,7 @@ export default function AnnouncementHeader({ content }) {
       newFiles,
       dispatch
     );
-    dispatch(editAnnouncement(content.get('id'), newTitle, newValue));
+    dispatch(editAnnouncement(content.get('id'), newTitle, contentWithFileUrls));
   };
 
   const hanldeCancelEdit = () => {
