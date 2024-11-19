@@ -486,3 +486,40 @@ export const editQuestion = (questionId, title, body) => async (dispatch) => {
     );
   }
 };
+
+
+export const editReply = (questionId, replyId, body) => async (dispatch) => {
+  try {
+    const editedReply = await toast.promise(
+      fetch(`${DOMAIN}/replies/${replyId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          body,
+        }),
+      }).then((response) => {
+        const data = response.json();
+        if (!response.ok) {
+          throw new Error(data.message);
+        }
+        return data;
+      }),
+      {
+        loading: 'Editing reply',
+        success: 'Reply edited',
+        error: 'Error editing reply',
+      }
+    );
+
+    dispatch(discussionsActions.editReplySuccess(questionId, editedReply));
+  } catch (error) {
+    console.error(error);
+    dispatch(
+      discussionsActions.editReplyFailure(
+        `Error editing the reply: ${error.message}`
+      )
+    );
+  }
+};

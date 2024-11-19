@@ -260,3 +260,22 @@ export const editQuestionSuccess = (editedQuestion) => ({
     editedQuestion,
   },
 });
+
+export const editReplyRequest = () => ({
+  type: actions.EDIT_REPLY_REQUEST,
+});
+
+export const editReplyFailure = (errorMessage) => ({
+  type: actions.EDIT_REPLY_FAILURE,
+  payload: {
+    errorMessage,
+  },
+});
+
+export const editReplySuccess = (questionId, editedReply) => ({
+  type: actions.EDIT_REPLY_SUCCESS,
+  payload: {
+    questionId,
+    editedReply,
+  },
+});
