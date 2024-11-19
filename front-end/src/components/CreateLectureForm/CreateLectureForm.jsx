@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { uploadFile } from '../../utils/utilFunctions';
 import { createLecture } from '../../redux/actions/lecturesThunks';
 import {useNavigate} from 'react-router-dom';
+import { DOMAIN } from '../../utils/constants';
 
 
 const CreateNewLecture = () => {
@@ -26,12 +27,36 @@ const CreateNewLecture = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   useEffect(() => {
-    setSections([
-      'Section 1',
-      'Section 2',
-      'Section 3',
-    ]);
-  }, []);
+    /**
+     * Givin that The syncing logic is not there yet, and I'm not sure
+     * Which method exactly will be there
+     * And that This might be one time use
+     * + The lectures might not be yet fetched.. incase user for example
+     * got here via direct link.. or whatever reason
+     * so, using a selector to get sections already in the state and get titles 
+     * from it, or if it' snot there there fetching the whole lectures and then get the
+     * titles from teh selector again...  
+     * which might not be needed to fetch the lectures again. or it's not gonna be used
+     * or might be just an extra load..
+     * 
+     * also that the syncing and offline logic is still vague in my mind
+     * 
+     * also, I don't think it's a good idea.. to just store the titles in the store.
+     * I don't see any use for it elseware
+     * 
+     * 
+     * So, With all this being said... I'm not sure what is the best way to do this
+     * but, I'm just goign to fetch teh titles from the api and keep them in local state here
+     */
+    fetch(`${DOMAIN}/sections_titles`)
+    .then(res => res.json())
+    .then(data => setSections(data))
+    .catch(err =>{
+      console.error(err);
+      toast.error(`Error getting sections: ${err.message}`);
+    })
+  }, [dispatch]);
+
 
   const createNewSection = () => {
     if (newSection) {
