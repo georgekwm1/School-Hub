@@ -120,3 +120,17 @@ export const editAnnouncementSuccess = (editedAnnouncement) => ({
   type: actions.EDIT_ANNOUNCEMENT_SUCCESS,
   payload: { editedAnnouncement },
 });
+
+export const editCommentRequest = () => ({
+  type: actions.EDIT_COMMENT_REQUEST,
+});
+
+export const editCommentFailure = (errorMessage) => ({
+  type: actions.EDIT_COMMENT_FAILURE,
+  payload: { errorMessage },
+});
+
+export const editCommentSuccess = (editedComment) => ({
+  type: actions.EDIT_COMMENT_SUCCESS,
+  payload: { editedComment },
+});

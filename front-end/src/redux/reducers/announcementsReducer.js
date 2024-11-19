@@ -199,6 +199,36 @@ export default function announcementsReducer(
         });
     }
 
+    case actions.EDIT_COMMENT_REQUEST:
+      return state.merge({
+        isLoading: true,
+      });
+
+    case actions.EDIT_COMMENT_FAILURE: {
+      const { errorMessage } = action.payload;
+      return state.merge({
+        isLoading: false,
+        announcementsError: errorMessage,
+      });
+    }
+
+    case actions.EDIT_COMMENT_SUCCESS: {
+      const { editedComment } = action.payload;
+      const announcementId = editedComment.announcementId;
+      const commentId = editedComment.id;
+
+      return state
+        .updateIn(['comments', announcementId], (comments) =>
+          comments.map((comment) =>
+            comment.get('id') === commentId ? fromJS(editedComment) : comment
+          )
+        )
+        .merge({
+          isLoading: false,
+          announcementsError: null,
+        });
+    }
+
     default:
       return state;
   }
