@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import toast from 'react-hot-toast';
-import { CircleArrowUp, EllipsisVertical, Trash2 } from 'lucide-react';
-import { formatDate } from '../../utils/utilFunctions';
+import { CircleArrowUp, EllipsisVertical, Trash2, SquarePen } from 'lucide-react';
+import TextEditor from '../TextEditor/TextEditor';
+import { formatDate, replaceTempImageUrls } from '../../utils/utilFunctions';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   makeReplyIsUpvotedSelector,
@@ -21,6 +21,7 @@ export default function ReplyEntry({ content, questionId }) {
   const userId = useSelector(selectUserId);
   const [showOptions, setShowOptions] = useState(false);
   const dispatch = useDispatch();
+  const date = formatDate(content.get('updatedAt'));
 
   const upvotes = useSelector(
     makeReplyUpvotesSelector(questionId, content.get('id'))
@@ -28,7 +29,25 @@ export default function ReplyEntry({ content, questionId }) {
   const upvoted = useSelector(
     makeReplyIsUpvotedSelector(questionId, content.get('id'))
   );
-  const date = formatDate(content.get('updatedAt'));
+
+  const [edit, setEdit] = useState(false);
+  const [newValue, setNewValue] = useState(content.get('body'));
+  const [newFiles, setNewFiles] = useState([]);
+
+  const handleResetEdit = () => {
+    setEdit(false);
+    setNewValue(content.get('body'));
+    setNewFiles([]);
+  };
+
+  const handleEditReply = async () => {
+    setEdit(true);
+    const body = await replaceTempImageUrls(newValue, newFiles, dispatch);
+    // dispatch();
+
+    handleResetEdit();
+  };
+
   const handleDeleteReply = () => {
     if (
       window.confirm(`Are you sure you are deleting reply ${content.get('id')}`)
@@ -60,7 +79,37 @@ export default function ReplyEntry({ content, questionId }) {
         <p className="text-muted">
           {content ? formatDate(content.get('updatedAt')) : ''}
         </p>
-        <div dangerouslySetInnerHTML={{ __html: content?.get('body') || '' }} />
+        {edit ? (
+          <>
+            <TextEditor
+              value={newValue}
+              setValue={setNewValue}
+              files={newFiles}
+              setFiles={setNewFiles}
+              bubble
+            />
+            <p>Select some text to show the toolbar</p>
+
+            <button
+              type="button"
+              onClick={handleResetEdit}
+              className="btn btn-sm btn-outline-secondary"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleEditReply}
+              className="btn btn-sm btn-outline-primary"
+            >
+              Confirm Edit
+            </button>
+          </>
+        ) : (
+          <div
+            dangerouslySetInnerHTML={{ __html: content?.get('body') || '' }}
+          />
+        )}
       </div>
       {/* <div>
         <p>{content.getIn(['user', 'name'])}</p>
@@ -94,6 +143,20 @@ export default function ReplyEntry({ content, questionId }) {
         {showOptions && (
           <div>
             <ul>
+              {userId === content.getIn(['user', 'id']) && (
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEdit(!edit);
+                      setShowOptions(false);
+                    }}
+                  >
+                    <SquarePen />
+                    Edit Reply
+                  </button>
+                </li>
+              )}
               {(userRole !== 'student' ||
                 userId === content.getIn(['user', 'id'])) && (
                 <li>
