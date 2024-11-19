@@ -193,7 +193,7 @@ export const editAnnouncement =
   };
 
 export const editComment =
-  (commentId, comment) => async (dispatch) => {
+  (commentId, body) => async (dispatch) => {
     try {
       const data = await toast.promise(
         fetch(`${DOMAIN}/comments/${commentId}`, {
@@ -201,7 +201,7 @@ export const editComment =
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ comment }),
+          body: JSON.stringify({ body }),
         }).then((response) => {
           const data = response.json();
           if (!response.ok) {
