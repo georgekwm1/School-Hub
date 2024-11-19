@@ -5,21 +5,21 @@ import { uploadFile } from '../../utils/utilFunctions';
 import { DOMAIN } from '../../utils/constants';
 
 
-export default function LectureForm({ onSubmit }) {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [tags, setTags] = useState('');
-  const [sections, setSections] = useState([]);
-  const [section, setSection] = useState('');
+export default function LectureForm({ onSubmit, lectureData = {} }) {
+  const [name, setName] = useState(lectureData.name || '');
+  const [description, setDescription] = useState(lectureData.description || '');
+  const [tags, setTags] = useState(lectureData.tags ? lectureData.tags.join(', ') : '');
+  const [sections, setSections] = useState(lectureData.sections || []);
+  const [section, setSection] = useState(lectureData.section || '');
   const [newSection, setNewSection] = useState('');
-  const [youtubeLink, setYoutubeLink] = useState('');
+  const [youtubeLink, setYoutubeLink] = useState(lectureData.videoLink || '');
   const [notesOption, setNotesOption] = useState('link');
-  const [notesLink, setNotesLink] = useState('');
+  const [notesLink, setNotesLink] = useState(lectureData.notesLink || '');
   const [notesFile, setNotesFile] = useState(null);
-  const [slidesLink, setSlidesLink] = useState('');
+  const [slidesLink, setSlidesLink] = useState(lectureData.slidesLink || '');
   const [slidesFile, setSlidesFile] = useState(null);
-  const [demos, setDemos] = useState([{ title: '', url: '' }]);
-  const [extras, setExtras] = useState([{ title: '', url: '' }]);
+  const [demos, setDemos] = useState(lectureData.demos || [{ title: '', url: '' }]);
+  const [extras, setExtras] = useState(lectureData.shorts || [{ title: '', url: '' }]);
   const [slidesOption, setSlidesOption] = useState('link');
 
   const dispatch = useDispatch();
