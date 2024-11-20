@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import LectureForm from '../LectureForm/LectureForm';
 import Loading from '../utilityComponents/Loading';
 import { selectCourseId } from '../../redux/selectors/uiSelectors';
-import { selectLecturesIsLoading } from '../../redux/actions/lecturesSelectors';
+import { selectLecturesIsLoading } from '../../redux/selectors/lecturesSelectors';
+import { setLectureLoading } from '../../redux/actions/lecturesActionCreators';
 import { DOMAIN } from '../../utils/constants';
 
 export default function EditLectureForm() {
@@ -23,10 +25,16 @@ export default function EditLectureForm() {
 
 	useEffect(() => {
 		dispatch(setLectureLoading(true));
-		fetch(`${DOMAIN}/lectures/${lectureId}`)
-			.then((response) => response.json())
+		fetch(`${DOMAIN}/courses/${courseId}/lectures/${lectureId}`)
+			.then((response) => {
+				const data = response.json()
+				if (!response.ok) {
+					throw new Error(data.message);
+				} 
+				return data;
+			})
 			.then((data) => {
-				setLectureData(data);
+				setLectureData(data.lectureData);
 			})
 			.catch((e) => {
 				console.error(e);
