@@ -11,6 +11,7 @@ const {
   question,
   mockDiscussion,
 
+
   mockSections,
   repliesList,
 } = require('./mockData');
@@ -460,6 +461,7 @@ app.post('/courses/:id/announcements', (req, res) => {
     courseId,
     user: {
       id: 'testId',
+      id: 'testId',
       name: 'John Doe',
       pictureThumbnail: `https://picsum.photos/200/${Math.floor(Math.random() * 100) + 300}`,
     },
@@ -501,6 +503,9 @@ app.post('/replies/:id/vote', (req, res) => {
 app.get('/announcements/:id/comments', (req, res) => {
   const announcementId = req.params.id;
   const ids = mockAnnouncements.map((announcement) => announcement.id);
+  // This is stupid.. I dont' know what I was thingking when i was creating this
+  // at first.. may be i wanted to test erro rmesages or
+  ids.push(announcementId);
   // This is stupid.. I dont' know what I was thingking when i was creating this
   // at first.. may be i wanted to test erro rmesages or
   ids.push(announcementId);

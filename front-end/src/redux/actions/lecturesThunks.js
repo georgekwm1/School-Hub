@@ -1,7 +1,6 @@
 import toast from 'react-hot-toast';
 import * as actionCreators from './lecturesActionCreators';
-
-import { DOMAIN } from '../../utils/constants';
+import {DOMAIN} from '../../utils/constants'
 
 export const getLectureById = (lectureId) => async (dispatch) => {
   dispatch(actionCreators.lectureRequest());
@@ -69,6 +68,7 @@ export const createLecture = (lectureData, navigate) => async (dispatch) => {
     navigate('/lectures');
   } catch (error) {
     console.error(error.message);
+    dispatch(actionCreators.createLectureFailure(error.message));
     dispatch(actionCreators.createLectureFailure(error.message));
   }
 };

@@ -109,6 +109,7 @@ def delete(request):
             user_id=request.session.get('user_id')).first()
         if user:
             user.delete()
+            request.session.flush()
             return render(request, 'authentication/login.html',
                           {'Info': f'The account of {user.first_name} {user.last_name} is deleted'})
     return redirect('login')

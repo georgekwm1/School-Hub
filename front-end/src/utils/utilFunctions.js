@@ -1,7 +1,6 @@
 import ImageKit from 'imagekit-javascript';
 import { setError } from '../redux/actions/uiActionCreators';
-
-import { DOMAIN } from './constants';
+import {DOMAIN} from './constants'
 
 export const imagekit = new ImageKit({
   publicKey: 'public_tTc9vCi5O7L8WVAQquK6vQWNx08=',

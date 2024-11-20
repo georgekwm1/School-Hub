@@ -55,6 +55,7 @@ export default function RegisterStepTwo({
   async function uploadImage(file) {
     let id = '';
     let url = '';
+    let thumbnail = '';
     try {
       dispatch(toggleLoading());
       const response = await fetch("http://localhost:3000/auth/imagekit");
@@ -67,6 +68,7 @@ export default function RegisterStepTwo({
       });
       id = uploadResponse.fileId;
       url = uploadResponse.url; 
+      thumbnail = uploadResponse.thumbnailUrl;
     } catch (error) {
       console.error("Error uploading image:", error);
     }

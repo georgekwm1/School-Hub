@@ -25,13 +25,13 @@ Just like in register
 **Request**: /auth/register
 - courseId
 - email
-- username
+<!-- - username -->
 - password
 - firstName
 - lastName
-- pictureId
+- pictureId =====================
 - pictureURL
-- pictureThumbnail
+- pictureThumbnail 
 
 reponse.. Just as if he was logging in
 
