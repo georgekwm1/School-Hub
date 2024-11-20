@@ -22,6 +22,7 @@ import Register from './components/Register/Register';
 import FakeHome from './components/FakeHome/FakeHome';
 import Sidebar from './components/Sidebar/sidebar';
 import CreateNewLecture from './components/CreateLectureForm/CreateLectureForm';
+import EditLectureForm from './components/EditLectureForm/EditLectureForm';
 
 
 function ProtectedLayout() {
@@ -57,6 +58,7 @@ function App() {
             <Route path="/lectures" element={<Lectures />} />
             <Route path="/lectures/:lectureId" element={<Lecture />} />
             <Route path="/lectures/new" element={<CreateNewLecture />} />
+            <Route path="/lectures/:lectureId/edit" element={<EditLectureForm />} />
             <Route path="/announcements" element={<Announcements />} />
             <Route path="/discussion" element={<GeneralDiscussion />} />
             <Route path="questions/:questionId" element={<Replies />} />

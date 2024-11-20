@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { EllipsisVertical, Trash2 } from 'lucide-react';
+import { EllipsisVertical, Trash2, SquarePen } from 'lucide-react';
 import { deleteLecture } from '../../redux/actions/lecturesThunks';
 
 export default function TempStyledLectureEntry({ lecture, sectionId }) {
@@ -44,11 +44,20 @@ export default function TempStyledLectureEntry({ lecture, sectionId }) {
             <EllipsisVertical />
           </button>
           {showOptions && (
-            <div>
-              <button type="button" onClick={handleDeleteLecture}>
-                <Trash2 color="red" /> Delete lecture
-              </button>
-            </div>
+            <ul >
+              <li>
+                <button type="button" >
+                  <Link to={`/lectures/${lecture.id}/edit`}>
+                    <SquarePen /> Edit lecture
+                  </Link>
+                </button>
+              </li>
+              <li>
+                <button type="button" onClick={handleDeleteLecture}>
+                  <Trash2 color="red" /> Delete lecture
+                </button>
+              </li>
+            </ul>
           )}
         </div>
       )}

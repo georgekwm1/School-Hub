@@ -4,22 +4,27 @@ import toast from 'react-hot-toast';
 import { uploadFile } from '../../utils/utilFunctions';
 import { DOMAIN } from '../../utils/constants';
 
-
-export default function LectureForm({ onSubmit }) {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [tags, setTags] = useState('');
+export default function LectureForm({ onSubmit, lectureData = {} }) {
+  const [name, setName] = useState(lectureData.title || '');
+  const [description, setDescription] = useState(lectureData.description || '');
+  const [tags, setTags] = useState(
+    lectureData.tags ? lectureData.tags.join(', ') : ''
+  );
   const [sections, setSections] = useState([]);
-  const [section, setSection] = useState('');
+  const [section, setSection] = useState(lectureData.section || '');
   const [newSection, setNewSection] = useState('');
-  const [youtubeLink, setYoutubeLink] = useState('');
+  const [youtubeLink, setYoutubeLink] = useState(lectureData.videoLink || '');
   const [notesOption, setNotesOption] = useState('link');
-  const [notesLink, setNotesLink] = useState('');
+  const [notesLink, setNotesLink] = useState(lectureData.notes || '');
   const [notesFile, setNotesFile] = useState(null);
-  const [slidesLink, setSlidesLink] = useState('');
+  const [slidesLink, setSlidesLink] = useState(lectureData.slides || '');
   const [slidesFile, setSlidesFile] = useState(null);
-  const [demos, setDemos] = useState([{ name: '', link: '' }]);
-  const [extras, setExtras] = useState([{ name: '', link: '' }]);
+  const [demos, setDemos] = useState(
+    lectureData.demos || [{ title: '', url: '' }]
+  );
+  const [extras, setExtras] = useState(
+    lectureData.shorts || [{ title: '', url: '' }]
+  );
   const [slidesOption, setSlidesOption] = useState('link');
 
   const dispatch = useDispatch();
@@ -30,71 +35,70 @@ export default function LectureForm({ onSubmit }) {
      * And that This might be one time use
      * + The lectures might not be yet fetched.. incase user for example
      * got here via direct link.. or whatever reason
-     * so, using a selector to get sections already in the state and get titles 
+     * so, using a selector to get sections already in the state and get titles
      * from it, or if it' snot there there fetching the whole lectures and then get the
-     * titles from teh selector again...  
+     * titles from teh selector again...
      * which might not be needed to fetch the lectures again. or it's not gonna be used
      * or might be just an extra load..
-     * 
+     *
      * also that the syncing and offline logic is still vague in my mind
-     * 
+     *
      * also, I don't think it's a good idea.. to just store the titles in the store.
      * I don't see any use for it elseware
-     * 
-     * 
+     *
+     *
      * So, With all this being said... I'm not sure what is the best way to do this
      * but, I'm just goign to fetch teh titles from the api and keep them in local state here
      */
-		// BUG: this should be course/id/sections_titles
+    // BUG: this should be course/id/sections_titles
     fetch(`${DOMAIN}/sections_titles`)
-    .then(res => res.json())
-    .then(data => setSections(data))
-    .catch(err =>{
-      console.error(err);
-      toast.error(`Error getting sections: ${err.message}`);
-    })
+      .then((res) => res.json())
+      .then((data) => setSections(data))
+      .catch((err) => {
+        console.error(err);
+        toast.error(`Error getting sections: ${err.message}`);
+      });
   }, [dispatch]);
-
 
   const createNewSection = () => {
     if (newSection) {
-      const existingNewSection = sections.find(sec => sec === newSection);
+      const existingNewSection = sections.find((sec) => sec === newSection);
       if (!existingNewSection) {
         setSections([...sections, newSection]);
       }
 
       setNewSection('');
     }
-  }
+  };
 
   const handleRemoveDemo = (index) => {
     if (demos.length <= 1) {
-      setDemos([{ name: '', link: '' }]);
+      setDemos([{ title: '', url: '' }]);
     } else {
       const updatedDemos = demos.filter((_, i) => i !== index);
       setDemos(updatedDemos);
     }
-  }
+  };
 
-  const handleAddDemo = () => setDemos([...demos, { name: '', link: '' }]);
-  
+  const handleAddDemo = () => setDemos([...demos, { title: '', url: '' }]);
+
   const handleDemoChange = (index, field, value) => {
     const updatedDemos = demos.map((demo, i) =>
       i === index ? { ...demo, [field]: value } : demo
-  );
-  setDemos(updatedDemos);
-};
+    );
+    setDemos(updatedDemos);
+  };
 
-const handleRemoveExtra = (index) => {
-  if (extras.length <= 1) {
-    setExtras([{ name: '', link: '' }]);
-  } else {
-    const filteredExtras = extras.filter((_, i) => i !== index);
-    setExtras(filteredExtras);
-  }
-}
+  const handleRemoveExtra = (index) => {
+    if (extras.length <= 1) {
+      setExtras([{ title: '', url: '' }]);
+    } else {
+      const filteredExtras = extras.filter((_, i) => i !== index);
+      setExtras(filteredExtras);
+    }
+  };
 
-const handleAddExtra = () => setExtras([...extras, { name: '', link: '' }]);
+  const handleAddExtra = () => setExtras([...extras, { title: '', url: '' }]);
   const handleExtraChange = (index, field, value) => {
     const updatedExtras = extras.map((extra, i) =>
       i === index ? { ...extra, [field]: value } : extra
@@ -103,24 +107,22 @@ const handleAddExtra = () => setExtras([...extras, { name: '', link: '' }]);
   };
 
   const handleMissingDemosNames = () => {
-    return demos.map(demo => {
-      if (!demo.name) {
+    return demos.map((demo) => {
+      if (!demo.title) {
         return {
           ...demo,
-          name: demo.link
+          title: demo.url,
         };
       }
       return demo;
-    })
-  }
+    });
+  };
 
-  const handleMissingExtrasNames= () => {
-    return extras.map(extra => {
-      return extra.name 
-      ? extra
-      : {...extra, name: extra.link}
-    })
-  }
+  const handleMissingExtrasNames = () => {
+    return extras.map((extra) => {
+      return extra.name ? extra : { ...extra, name: extra.url };
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -162,19 +164,19 @@ const handleAddExtra = () => setExtras([...extras, { name: '', link: '' }]);
       extras: handleMissingExtrasNames(),
     };
 
-		onSubmit(lectureData);
+    onSubmit(lectureData);
   };
 
   return (
     <form onSubmit={handleSubmit}>
       <label htmlFor="name">Lecture Name</label>
       <input
-        className='form-control'
-        id='name'
-        name='name'
+        className="form-control"
+        id="name"
+        name="name"
         type="text"
         value={name}
-        placeholder='Lecture Name'
+        placeholder="Lecture Name"
         onChange={(e) => setName(e.target.value)}
         required
       />
@@ -182,10 +184,9 @@ const handleAddExtra = () => setExtras([...extras, { name: '', link: '' }]);
 
       <label htmlFor="description">Description</label>
       <textarea
-        className='form-control'
-
-        id='description'
-        name='description'
+        className="form-control"
+        id="description"
+        name="description"
         value={description}
         placeholder="Brief description of the lecture."
         onChange={(e) => setDescription(e.target.value)}
@@ -195,16 +196,22 @@ const handleAddExtra = () => setExtras([...extras, { name: '', link: '' }]);
 
       <label htmlFor="tags">Tags (comma-separated)</label>
       <input
-        className='form-control'
-
+        className="form-control"
         type="text"
         value={tags}
         placeholder="Lecture related keywords"
         onChange={(e) => setTags(e.target.value)}
       />
       <hr />
-      <div className='input-group'>
-        <select id='section' name='section' value={section} onChange={(e) => setSection(e.target.value)} required className='form-select'>
+      <div className="input-group">
+        <select
+          id="section"
+          name="section"
+          value={section}
+          onChange={(e) => setSection(e.target.value)}
+          required
+          className="form-select"
+        >
           <option value="" disabled>
             Select a section
           </option>
@@ -216,12 +223,16 @@ const handleAddExtra = () => setExtras([...extras, { name: '', link: '' }]);
         </select>
         <input
           type="text"
-          className='form-control'
+          className="form-control"
           placeholder="Or add a new section"
           value={newSection}
           onChange={(e) => setNewSection(e.target.value)}
         />
-        <button onClick={createNewSection} className='btn btn-outline-secondary' type="button">
+        <button
+          onClick={createNewSection}
+          className="btn btn-outline-secondary"
+          type="button"
+        >
           Add
         </button>
       </div>
@@ -229,10 +240,9 @@ const handleAddExtra = () => setExtras([...extras, { name: '', link: '' }]);
 
       <label htmlFor="videoLink">YouTube Link</label>
       <input
-        className='form-control'
-
-        id='videoLink'
-        name='videoLink'
+        className="form-control"
+        id="videoLink"
+        name="videoLink"
         type="url"
         value={youtubeLink}
         placeholder="The youtube video/live link of the lecture"
@@ -261,21 +271,25 @@ const handleAddExtra = () => setExtras([...extras, { name: '', link: '' }]);
           File
         </label>
       </div>
-      
+
       {notesOption === 'link' ? (
         <input
-        className='form-control'
-
-          id='notesLink'
-          name='notesFile'
+          className="form-control"
+          id="notesLink"
+          name="notesFile"
           type="url"
           placeholder="Add a link"
           defaultValue={notesLink}
           onChange={(e) => setNotesLink(e.target.value)}
         />
       ) : (
-        <input         className='form-control'
-         id='notesFile' name='notesFile' type="file" onChange={(e) => setNotesFile(e.target.files[0])} />
+        <input
+          className="form-control"
+          id="notesFile"
+          name="notesFile"
+          type="file"
+          onChange={(e) => setNotesFile(e.target.files[0])}
+        />
       )}
       <hr />
 
@@ -283,7 +297,6 @@ const handleAddExtra = () => setExtras([...extras, { name: '', link: '' }]);
       <div className="form-check d-flex mt-1">
         <label className="form-check-label">
           <input
-
             type="radio"
             checked={slidesOption === 'link'}
             onChange={() => setSlidesOption('link')}
@@ -293,7 +306,6 @@ const handleAddExtra = () => setExtras([...extras, { name: '', link: '' }]);
         </label>
         <label className="form-check-label ms-5">
           <input
-
             type="radio"
             checked={slidesOption === 'file'}
             onChange={() => setSlidesOption('file')}
@@ -304,79 +316,104 @@ const handleAddExtra = () => setExtras([...extras, { name: '', link: '' }]);
       </div>
       {slidesOption === 'link' ? (
         <input
-        className='form-control'
-
-          id='slidesLink'
-          name='slidesLink'
+          className="form-control"
+          id="slidesLink"
+          name="slidesLink"
           type="url"
           placeholder="Add a link"
           defaultValue={slidesLink}
           onChange={(e) => setSlidesLink(e.target.value)}
         />
       ) : (
-        <input          className='form-control'
-        id='slidesFile' name='slidesFile'  type="file" onChange={(e) => setSlidesFile(e.target.files[0])} />
+        <input
+          className="form-control"
+          id="slidesFile"
+          name="slidesFile"
+          type="file"
+          onChange={(e) => setSlidesFile(e.target.files[0])}
+        />
       )}
       <hr />
 
       <label>Demos</label>
       {demos.map((demo, index) => (
         <div key={index}>
-          <div className='d-flex mb-3 justify-content-center' >
-
-          <input
-          className='form-control'
-            type="text"
-            placeholder="Demo name"
-            value={demo.name}
-            onChange={(e) => handleDemoChange(index, 'name', e.target.value)}
-          />
-          <input
-          className='form-control'
-            type="url"
-            placeholder="Demo link"
-            value={demo.link}
-            onChange={(e) => handleDemoChange(index, 'link', e.target.value)}
-          />
-          <button className="btn btn-secondary btn-danger" type="button" onClick={() => handleRemoveDemo(index)}>&times;</button>
-        </div>
+          <div className="d-flex mb-3 justify-content-center">
+            <input
+              className="form-control"
+              type="text"
+              placeholder="Demo name"
+              value={demo.title}
+              onChange={(e) => handleDemoChange(index, 'title', e.target.value)}
+            />
+            <input
+              className="form-control"
+              type="url"
+              placeholder="Demo link"
+              value={demo.url}
+              onChange={(e) => handleDemoChange(index, 'url', e.target.value)}
+            />
+            <button
+              className="btn btn-secondary btn-danger"
+              type="button"
+              onClick={() => handleRemoveDemo(index)}
+            >
+              &times;
+            </button>
+          </div>
         </div>
       ))}
-      <button  className="btn btn-secondary" type="button" onClick={handleAddDemo}>
+      <button
+        className="btn btn-secondary"
+        type="button"
+        onClick={handleAddDemo}
+      >
         Add Demo
       </button>
       <hr />
 
       <label>Shorts/Extras</label>
       {extras.map((extra, index) => (
-        
         <div key={index}>
-          <div className='d-flex mb-3 justify-content-center' >
-          <input
-          className='form-control'
-            type="text"
-            placeholder="Extra name"
-            value={extra.name}
-            onChange={(e) => handleExtraChange(index, 'name', e.target.value)}
-          />
-          <input
-          className='form-control'
-            type="url"
-            placeholder="Extra link"
-            value={extra.link}
-            onChange={(e) => handleExtraChange(index, 'link', e.target.value)}
-          />
-          <button type="button"  className="btn btn-secondary btn-danger" onClick={() => handleRemoveExtra(index)}>&times;</button>
+          <div className="d-flex mb-3 justify-content-center">
+            <input
+              className="form-control"
+              type="text"
+              placeholder="Extra title"
+              value={extra.title}
+              onChange={(e) =>
+                handleExtraChange(index, 'title', e.target.value)
+              }
+            />
+            <input
+              className="form-control"
+              type="url"
+              placeholder="Extra url"
+              value={extra.url}
+              onChange={(e) => handleExtraChange(index, 'url', e.target.value)}
+            />
+            <button
+              type="button"
+              className="btn btn-secondary btn-danger"
+              onClick={() => handleRemoveExtra(index)}
+            >
+              &times;
+            </button>
+          </div>
         </div>
-        </div>
-
       ))}
-      <button type="button" className="btn btn-secondary" onClick={handleAddExtra}>
+      <button
+        type="button"
+        className="btn btn-secondary"
+        onClick={handleAddExtra}
+      >
         Add Extra
       </button>
       <hr />
 
-      <button className="btn btn-success " type="submit">Done</button>
+      <button className="btn btn-success " type="submit">
+        Done
+      </button>
     </form>
   );
-};
+}
