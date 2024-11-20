@@ -145,6 +145,7 @@ export default function lecturesReducer(state = initialState, action = {}) {
         return state
           .set('isLoading', false)
           .set('lectureError', null)
+          .set('lectureEdited', true);
           .setIn(['lectures', editedLecture.id], fromJS(editedLecture))
           // I think it's now very opvious why we need normalizers..
           // I havn't used them for a purpose at the begenning
