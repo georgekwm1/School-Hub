@@ -100,7 +100,7 @@ export const deleteLecture = (sectionId, lectureId) => async (dispatch) => {
 };
 
 
-export const editLecture = (lectureId, lectureData) => async (dispatch) => {
+export const editLecture = (lectureId, lectureData, navigate) => async (dispatch) => {
   dispatch(actionCreators.editLectureRequest());
 
   try {
@@ -117,6 +117,7 @@ export const editLecture = (lectureId, lectureData) => async (dispatch) => {
     }
 
     dispatch(actionCreators.editLectureSuccess(data));
+    navigate('/lectures');
   } catch (error) {
     console.error(error.message);
     dispatch(actionCreators.editLectureFailure(error.message));

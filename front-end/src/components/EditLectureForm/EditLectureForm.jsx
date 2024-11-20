@@ -8,6 +8,7 @@ import { selectCourseId } from '../../redux/selectors/uiSelectors';
 import { selectLecturesIsLoading } from '../../redux/selectors/lecturesSelectors';
 import { setLectureLoading } from '../../redux/actions/lecturesActionCreators';
 import { DOMAIN } from '../../utils/constants';
+import { editLecture } from '../../redux/actions/lecturesThunks';
 
 
 // I really need to sleep now
@@ -53,7 +54,7 @@ export default function EditLectureForm() {
 	}, [dispatch, lectureId])
 
 	const handleSubmit = (lectureData) => {
-		console.log(lectureData);
+		dispatch(editLecture(lectureId, lectureData, navigate));
 	};
 	
 	if (isLoading) {
