@@ -90,3 +90,21 @@ export const deleteLectureSuccess = (sectionId, lectureId) => ({
     lectureId,
   },
 });
+
+export const editLectureRequest = () => ({
+  type: actions.EDIT_LECTURE_REQUEST,
+});
+
+export const editLectureFailure = (errorMessage) => ({
+  type: actions.EDIT_LECTURE_FAILURE,
+  payload: {
+    errorMessage,
+  },
+});
+
+export const editLectureSuccess = (editedLecture) => ({
+  type: actions.EDIT_LECTURE_SUCCESS,
+  payload: {
+    editedLecture,
+  },
+});
