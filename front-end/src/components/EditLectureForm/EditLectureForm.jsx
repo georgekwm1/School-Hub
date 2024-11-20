@@ -5,8 +5,8 @@ import toast from 'react-hot-toast';
 import LectureForm from '../LectureForm/LectureForm';
 import Loading from '../utilityComponents/Loading';
 import { selectCourseId } from '../../redux/selectors/uiSelectors';
-import { selectLecturesIsLoading } from '../../redux/selectors/lecturesSelectors';
-import { setLectureLoading } from '../../redux/actions/lecturesActionCreators';
+import { selectLectureEditedFlag, selectLecturesIsLoading } from '../../redux/selectors/lecturesSelectors';
+import { resetLectureEdited, setLectureLoading } from '../../redux/actions/lecturesActionCreators';
 import { DOMAIN } from '../../utils/constants';
 import { editLecture } from '../../redux/actions/lecturesThunks';
 
@@ -26,6 +26,7 @@ export default function EditLectureForm() {
 	// loading text or screen that shows at teh center of teh screen
 	// and when to use them!
 	const isLoading = useSelector(selectLecturesIsLoading);
+	const editedSuccess = useSelector(selectLectureEditedFlag);
 	const [lectureData, setLectureData] = useState(null);
 	const navigate = useNavigate()
 	const dispatch = useDispatch();
@@ -53,8 +54,15 @@ export default function EditLectureForm() {
 			})
 	}, [dispatch, lectureId])
 
+	useEffect(() => {
+		if (editedSuccess) {
+			navigate('/lectures');
+			dispatch(resetLectureEdited());
+		}
+	}, [editedSuccess])
+
 	const handleSubmit = (lectureData) => {
-		dispatch(editLecture(lectureId, lectureData, navigate));
+		dispatch(editLecture(lectureId, lectureData));
 	};
 	
 	if (isLoading) {
