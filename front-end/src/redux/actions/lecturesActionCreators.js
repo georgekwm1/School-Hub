@@ -36,24 +36,23 @@ export const lectureFailure = (errorMessage) => ({
   },
 });
 
-
 export const sectionsRequest = () => ({
-  type: actions.SECTIONS_REQUEST
-})
+  type: actions.SECTIONS_REQUEST,
+});
 
 export const sectionsSuccess = (sections) => ({
   type: actions.SECTIONS_SUCCESS,
   payload: {
-    sections
-  }
-})
+    sections,
+  },
+});
 
 export const sectionsFailure = (errorMessage) => ({
   type: actions.SECTIONS_FAILURE,
   payload: {
-    errorMessage
-  }
-})
+    errorMessage,
+  },
+});
 
 export const createLectureRequest = () => ({
   type: actions.CREATE_LECTURE_REQUEST,
@@ -90,4 +89,26 @@ export const deleteLectureSuccess = (sectionId, lectureId) => ({
     sectionId,
     lectureId,
   },
+});
+
+export const editLectureRequest = () => ({
+  type: actions.EDIT_LECTURE_REQUEST,
+});
+
+export const editLectureFailure = (errorMessage) => ({
+  type: actions.EDIT_LECTURE_FAILURE,
+  payload: {
+    errorMessage,
+  },
+});
+
+export const editLectureSuccess = (editedLecture) => ({
+  type: actions.EDIT_LECTURE_SUCCESS,
+  payload: {
+    editedLecture,
+  },
+});
+
+export const resetLectureEdited = () => ({
+  type: actions.RESET_LECTURE_EDITED,
 });

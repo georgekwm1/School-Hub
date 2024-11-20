@@ -317,101 +317,106 @@ export const toggleReplyVote =
     }
   };
 
-
 // This part I'm abit concernded about, I dont' know if this is the best
 // and proper way to do tihs. especially that I see abit or repetition..
 // But I'm very late now!
 // Check that part
-export const toggleQuestionVote = (questionId) => async (dispatch, getState) => {
-  const state = getState();
-  const question = state.discussions.getIn(['replies', questionId, 'question']);
-  const isUpvoted = question.get('upvoted');
+export const toggleQuestionVote =
+  (questionId) => async (dispatch, getState) => {
+    const state = getState();
+    const question = state.discussions.getIn([
+      'replies',
+      questionId,
+      'question',
+    ]);
+    const isUpvoted = question.get('upvoted');
 
-  const action = isUpvoted ? 'downvote' : 'upvote';
+    const action = isUpvoted ? 'downvote' : 'upvote';
 
-  try {
-    await toast.promise(
-      fetch(`${DOMAIN}/questions/${questionId}/vote`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ action }),
-      }).then((response) => {
-        if (!response.ok) {
-          const data = response.json();
-          throw new Error(data.message);
+    try {
+      await toast.promise(
+        fetch(`${DOMAIN}/questions/${questionId}/vote`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ action }),
+        }).then((response) => {
+          if (!response.ok) {
+            const data = response.json();
+            throw new Error(data.message);
+          }
+          return response.json();
+        }),
+        {
+          loading: isUpvoted ? 'Downvoting' : 'Upvoting',
+          success: isUpvoted ? 'Downvoted' : 'Upvoted',
+          error: 'Error toggling vote',
         }
-        return response.json();
-      }),
-      {
-        loading: isUpvoted ? 'Downvoting' : 'Upvoting',
-        success: isUpvoted ? 'Downvoted' : 'Upvoted',
-        error: 'Error toggling vote',
-      }
-    );
-
-    dispatch(
-      discussionsActions.toggleQuestionUpvoteSuccess(questionId, !isUpvoted)
-    );
-
-    const lectureId = question.get('lectureId');
-    if (lectureId) {
-      dispatch(
-        discussionsActions.toggleLectureQuestionUpvoteSuccess(
-          questionId,
-          lectureId,
-          !isUpvoted
-        )
       );
-    } else {
+
       dispatch(
-        discussionsActions.toggleGeneralQuestionUpvoteSuccess(
-          questionId,
-          !isUpvoted
+        discussionsActions.toggleQuestionUpvoteSuccess(questionId, !isUpvoted)
+      );
+
+      const lectureId = question.get('lectureId');
+      if (lectureId) {
+        dispatch(
+          discussionsActions.toggleLectureQuestionUpvoteSuccess(
+            questionId,
+            lectureId,
+            !isUpvoted
+          )
+        );
+      } else {
+        dispatch(
+          discussionsActions.toggleGeneralQuestionUpvoteSuccess(
+            questionId,
+            !isUpvoted
+          )
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      dispatch(
+        discussionsActions.toggleQuestionUpvoteFailure(
+          `Error toggling the vote: ${error.message}`
         )
       );
     }
-  } catch (error) {
-    console.error(error);
-    dispatch(
-      discussionsActions.toggleQuestionUpvoteFailure(
-        `Error toggling the vote: ${error.message}`
-      )
-    );
-  }
-}
+  };
 
-export const deleteQuestion = (questionId, lectureId = null) => async (dispatch) => {
-  try {
-    await toast.promise(
-      fetch(`${DOMAIN}/questions/${questionId}`, {
-        method: 'DELETE',
-      }).then((response) => {
-        const data = response.json();
-        if (!response.ok) {
-          throw new Error(data.message);
+export const deleteQuestion =
+  (questionId, lectureId = null) =>
+  async (dispatch) => {
+    try {
+      await toast.promise(
+        fetch(`${DOMAIN}/questions/${questionId}`, {
+          method: 'DELETE',
+        }).then((response) => {
+          const data = response.json();
+          if (!response.ok) {
+            throw new Error(data.message);
+          }
+          return data;
+        }),
+        {
+          loading: 'Deleting question',
+          success: 'Question deleted',
+          error: 'Error deleting question',
         }
-        return data;
-      }),
-      {
-        loading: 'Deleting question',
-        success: 'Question deleted',
-        error: 'Error deleting question',
-      }
-    );
+      );
 
-    dispatch(discussionsActions.deleteQuestionSuccess(questionId, lectureId));
-  } catch (error) {
-    console.error(error);
-    dispatch(
-      discussionsActions.deleteQuestionFailure(
-        `Error deleting the question: ${error.message}`
-      )
-    );
-  }
-};
-
+      dispatch(discussionsActions.deleteQuestionSuccess(questionId, lectureId));
+    } catch (error) {
+      console.error(error);
+      dispatch(
+        discussionsActions.deleteQuestionFailure(
+          `Error deleting the question: ${error.message}`
+        )
+      );
+    }
+  };
 
 export const deleteReply = (questionId, replyId) => async (dispatch) => {
   try {
@@ -438,6 +443,80 @@ export const deleteReply = (questionId, replyId) => async (dispatch) => {
     dispatch(
       discussionsActions.deleteReplyFailure(
         `Error deleting the reply: ${error.message}`
+      )
+    );
+  }
+};
+
+export const editQuestion = (questionId, title, body) => async (dispatch) => {
+  try {
+    const data = await toast.promise(
+      fetch(`${DOMAIN}/questions/${questionId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title,
+          body,
+        }),
+      }).then((response) => {
+        const data = response.json();
+        if (!response.ok) {
+          throw new Error(data.message);
+        }
+        return data;
+      }),
+      {
+        loading: 'Editing question',
+        success: 'Question edited',
+        error: 'Error editing question',
+      }
+    );
+
+    dispatch(discussionsActions.editQuestionSuccess(data));
+  } catch (error) {
+    console.error(error);
+    dispatch(
+      discussionsActions.editQuestionFailure(
+        `Error editing the question: ${error.message}`
+      )
+    );
+  }
+};
+
+
+export const editReply = (questionId, replyId, body) => async (dispatch) => {
+  try {
+    const editedReply = await toast.promise(
+      fetch(`${DOMAIN}/replies/${replyId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          body,
+        }),
+      }).then((response) => {
+        const data = response.json();
+        if (!response.ok) {
+          throw new Error(data.message);
+        }
+        return data;
+      }),
+      {
+        loading: 'Editing reply',
+        success: 'Reply edited',
+        error: 'Error editing reply',
+      }
+    );
+
+    dispatch(discussionsActions.editReplySuccess(questionId, editedReply));
+  } catch (error) {
+    console.error(error);
+    dispatch(
+      discussionsActions.editReplyFailure(
+        `Error editing the reply: ${error.message}`
       )
     );
   }

@@ -168,14 +168,14 @@ export const toggleGeneralQuestionUpvoteSuccess = (id, isUpvoted) => ({
 
 export const toggleReplyUpvoteRequest = () => ({
   type: actions.TOGGLE_REPLY_UPVOTE_FAILURE,
-})
+});
 
-export const toggleReplyUpvoteFailure = (errorMessage)  => ({
+export const toggleReplyUpvoteFailure = (errorMessage) => ({
   type: actions.TOGGLE_REPLY_UPVOTE_FAILURE,
   payload: {
     errorMessage,
   },
-})
+});
 
 export const toggleReplyUpvoteSuccess = (id, questionId, isUpvoted) => ({
   type: actions.TOGGLE_REPLY_UPVOTE_SUCCESS,
@@ -184,7 +184,7 @@ export const toggleReplyUpvoteSuccess = (id, questionId, isUpvoted) => ({
     questionId,
     isUpvoted,
   },
-})
+});
 
 export const toggleQuestionUpvoteRequest = () => ({
   type: actions.TOGGLE_QUESTION_UPVOTE_REQUEST,
@@ -217,14 +217,13 @@ export const deleteQuestionFailure = (errorMessage) => ({
 });
 
 // if the queiston belongs to a lecture
-export const deleteQuestionSuccess = (questionId, lectureId='') => ({
+export const deleteQuestionSuccess = (questionId, lectureId = '') => ({
   type: actions.DELETE_QUESTION_SUCCESS,
   payload: {
     questionId,
     lectureId,
-  }
+  },
 });
-
 
 export const deleteReplyRequest = () => ({
   type: actions.DELETE_REPLY_REQUEST,
@@ -237,11 +236,46 @@ export const deleteReplyFailure = (errorMessage) => ({
   },
 });
 
-
 export const deleteReplySuccess = (questionId, replyId) => ({
   type: actions.DELETE_REPLY_SUCCESS,
   payload: {
     questionId,
-    replyId
+    replyId,
+  },
+});
+
+export const editQuestionRequest = () => ({
+  type: actions.EDIT_QUESTION_REQUEST,
+});
+
+export const editQuestionFailure = (errorMessage) => ({
+  type: actions.EDIT_QUESTION_FAILURE,
+  payload: {
+    errorMessage,
+  },
+});
+export const editQuestionSuccess = (editedQuestion) => ({
+  type: actions.EDIT_QUESTION_SUCCESS,
+  payload: {
+    editedQuestion,
+  },
+});
+
+export const editReplyRequest = () => ({
+  type: actions.EDIT_REPLY_REQUEST,
+});
+
+export const editReplyFailure = (errorMessage) => ({
+  type: actions.EDIT_REPLY_FAILURE,
+  payload: {
+    errorMessage,
+  },
+});
+
+export const editReplySuccess = (questionId, editedReply) => ({
+  type: actions.EDIT_REPLY_SUCCESS,
+  payload: {
+    questionId,
+    editedReply,
   },
 });

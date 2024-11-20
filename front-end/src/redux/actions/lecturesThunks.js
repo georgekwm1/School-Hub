@@ -97,3 +97,26 @@ export const deleteLecture = (sectionId, lectureId) => async (dispatch) => {
     dispatch(actionCreators.deleteLectureFailure(error.message));
   }
 };
+
+export const editLecture = (lectureId, lectureData) => async (dispatch) => {
+  dispatch(actionCreators.editLectureRequest());
+
+  try {
+    const response = await fetch(`${DOMAIN}/lectures/${lectureId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(lectureData),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message);
+    }
+
+    dispatch(actionCreators.editLectureSuccess(data));
+  } catch (error) {
+    console.error(error.message);
+    dispatch(actionCreators.editLectureFailure(error.message));
+  }
+};

@@ -73,7 +73,7 @@ export async function replaceTempImageUrls(content, files, dispatch) {
   return newContent;
 }
 
-export async function uploadFile(file, dispatch, name='') {
+export async function uploadFile(file, dispatch, name = '') {
   try {
     const authParamsResponse = await fetch(`${DOMAIN}/auth/imagekit`);
     const authParams = await authParamsResponse.json();
@@ -81,7 +81,7 @@ export async function uploadFile(file, dispatch, name='') {
       file,
       fileName: name ? name : `UploadedFile_${Date.now()}`,
       ...authParams,
-    })
+    });
     return uploadResponse.url;
   } catch (error) {
     dispatch(setError('upload', `Error uploading file: ${error.message}`));

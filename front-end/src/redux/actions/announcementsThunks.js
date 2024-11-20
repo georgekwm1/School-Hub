@@ -128,7 +128,9 @@ export const deleteAnnouncementComment =
           error: 'Failed to delete the comment',
         }
       );
-      dispatch(creators.deleteAnnouncementCommentSuccess(announcementId, commentId));
+      dispatch(
+        creators.deleteAnnouncementCommentSuccess(announcementId, commentId)
+      );
     } catch (error) {
       console.error(error.message);
       dispatch(creators.deleteAnnouncementCommentFailure(error.message));
@@ -138,15 +140,14 @@ export const deleteAnnouncementComment =
 export const deleteAnnouncementEntry = (announcementId) => async (dispatch) => {
   try {
     await toast.promise(
-      fetch(`${DOMAIN}/announcements/${announcementId}`,{
+      fetch(`${DOMAIN}/announcements/${announcementId}`, {
         method: 'DELETE',
-      })
-      .then(response => {
+      }).then((response) => {
         const data = response.json();
         if (!response.ok) {
           throw new Error(data.message);
         }
-        
+
         return data;
       }),
       {
@@ -154,11 +155,73 @@ export const deleteAnnouncementEntry = (announcementId) => async (dispatch) => {
         success: 'Announcement deleted successfully',
         error: 'Failed to delete the announcement',
       }
-    )
+    );
 
     dispatch(creators.deleteAnnouncementSuccess(announcementId));
   } catch (error) {
     console.error(error);
-    dispatch(creators.deleteAnnouncementFailure(error.message))
+    dispatch(creators.deleteAnnouncementFailure(error.message));
   }
-}
+};
+
+export const editAnnouncement =
+  (announcementId, title, details) => async (dispatch) => {
+    try {
+      const data = await toast.promise(
+        fetch(`${DOMAIN}/announcements/${announcementId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ title, details }),
+        }).then((response) => {
+          const data = response.json();
+          if (!response.ok) {
+            throw new Error(data.message);
+          }
+          return data;
+        }),
+        {
+          loading: 'Updating announcement...',
+          success: 'Announcement updated successfully',
+          error: 'Failed to update the announcement',
+        }
+      );
+      dispatch(creators.editAnnouncementSuccess(data));
+    } catch (error) {
+      console.error(error.message);
+      dispatch(creators.editAnnouncementFailure(error.message));
+    }
+  };
+
+export const editComment =
+  (commentId, body) => async (dispatch) => {
+    try {
+      const data = await toast.promise(
+        fetch(`${DOMAIN}/comments/${commentId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ body }),
+        }).then((response) => {
+          const data = response.json();
+          if (!response.ok) {
+            throw new Error(data.message);
+          }
+          return data;
+        }),
+        {
+          loading: 'Updating comment...',
+          success: 'Comment updated successfully',
+          error: 'Failed to update the comment',
+        }
+      );
+      dispatch(creators.editCommentSuccess(data));
+    } catch (error) {
+      console.error(error.message);
+      dispatch(
+        creators.editCommentFailure(error.message)
+      );
+    }
+  };
