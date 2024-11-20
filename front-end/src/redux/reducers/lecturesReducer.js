@@ -11,6 +11,7 @@ import * as actions from '../actions/lecturesActionTypes';
 export const initialState = fromJS({
   isLoading: false,
   lectureError: null,
+  lectureEdited: true,
   lectures: {},
   sections: [],
 });
