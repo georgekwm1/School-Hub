@@ -69,7 +69,6 @@ export const createLecture = (lectureData, navigate) => async (dispatch) => {
   } catch (error) {
     console.error(error.message);
     dispatch(actionCreators.createLectureFailure(error.message));
-    dispatch(actionCreators.createLectureFailure(error.message));
   }
 };
 
