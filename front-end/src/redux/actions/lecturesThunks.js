@@ -99,7 +99,6 @@ export const deleteLecture = (sectionId, lectureId) => async (dispatch) => {
   }
 };
 
-
 export const editLecture = (lectureId, lectureData) => async (dispatch) => {
   dispatch(actionCreators.editLectureRequest());
 

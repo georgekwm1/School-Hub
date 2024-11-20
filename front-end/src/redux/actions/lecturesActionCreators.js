@@ -109,7 +109,6 @@ export const editLectureSuccess = (editedLecture) => ({
   },
 });
 
-
 export const resetLectureEdited = () => ({
   type: actions.RESET_LECTURE_EDITED,
-})
+});
