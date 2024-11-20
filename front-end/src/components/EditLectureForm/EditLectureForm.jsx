@@ -9,6 +9,12 @@ import { selectLecturesIsLoading } from '../../redux/selectors/lecturesSelectors
 import { setLectureLoading } from '../../redux/actions/lecturesActionCreators';
 import { DOMAIN } from '../../utils/constants';
 
+
+// I really need to sleep now
+// I need to sleep
+// and I need to finish this.
+// and I don't like how this component is made here.
+// I think there is something wronge or off the standarts
 export default function EditLectureForm() {
 	const { lectureId } = useParams();
 	const courseId = useSelector(selectCourseId) || 'testId';
@@ -19,7 +25,7 @@ export default function EditLectureForm() {
 	// loading text or screen that shows at teh center of teh screen
 	// and when to use them!
 	const isLoading = useSelector(selectLecturesIsLoading);
-	const [lectureData, setLectureData] = useState({});
+	const [lectureData, setLectureData] = useState(null);
 	const navigate = useNavigate()
 	const dispatch = useDispatch();
 
@@ -39,6 +45,7 @@ export default function EditLectureForm() {
 			.catch((e) => {
 				console.error(e);
 				toast.error('Failed to fetch lecture ' + lectureId);
+				navigate('/404')
 			})
 			.finally(() => {
 				dispatch(setLectureLoading(false));
@@ -48,15 +55,14 @@ export default function EditLectureForm() {
 	const handleSubmit = (lectureData) => {
 		console.log(lectureData);
 	};
-
+	
 	if (isLoading) {
 		return <Loading />
-	} else if (!lectureData) {
-		navigate('/lectures')
-	}
+	} 
 
   return (
-    <div className="container mt-5 p-4 ">
+    <div className="container mt-5 p-4 ">					
+			<>
 			<button className='btn btn-secondary mb-3' onClick={() => navigate('/lectures')}>
         Back
       </button>
@@ -68,7 +74,13 @@ export default function EditLectureForm() {
         place
       </p>
 
-      <LectureForm onSubmit={handleSubmit} lectureData={lectureData} />
+				{
+					lectureData !== null &&
+						<LectureForm onSubmit={handleSubmit} lectureData={lectureData} />
+					
+				}
+			</>
+
     </div>
   );
 }
