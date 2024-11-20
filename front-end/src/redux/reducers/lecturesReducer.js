@@ -169,6 +169,10 @@ export default function lecturesReducer(state = initialState, action = {}) {
       });
     }
 
+    case actions.RESET_LECTURE_EDITED: {
+      return state.set('lectureEdited', false);
+    }
+
     default: {
       return state;
     }
