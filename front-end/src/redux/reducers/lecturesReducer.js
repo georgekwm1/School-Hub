@@ -151,8 +151,11 @@ export default function lecturesReducer(state = initialState, action = {}) {
           // Let me add extra lay er of complexity or simplicity in thi scase
           // before next upgrade
           .update('sections', sections => {
-            const index = sections.findIndex((section) => section.title === editedLecture.section);
-            
+            // Incase user is dispatching this while he hasn't accesed
+            // the lectures component before.. so sections will be empty
+            if (!sections?.size) return sections;
+
+            const index = sections?.findIndex((section) => section.title === editedLecture.section);
             return sections.updateIn([index, 'lectures'], lectures => {
               const index = lectures.findIndex((lecture) => lecture.id === editedLecture.id);
               if (index === -1) {
