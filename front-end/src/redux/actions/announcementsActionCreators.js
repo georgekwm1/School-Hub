@@ -59,3 +59,78 @@ export const incrementCommentsCount = (announcementId) => ({
   type: actions.INCREMENT_COMMENTS_COUNT,
   payload: { announcementId },
 });
+
+export const addAnnouncementRequest = () => ({
+  type: actions.ADD_ANNOUNCEMENT_REQUEST,
+});
+
+export const addAnnouncementFailure = (errorMessage) => ({
+  type: actions.ADD_ANNOUNCEMENT_FAILURE,
+  payload: { errorMessage },
+});
+
+export const addAnnouncementSuccess = (newAnnouncement) => ({
+  type: actions.ADD_ANNOUNCEMENT_SUCCESS,
+  payload: { newAnnouncement },
+});
+
+export const deleteAnnouncementCommentRequest = () => ({
+  type: actions.DELETE_ANNOUNCEMENT_COMMENT_REQUEST,
+});
+
+export const deleteAnnouncementCommentFailure = (errorMessage) => ({
+  type: actions.DELETE_ANNOUNCEMENT_COMMENT_FAILURE,
+  payload: { errorMessage },
+});
+
+export const deleteAnnouncementCommentSuccess = (
+  announcementId,
+  commentId
+) => ({
+  type: actions.DELETE_ANNOUNCEMENT_COMMENT_SUCCESS,
+  payload: { announcementId, commentId },
+});
+
+export const deleteAnnouncementRequest = (announcementId) => ({
+  type: actions.DELETE_ANNOUNCEMENT_REQUEST,
+  payload: { announcementId },
+});
+
+export const deleteAnnouncementFailure = (errorMessage) => ({
+  type: actions.DELETE_ANNOUNCEMENT_FAILURE,
+  payload: { errorMessage },
+});
+
+export const deleteAnnouncementSuccess = (announcementId) => ({
+  type: actions.DELETE_ANNOUNCEMENT_SUCCESS,
+  payload: { announcementId },
+});
+
+export const editAnnouncementRequest = (announcementId, updatedInfo) => ({
+  type: actions.EDIT_ANNOUNCEMENT_REQUEST,
+  payload: { announcementId, updatedInfo },
+});
+
+export const editAnnouncementFailure = (errorMessage) => ({
+  type: actions.EDIT_ANNOUNCEMENT_FAILURE,
+  payload: { errorMessage },
+});
+
+export const editAnnouncementSuccess = (editedAnnouncement) => ({
+  type: actions.EDIT_ANNOUNCEMENT_SUCCESS,
+  payload: { editedAnnouncement },
+});
+
+export const editCommentRequest = () => ({
+  type: actions.EDIT_COMMENT_REQUEST,
+});
+
+export const editCommentFailure = (errorMessage) => ({
+  type: actions.EDIT_COMMENT_FAILURE,
+  payload: { errorMessage },
+});
+
+export const editCommentSuccess = (editedComment) => ({
+  type: actions.EDIT_COMMENT_SUCCESS,
+  payload: { editedComment },
+});

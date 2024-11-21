@@ -27,10 +27,10 @@ export const loginFailure = (errorMessage) => (dispatch) => {
 export function formLogin(email, password, isAdmin) {
   const url = isAdmin
     ? `${DOMAIN}/auth/admin/login`
-    : `${DOMAIN}/api/login`
+    : `${DOMAIN}/auth/login`
   const request = new Request(url, {
     method: 'POST',
-    body: JSON.stringify({ email, password_hash: password }),
+    body: JSON.stringify({ email, password }),
     headers: {
       'Content-Type': 'application/json',
     },
@@ -74,7 +74,6 @@ const login = (request) => async (dispatch) => {
     }
 
     const data = await response.json();
-    console.log(data);
     dispatch(loginSuccess(data.user));
   } catch (error) {
     dispatch(loginFailure(error.message));
@@ -122,16 +121,9 @@ export const registerSuccess = (user) => {
 };
 
 export const formRegister = (userData) => {
-  const requestBody = {
-    ...userData,
-    first_name: userData.firstName,
-    last_name: userData.lastName,
-    password_hash: userData.password,
-    role: 'student'
-  }
-  const request = new Request(`${DOMAIN}/api/register`, {
+  const request = new Request(`${DOMAIN}/auth/register`, {
     method: 'POST',
-    body: JSON.stringify(requestBody),
+    body: JSON.stringify({userData}),
     headers: {
       'Content-Type': 'application/json',
     },
@@ -173,7 +165,6 @@ export const register = (request) => async (dispatch) => {
         }
       }
     }
-    console.log(data);
     dispatch(registerSuccess(data.user));
 
   } catch (error) {

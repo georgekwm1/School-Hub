@@ -1,8 +1,24 @@
 const express = require('express');
+const https = require('https');
+const fs = require('fs');
 const ImageKit = require('imagekit');
 const app = express();
 const cors = require('cors');
 const port = 3000;
+
+const {
+  mockComments,
+  mockAnnouncements,
+  mockReplies,
+  question,
+  mockDiscussion,
+
+  mockSections,
+  repliesList,
+} = require('./mockData');
+
+const key = fs.readFileSync('./key.pem');
+const cert = fs.readFileSync('./cert.pem');
 
 app.use(express.json());
 app.use(cors({origin: '*'}));
@@ -11,11 +27,52 @@ app.use((req, res, next) => {
   res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
   next();
 });
+
+
+const ytdl = require('ytdl-core');
+const { getTranscript } = require('youtube-transcript');
+
+app.get('/audio-stream', async (req, res) => {
+  const videoUrl = req.query.url;
+
+  if (!ytdl.validateURL(videoUrl)) {
+      return res.status(400).send({ error: 'Invalid YouTube URL' });
+  }
+
+  try {
+      const info = await ytdl.getInfo(videoUrl);
+      const audioFormat = ytdl.chooseFormat(info.formats, { quality: 'highestaudio' });
+
+      res.setHeader('Content-Disposition', 'inline; filename="audio.mp3"');
+      res.setHeader('Content-Type', 'audio/mpeg');
+
+
+      ytdl(videoUrl, { format: audioFormat }).pipe(res);
+  } catch (error) {
+      console.error('Failed to stream audio:', error);
+      res.status(500).send({ error: 'Failed to stream audio' });
+  }
+});
+
+app.post('/subtitles', async (req, res) => {
+    const videoUrl = req.body.url;
+    const videoId = ytdl.getURLVideoID(videoUrl);
+
+    try {
+        const transcript = await getTranscript(videoId);
+        console.log(transcript);
+        res.send({ subtitles: transcript });
+    } catch (error) {
+      console.error(error);
+        res.status(500).send({ error: 'Failed to retrieve subtitles' });
+    }
+});
+
 app.post('/auth/login', (req, res) => {
 	console.log(req.body);
   const { email, password } = req.body;
   if (email === 'admin' && password === 'admin') {
-    res.send({ message: 'Logged in successfully', 
+    res.send({ message: 'Logged in successfully',
 			user: {
 				email, password, id: 'testId',
         role: 'student'
@@ -36,7 +93,7 @@ app.post('/auth/oauth/google', (req, res) => {
     .then(response => response.json())
     .then(data => {
       if (data.email_verified) {
-        res.send({ message: 'Logged in successfully', 
+        res.send({ message: 'Logged in successfully',
           user: {
             email: data.email,
             id: data.sub,
@@ -63,7 +120,7 @@ app.post('/auth/oauth/googleRegister', (req, res) => {
     .then(data => {
       console.log(data)
       if (data.email_verified) {
-        res.send({ message: 'Logged in successfully', 
+        res.send({ message: 'Logged in successfully',
           user: {
             email: data.email,
             id: data.sub,
@@ -83,7 +140,7 @@ app.post('/auth/oauth/googleRegister', (req, res) => {
 app.post('/auth/admin/login', (req, res) => {
   const { email, password } = req.body;
   if (email === 'admin' && password === 'admin') {
-    res.send({ message: 'Logged in successfully', 
+    res.send({ message: 'Logged in successfully',
       user: {
         email,
         password,
@@ -103,7 +160,7 @@ app.post('/auth/admin/OAuth/google', (req, res) => {
     .then(response => response.json())
     .then(data => {
       if (data.email_verified) {
-        res.send({ message: 'Logged in successfully', 
+        res.send({ message: 'Logged in successfully',
           user: {
             email: data.email,
             id: data.sub,
@@ -151,13 +208,15 @@ app.get('/courses/:courseId/lectures/:lectureId', (req, res) => {
     res.json({lectureData: {
       id: lectureId,
       title: 'Week 4',
+      section: 'Low Level Programming',
       videoLink: 'https://youtu.be/F9-yqoS7b8w',
-      notes: 'https://example.com/lecture-notes',
+      notes: 'https://cs50.harvard.edu/x/2024/notes/4/',
       audioLink: 'https://cs50.harvard.edu/college/2022/spring/lectures/4/wav/lecture4.wav',
       slides: 'https://cs50.harvard.edu/college/2022/spring/lectures/4/slides/lecture4.pdf',
       subtitles: 'https://cs50.harvard.edu/college/2022/spring/lectures/4/subtitles/lecture4.srt',
       transcript: 'https://cs50.harvard.edu/college/2022/spring/lectures/4/transcript',
-      description: 'HTML, CSS, JavaScript',
+      description: 'Pointers. Segmentation Faults. Dynamic Memory Allocation. Stack. Heap. Buffer Overflow. File I/O. Images.',
+      tags: ['pointers', 'segmentation faults', 'dynamic memory allocation', 'stack', 'heap', 'buffer overflow', 'file i/o', 'images'],
       demos: [
         {
           title: 'Demo: HTML/CSS',
@@ -203,14 +262,57 @@ app.get('/courses/:id/lectures', (req, res) => {
   }
 });
 
+app.get('/sections_titles', (req, res) => {
+  const sectionTitles = mockSections?.map(section => section.title) || [];
+  res.json(sectionTitles);
+});
+
+app.post('/courses/:id/lectures', (req, res) => {
+  const courseId = req.params.id;
+  const { demos, description, extras, name, notesLink, section, slidesLink, tags, youtubeLink } = req.body;
+  if (courseId === "testId") {
+    const newLecture = {
+      id: `lecture-${Date.now()}`,
+      title: name,
+      videoLink: youtubeLink,
+      notes: notesLink,
+      audioLink: '', // Add actual audio link if available
+      slides: slidesLink,
+      subtitles: '', // Add actual subtitles link if available
+      transcript: '', // Add actual transcript link if available
+      description,
+      demos,
+      shorts: extras, // Add actual shorts if available
+      quizzez: [], // Add actual quizzes if available
+      tags,
+    };
+
+    const existingSection = mockSections.find(sec => sec.title === section);
+    if (existingSection) {
+      existingSection.lectures.push(newLecture);
+    } else {
+      const newId = `section-${Date.now()}`;
+      mockSections.push({ id: newId, title: section, lectures: [newLecture] });
+    }
+    res.json(newLecture);
+  } else {
+    res.status(404).send({ message: 'Course not found' });
+  }
+});
+
 app.get('/lectures/:id/discussion', (req, res) => {
   console.log(33)
   const id = req.params.id;
   const allowedLectures = mockSections.flatMap(section => section.lectures.map(lecture => lecture.id));
 
   if (allowedLectures.includes(id)) {
-    res.json(mockDiscussion);
-  } else {
+      const discussionWithLectureId = mockDiscussion.map(discussion => ({
+        ...discussion,
+        lectureId: id,
+      }));
+      res.json(discussionWithLectureId);
+
+    } else {
     res.status(404).send({ message: 'Lecture not found' });
   }
 });
@@ -227,6 +329,7 @@ app.post('/lectures/:id/discussion', (req, res) => {
     id: `entry-${Date.now()}`,
     title,
     user: {
+      id: 'testId',
       name: 'John Doe',
       pictureThumbnail: `https://picsum.photos/200/${Math.floor(Math.random() * 100) + 300}`,
     },
@@ -234,13 +337,15 @@ app.post('/lectures/:id/discussion', (req, res) => {
     upvotes: 0,
     upvoted: false,
     repliesCount: 0,
+    body,
+    lectureId
   };
 
   // Here you would typically add the newEntry to your database or data store.
   // For this example, we'll just return it in the response.
   mockDiscussion.unshift(newEntry);
-  
-  
+
+
   res.status(201).json(newEntry);
 });
 
@@ -265,6 +370,7 @@ app.post('/courses/:id/general_discussion', (req, res) => {
     id: `entry-${Date.now()}`,
     title,
     user: {
+      id: 'testId',
       name: 'John Doe',
       pictureThumbnail: `https://picsum.photos/200/${Math.floor(Math.random() * 100) + 300}`,
     },
@@ -272,96 +378,26 @@ app.post('/courses/:id/general_discussion', (req, res) => {
     upvotes: 0,
     upvoted: false,
     repliesCount: 0,
+    body
   };
 
   // Here you would typically add the newEntry to your database or data store.
   // For this example, we'll just return it in the response.
   mockDiscussion.push(newEntry);
-  
+
   res.status(201).json(newEntry);
 });
 
 app.get('/questions/:id/replies', (req, res) => {
   const questionId = req.params.id;
 
-  // Mock question data
-  const question = {
-    id: 'question-1',
-    title: 'How does react hooks work?',
-    user: {
-      name: 'John Doe',
-      pictureThumbnail: 'https://picsum.photos/100',
-    },
-    updatedAt: '2022-01-01T00:00:00.000Z',
-    upvotes: 100,
-    upvoted: false,
-    repliesCount: 20,
-  };
+  const question = mockDiscussion.find(q => q.id === questionId);
 
-  // Mock replies data
-  const repliesList = [
-    {
-      id: 'reply-1',
-      user: {
-        name: 'Jane Doe',
-        pictureThumbnail: 'https://picsum.photos/100',
-      },
-      updatedAt: '2024-11-02T07:00:00.000Z',
-      upvotes: 50,
-      upvoted: true,
-      body: 'How does react hooks work?',
-    },
-    {
-      id: 'reply-2',
-      user: {
-        name: 'John Doe',
-        pictureThumbnail: 'https://picsum.photos/100',
-      },
-      updatedAt: '2022-01-03T00:00:00.000Z',
-      upvotes: 30,
-      upvoted: false,
-      body: 'How does react context work?',
-    },
-    {
-      id: 'reply-3',
-      user: {
-        name: 'Jane Doe',
-        pictureThumbnail: 'https://picsum.photos/100',
-      },
-      updatedAt: '2024-11-04T07:00:00.000Z',
-      upvotes: 20,
-      upvoted: false,
-      body: 'How does react hooks work?',
-    },
-    {
-      id: 'reply-4',
-      user: {
-        name: 'John Doe',
-        pictureThumbnail: 'https://picsum.photos/100',
-      },
-      updatedAt: '2022-01-05T00:00:00.000Z',
-      upvotes: 10,
-      upvoted: true,
-      body: 'How does react useState work?',
-    },
-    {
-      id: 'reply-5',
-      user: {
-        name: 'Jane Doe',
-        pictureThumbnail: 'https://picsum.photos/100',
-      },
-      updatedAt: '2024-11-06T07:00:00.000Z',
-      upvotes: 5,
-      upvoted: false,
-      body: 'How does react useEffect work?',
-    },
-  ];
-
-  if (questionId === 'question-1') {
-    res.json({ question, repliesList });
-  } else {
-    res.status(404).send({ message: 'Question not found' });
+  if (!question) {
+    return res.status(404).send({ message: 'Question not found' });
   }
+
+  res.json({ question: {...question, lectureId: 'cs50-lecture-0'}, repliesList });
 });
 
 app.post('/questions/:id/replies', (req, res) => {
@@ -376,6 +412,7 @@ app.post('/questions/:id/replies', (req, res) => {
     questionId,
     id: `reply-${Date.now()}`,
     user: {
+      id: 'testId',
       name: 'Anonymous',
       pictureThumbnail: `https://picsum.photos/100`,
     },
@@ -392,6 +429,29 @@ app.post('/questions/:id/replies', (req, res) => {
   res.status(201).json(newReply);
 });
 
+app.post('/questions/:id/vote', (req, res) => {
+  const questionId = req.params.id;
+  const { action } = req.body;
+
+  if (!action) {
+    return res.status(400).send({ message: 'Missing required fields' });
+  }
+
+  const index = mockDiscussion.findIndex((question) => question.id === questionId);
+
+  if (index === -1) {
+    return res.status(404).send({ message: 'Question not found' });
+  }
+
+  if (action === 'upvote') {
+    mockDiscussion[index].upvotes += 1;
+  } else if (action === 'downvote') {
+    mockDiscussion[index].upvotes -= 1;
+  }
+
+  res.status(200).json(mockDiscussion[index]);
+});
+
 app.get('/courses/:id/announcements', (req, res) => {
   const courseId = req.params.id;
 
@@ -404,12 +464,67 @@ app.get('/courses/:id/announcements', (req, res) => {
     res.status(404).send({ message: 'Course not found' });
   }
 });
+
+app.post('/courses/:id/announcements', (req, res) => {
+  const courseId = req.params.id;
+  const { userId, title, details } = req.body;
+
+  if (!userId || !title || !details) {
+    return res.status(400).send({ message: 'Missing required fields' });
+  }
+
+  const newAnnouncement = {
+    id: `announcement-${Date.now()}`,
+    courseId,
+    user: {
+      id: 'testId',
+      name: 'John Doe',
+      pictureThumbnail: `https://picsum.photos/200/${Math.floor(Math.random() * 100) + 300}`,
+    },
+    title,
+    body: details,
+    commentsCount: 0,
+    updatedAt: new Date().toISOString(),
+  };
+
+  // Here you would typically add the newAnnouncement to your database or data store.
+  // For this example, we'll just return it in the response.
+  mockAnnouncements.unshift(newAnnouncement);
+
+  res.status(201).json(newAnnouncement);
+});
+
+app.post('/replies/:id/vote', (req, res) => {
+  const replyId = req.params.id;
+  const { action } = req.body;
+
+  if (!action) {
+    return res.status(400).send({ message: 'Missing required fields' });
+  }
+
+  const index = mockReplies.findIndex((reply) => reply.id === replyId);
+
+  if (index === -1) {
+    return res.status(404).send({ message: 'Reply not found' });
+  }
+
+  if (action === 'upvote') {
+    mockReplies[index].upvotes += 1;
+  } else if (action === 'downvote') {
+    mockReplies[index].upvotes -= 1;
+  }
+  res.status(200).json(mockReplies[index]);
+});
+
 app.get('/announcements/:id/comments', (req, res) => {
   const announcementId = req.params.id;
   const ids = mockAnnouncements.map((announcement) => announcement.id);
-  ids.push('testId');
+  // This is stupid.. I dont' know what I was thingking when i was creating this
+  // at first.. may be i wanted to test erro rmesages or
+  ids.push(announcementId);
   if (ids.includes(announcementId)) {
-    res.json(mockComments);
+    const comments = mockComments.filter(com => com.announcementId === announcementId);
+    res.json(comments.map(com => ({...com, announcementId})));
   } else {
     res.status(404).send({ message: 'Announcement not found' });
   }
@@ -427,6 +542,7 @@ app.post('/announcements/:id/comments', (req, res) => {
     announcementId,
     id: `comment-${Date.now()}`,
     user: {
+      id: Math.random() < 0.5 ? 'testId' : 'somethingElse',
       name: 'Anonymous',
       pictureThumbnail: `https://picsum.photos/100`,
     },
@@ -440,634 +556,157 @@ app.post('/announcements/:id/comments', (req, res) => {
 
   res.status(201).json(newComment);
 });
+
+app.delete('/questions/:id', (req, res) => {
+  const questionId = req.params.id;
+  const index = mockDiscussion.findIndex((question) => question.id === questionId);
+
+  if (index === -1) {
+    return res.status(404).send({ message: 'Question not found' });
+  }
+  mockDiscussion.splice(index, 1);
+  res.status(200).json({ message: 'Question deleted successfully' });
+});
+
+app.delete('/replies/:id', (req, res) => {
+  const replyId = req.params.id;
+  const index = mockReplies.findIndex((reply) => reply.id === replyId);
+
+  if (index === -1) {
+    return res.status(404).send({ message: 'Reply not found' });
+  }
+  
+  mockReplies.splice(index, 1);
+  res.status(200).json({ message: 'Reply deleted successfully' });
+});
+
+app.delete('/comments/:commentId', (req, res) => {
+  const { announcementId, commentId } = req.params;
+  const index = mockComments.findIndex((comment) => comment.id === commentId);
+
+  if (index === -1) {
+    return res.status(404).send({ message: 'Comment not found' });
+  }
+  
+  mockComments.splice(index, 1);
+  res.status(200).json({ message: 'Comment deleted successfully' });
+});
+
+app.delete('/announcements/:id', (req, res) => {
+  const announcementId = req.params.id;
+  const index = mockAnnouncements.findIndex((announcement) => announcement.id === announcementId);
+
+  if (index === -1) {
+    return res.status(404).send({ message: 'Announcement not found' });
+  }
+  mockAnnouncements.splice(index, 1);
+  res.status(200).json({ message: 'Announcement deleted successfully' });
+});
+
+app.delete('/lectures/:id', (req, res) => {
+  const lectureId = req.params.id;
+  const index = mockSections.findIndex((section) => section.lectures.findIndex((lecture) => lecture.id === lectureId) !== -1);
+
+  if (index === -1) {
+    return res.status(404).send({ message: 'Lecture not found' });
+  }
+  const lectureIndex = mockSections[index].lectures.findIndex((lecture) => lecture.id === lectureId);
+  mockSections[index].lectures.splice(lectureIndex, 1);
+  res.status(200).json({ message: 'Lecture deleted successfully' });
+});
+
+app.put('/announcements/:id', (req, res) => {
+  const { id } = req.params;
+  const { title, details } = req.body;
+
+  const index = mockAnnouncements.findIndex((announcement) => announcement.id === id);
+
+  if (index === -1) {
+    return res.status(404).send({ message: 'Announcement not found' });
+  }
+
+  mockAnnouncements[index].title = title;
+  mockAnnouncements[index].body = details;
+
+  res.status(200).json(mockAnnouncements[index]);
+});
+
+app.put('/comments/:id', (req, res) => {
+  const { id } = req.params;
+  const { body } = req.body;
+
+  const index = mockComments.findIndex((comment) => comment.id === id);
+
+  if (index === -1) {
+    return res.status(404).send({ message: 'Comment not found' });
+  }
+
+  mockComments[index].body = body;
+
+  res.status(200).json(mockComments[index]);
+});
+
+app.put('/questions/:id', (req, res) => {
+  const { id } = req.params;
+  const { title, body } = req.body;
+
+  const index = mockDiscussion.findIndex((question) => question.id === id);
+
+  if (index === -1) {
+    return res.status(404).send({ message: 'Question not found' });
+  }
+
+  mockDiscussion[index].title = title;
+  mockDiscussion[index].body = body;
+
+  res.status(200).json(mockDiscussion[index]);
+});
+
+app.put('/replies/:id', (req, res) => {
+  const { id } = req.params;
+  const { body } = req.body;
+
+  const index = mockReplies.findIndex((reply) => reply.id === id);
+
+  if (index === -1) {
+    return res.status(404).send({ message: 'Reply not found' });
+  }
+
+  mockReplies[index].body = body;
+
+  res.status(200).json(mockReplies[index]);
+});
+
+app.put('/lectures/:id', (req, res) => {
+  const { id } = req.params;
+  const { name, description, youtubeLink, notesLink, slidesLink, section, extras, tags, demos } = req.body;
+
+  const index = mockSections.flatMap(section => section.lectures).findIndex(lecture => lecture.id === id);
+
+  if (index === -1) {
+    return res.status(404).send({ message: 'Lecture not found' });
+  }
+
+  const lecture = mockSections.flatMap(section => section.lectures)[index];
+  lecture.title = name;
+  lecture.description = description;
+  lecture.videoLink = youtubeLink;
+  lecture.notes = notesLink;
+  lecture.slides = slidesLink;
+  lecture.section = section;
+  lecture.shorts = extras;
+  lecture.demos = demos;
+  lecture.tags = tags;
+
+  res.status(200).json(lecture);
+});
+
 app.use((req, res, next) => {
   res.status(404).send({ message: 'Not found' });
 });
 
-app.listen(port, () => {
-  console.log(`Server started on port ${port}`);
+const httpsServer = https.createServer({ key, cert }, app);
+httpsServer.listen(port, () => {
+  console.log(`Server started on https://localhost:${port}`);
 });
 
-
-const mockSections = [
-  {
-    title: 'Low Level Programming',
-    lectures: [
-      {
-        id: 'cs50-lecture-0',
-        title: 'CS50 Lecture 0: Introduction',
-        description:
-          'This lecture covers the basics of computing and how the internet works',
-        tags: ['basics', 'internet'],
-      },
-      {
-        id: 'cs50-lecture-1',
-        title: 'CS50 Lecture 1: C',
-        description:
-          'This lecture covers the basics of the C programming language',
-        tags: ['c', 'programming'],
-      },
-      {
-        id: 'cs50-lecture-2',
-        title: 'CS50 Lecture 2: Arrays',
-        description: 'This lecture covers the basics of arrays in C',
-        tags: ['arrays', 'c'],
-      },
-    ],
-  },
-  {
-    title: 'Data Structures and Algorithms',
-    lectures: [
-      {
-        id: 'cs50-lecture-3',
-        title: 'CS50 Lecture 3: Algorithms',
-        description: 'This lecture covers the basics of algorithms',
-        tags: ['algorithms', 'dsa'],
-      },
-      {
-        id: 'cs50-lecture-4',
-        title: 'CS50 Lecture 4: Searching, Sorting',
-        description: 'This lecture covers searching and sorting algorithms',
-        tags: ['searching', 'sorting', 'algorithms'],
-      },
-      {
-        id: 'cs50-lecture-5',
-        title: 'CS50 Lecture 5: Memory, Pointers',
-        description: 'This lecture covers memory and pointers in C',
-        tags: ['memory', 'pointers', 'c'],
-      },
-    ],
-  },
-  {
-    title: 'High Level Programming',
-    lectures: [
-      {
-        id: 'cs50-lecture-6',
-        title: 'CS50 Lecture 6: Python',
-        description:
-          'This lecture covers the basics of the Python programming language',
-        tags: ['python', 'programming'],
-      },
-      {
-        id: 'cs50-lecture-7',
-        title: 'CS50 Lecture 7: Object Oriented Programming',
-        description:
-          'This lecture covers object oriented programming in Python',
-        tags: ['oop', 'python'],
-      },
-      {
-        id: 'cs50-lecture-8',
-        title: 'CS50 Lecture 8: File I/O',
-        description: 'This lecture covers file input and output in Python',
-        tags: ['file i/o', 'python'],
-      },
-    ],
-  },
-  {
-    title: 'Frontend Development',
-    lectures: [
-      {
-        id: 'cs50-lecture-9',
-        title: 'CS50 Lecture 9: HTML, CSS',
-        description: 'This lecture covers the basics of HTML and CSS',
-        tags: ['html', 'css', 'frontend'],
-      },
-      {
-        id: 'cs50-lecture-10',
-        title: 'CS50 Lecture 10: JavaScript',
-        description: 'This lecture covers the basics of JavaScript',
-        tags: ['javascript', 'frontend'],
-      },
-      {
-        id: 'cs50-lecture-11',
-        title: 'CS50 Lecture 11: React',
-        description: 'This lecture covers the basics of React',
-        tags: ['react', 'frontend'],
-      },
-    ],
-  },
-  {
-    title: 'Backend Development',
-    lectures: [
-      {
-        id: 'cs50-lecture-12',
-        title: 'CS50 Lecture 12: Flask',
-        description: 'This lecture covers the basics of Flask',
-        tags: ['flask', 'backend'],
-      },
-    ],
-  },
-];
-
-const mockDiscussion = [
-  {
-    id: 'question-1',
-    title: 'How does react work?',
-    user: {
-      name: 'John Doe',
-      pictureThumbnail: 'https://picsum.photos/200/300',
-    },
-    updatedAt: '2022-01-01T00:00:00.000Z',
-    upvotes: 100,
-    upvoted: false,
-    repliesCount: 20,
-  },
-  {
-    id: 'question-2',
-    title: 'How does react state work?',
-    user: {
-      name: 'Jane Doe',
-      pictureThumbnail: 'https://picsum.photos/200/301',
-    },
-    updatedAt: '2024-11-02T07:00:00.000Z',
-    upvotes: 50,
-    upvoted: true,
-    repliesCount: 10,
-  },
-  {
-    id: 'question-3',
-    title: 'How does react context work?',
-    user: {
-      name: 'John Doe',
-      pictureThumbnail: 'https://picsum.photos/200/302',
-    },
-    updatedAt: '2022-01-03T00:00:00.000Z',
-    upvotes: 30,
-    upvoted: false,
-    repliesCount: 5,
-  },
-  {
-    id: 'question-4',
-    title: 'How does react hooks work?',
-    user: {
-      name: 'Jane Doe',
-      pictureThumbnail: 'https://picsum.photos/200/303',
-    },
-    updatedAt: '2024-11-04T07:00:00.000Z',
-    upvotes: 20,
-    upvoted: false,
-    repliesCount: 5,
-  },
-  {
-    id: '5',
-    title: 'What is the difference between react and angular?',
-    user: {
-      name: 'John Doe',
-      pictureThumbnail: 'https://picsum.photos/200/304',
-    },
-    updatedAt: '2022-01-05T00:00:00.000Z',
-    upvotes: 15,
-    upvoted: true,
-    repliesCount: 10,
-  },
-  {
-    id: '6',
-    title: 'How does react router work?',
-    user: {
-      name: 'Jane Doe',
-      pictureThumbnail: 'https://picsum.photos/200/305',
-    },
-    updatedAt: '2024-11-06T07:00:00.000Z',
-    upvotes: 10,
-    upvoted: false,
-    repliesCount: 5,
-  },
-  {
-    id: '7',
-    title: 'How does react context work?',
-    user: {
-      name: 'John Doe',
-      pictureThumbnail: 'https://picsum.photos/200/306',
-    },
-    updatedAt: '2022-01-07T00:00:00.000Z',
-    upvotes: 5,
-    upvoted: true,
-    repliesCount: 10,
-  },
-  {
-    id: '8',
-    title: 'How does react useState work?',
-    user: {
-      name: 'Jane Doe',
-      pictureThumbnail: 'https://picsum.photos/200/307',
-    },
-    updatedAt: '2024-11-08T07:00:00.000Z',
-    upvotes: 15,
-    upvoted: false,
-    repliesCount: 5,
-  },
-  {
-    id: '9',
-    title: 'How does react useEffect work?',
-    user: {
-      name: 'John Doe',
-      pictureThumbnail: 'https://picsum.photos/200/308',
-    },
-    updatedAt: '2022-01-09T00:00:00.000Z',
-    upvotes: 10,
-    upvoted: true,
-    repliesCount: 10,
-  },
-  {
-    id: '10',
-    title: 'How does react useRef work?',
-    user: {
-      name: 'Jane Doe',
-      pictureThumbnail: 'https://picsum.photos/200/309',
-    },
-    updatedAt: '2024-11-10T07:00:00.000Z',
-    upvotes: 5,
-    upvoted: false,
-    repliesCount: 5,
-  },
-  {
-    id: '11',
-    title: 'How does react useLayoutEffect work?',
-    user: {
-      name: 'John Doe',
-      pictureThumbnail: 'https://picsum.photos/200/310',
-    },
-    updatedAt: '2022-01-11T00:00:00.000Z',
-    upvotes: 10,
-    upvoted: true,
-    repliesCount: 10,
-  },
-  {
-    id: '12',
-    title: 'How does react useMemo work?',
-    user: {
-      name: 'Jane Doe',
-      pictureThumbnail: 'https://picsum.photos/200/311',
-    },
-    updatedAt: '2024-11-12T07:00:00.000Z',
-    upvotes: 15,
-    upvoted: false,
-    repliesCount: 5,
-  },
-  {
-    id: '13',
-    title: 'How does react useCallback work?',
-    user: {
-      name: 'John Doe',
-      pictureThumbnail: 'https://picsum.photos/200/312',
-    },
-    updatedAt: '2022-01-13T00:00:00.000Z',
-    upvotes: 10,
-    upvoted: true,
-    repliesCount: 10,
-  },
-  {
-    id: '14',
-    title: 'How does react useReducer work?',
-    user: {
-      name: 'Jane Doe',
-      pictureThumbnail: 'https://picsum.photos/200/313',
-    },
-    updatedAt: '2024-11-14T07:00:00.000Z',
-    upvotes: 5,
-    upvoted: false,
-    repliesCount: 5,
-  },
-  {
-    id: '15',
-    title: 'How does react useContext work?',
-    user: {
-      name: 'John Doe',
-      pictureThumbnail: 'https://picsum.photos/200/314',
-    },
-    updatedAt: '2022-01-15T00:00:00.000Z',
-    upvotes: 10,
-    upvoted: true,
-    repliesCount: 10,
-  },
-  {
-    id: '16',
-    title: 'How does react useImperativeHandle work?',
-    user: {
-      name: 'Jane Doe',
-      pictureThumbnail: 'https://picsum.photos/200/315',
-    },
-    updatedAt: '2024-11-16T07:00:00.000Z',
-    upvotes: 5,
-    upvoted: false,
-    repliesCount: 5,
-  },
-  {
-    id: '17',
-    title: 'How does react useLayoutEffect work?',
-    user: {
-      name: 'John Doe',
-      pictureThumbnail: 'https://picsum.photos/200/316',
-    },
-    updatedAt: '2022-01-17T00:00:00.000Z',
-    upvotes: 10,
-    upvoted: true,
-    repliesCount: 10,
-  },
-  {
-    id: '18',
-    title: 'How does react useRef work?',
-    user: {
-      name: 'Jane Doe',
-      pictureThumbnail: 'https://picsum.photos/200/317',
-    },
-    updatedAt: '2024-11-18T07:00:00.000Z',
-    upvotes: 15,
-    upvoted: false,
-    repliesCount: 5,
-  },
-  {
-    id: '19',
-    title: 'How does react useMemo work?',
-    user: {
-      name: 'John Doe',
-      pictureThumbnail: 'https://picsum.photos/200/318',
-    },
-    updatedAt: '2022-01-19T00:00:00.000Z',
-    upvotes: 5,
-    upvoted: true,
-    repliesCount: 10,
-  },
-  {
-    id: '20',
-    title: 'How does react useCallback work?',
-    user: {
-      name: 'Jane Doe',
-      pictureThumbnail: 'https://picsum.photos/200/319',
-    },
-    updatedAt: '2024-11-20T07:00:00.000Z',
-    upvotes: 10,
-    upvoted: false,
-    repliesCount: 5,
-  },
-  {
-    id: '21',
-    title: 'How does react useLayoutEffect work?',
-    user: {
-      name: 'John Doe',
-      pictureThumbnail: 'https://picsum.photos/200/320',
-    },
-    updatedAt: '2022-01-21T00:00:00.000Z',
-    upvotes: 10,
-    upvoted: true,
-    repliesCount: 10,
-  },
-  {
-    id: '22',
-    title: 'How does react useMemo work?',
-    user: {
-      name: 'Jane Doe',
-      pictureThumbnail: 'https://picsum.photos/200/321',
-    },
-    updatedAt: '2024-11-22T07:00:00.000Z',
-    upvotes: 15,
-    upvoted: false,
-    repliesCount: 5,
-  },
-  {
-    id: '23',
-    title: 'How does react useCallback work?',
-    user: {
-      name: 'John Doe',
-      pictureThumbnail: 'https://picsum.photos/200/322',
-    },
-    updatedAt: '2022-01-23T00:00:00.000Z',
-    upvotes: 5,
-    upvoted: true,
-    repliesCount: 10,
-  },
-  {
-    id: '24',
-    title: 'How does react useEffect work?',
-    user: {
-      name: 'Jane Doe',
-      pictureThumbnail: 'https://picsum.photos/200/323',
-    },
-    updatedAt: '2024-11-24T07:00:00.000Z',
-    upvotes: 10,
-    upvoted: false,
-    repliesCount: 5,
-  },
-  {
-    id: '25',
-    title: 'How does react useState work?',
-    user: {
-      name: 'John Doe',
-      pictureThumbnail: 'https://picsum.photos/200/324',
-    },
-    updatedAt: '2022-01-25T00:00:00.000Z',
-    upvotes: 10,
-    upvoted: true,
-    repliesCount: 10,
-  },
-  {
-    id: '26',
-    title: 'How does react useReducer work?',
-    user: {
-      name: 'Jane Doe',
-      pictureThumbnail: 'https://picsum.photos/200/325',
-    },
-    updatedAt: '2024-11-26T07:00:00.000Z',
-    upvotes: 15,
-    upvoted: false,
-    repliesCount: 5,
-  },
-  {
-    id: '27',
-    title: 'How does react context work?',
-    user: {
-      name: 'John Doe',
-      pictureThumbnail: 'https://picsum.photos/200/326',
-    },
-    updatedAt: '2022-01-27T00:00:00.000Z',
-    upvotes: 5,
-    upvoted: true,
-    repliesCount: 10,
-  },
-  {
-    id: '28',
-    title: 'How does react router work?',
-    user: {
-      name: 'Jane Doe',
-      pictureThumbnail: 'https://picsum.photos/200/327',
-    },
-    updatedAt: '2024-11-28T07:00:00.000Z',
-    upvotes: 10,
-    upvoted: false,
-    repliesCount: 5,
-  },
-  {
-    id: '29',
-    title: 'How does react hooks work?',
-    user: {
-      name: 'John Doe',
-      pictureThumbnail: 'https://picsum.photos/200/328',
-    },
-    updatedAt: '2022-01-29T00:00:00.000Z',
-    upvotes: 10,
-    upvoted: true,
-    repliesCount: 10,
-  },
-];
-
-const question = {
-  id: 'question-1',
-  title: 'How does react hooks work?',
-  user: {
-    name: 'John Doe',
-    pictureThumbnail: 'https://picsum.photos/100',
-  },
-  updatedAt: '2022-01-01T00:00:00.000Z',
-  upvotes: 100,
-  upvoted: false,
-  repliesCount: 20,
-};
-
-
-const mockReplies = [
-  {
-    id: 'reply-1',
-    user: {
-      name: 'Jane Doe',
-      pictureThumbnail: 'https://picsum.photos/100',
-    },
-    updatedAt: '2024-11-02T07:00:00.000Z',
-    upvotes: 50,
-    upvoted: true,
-    body: 'How does react hooks work?',
-  },
-  {
-    id: 'reply-2',
-    user: {
-      name: 'John Doe',
-      pictureThumbnail: 'https://picsum.photos/100',
-    },
-    updatedAt: '2022-01-03T00:00:00.000Z',
-    upvotes: 30,
-    upvoted: false,
-    body: 'How does react context work?',
-  },
-  {
-    id: 'reply-3',
-    user: {
-      name: 'Jane Doe',
-      pictureThumbnail: 'https://picsum.photos/100',
-    },
-    updatedAt: '2024-11-04T07:00:00.000Z',
-    upvotes: 20,
-    upvoted: false,
-    body: 'How does react hooks work?',
-  },
-  {
-    id: 'reply-4',
-    user: {
-      name: 'John Doe',
-      pictureThumbnail: 'https://picsum.photos/100',
-    },
-    updatedAt: '2022-01-05T00:00:00.000Z',
-    upvotes: 10,
-    upvoted: true,
-    body: 'How does react useState work?',
-  },
-  {
-    id: 'reply-5',
-    user: {
-      name: 'Jane Doe',
-      pictureThumbnail: 'https://picsum.photos/100',
-    },
-    updatedAt: '2024-11-06T07:00:00.000Z',
-    upvotes: 5,
-    upvoted: false,
-    body: 'How does react useEffect work?',
-  },
-];
-
-const mockAnnouncements = [
-  {
-    user: {
-      name: 'John Doe',
-      id: '1234567890',
-      pictureThumbnail: 'https://picsum.photos/100',
-    },
-    id: 'announcement-1',
-    title: 'This is the title of the announcement',
-    body: 'This is the content of the announcement',
-    commentsCount: 10,
-    updatedAt: '2022-01-01T00:00:00.000Z',
-  },
-  {
-    user: {
-      name: 'Jane Doe',
-      id: '9876543210',
-      pictureThumbnail: 'https://picsum.photos/101',
-    },
-    id: 'announcement-2',
-    title: 'This is the title of the second announcement',
-    body: 'This is the content of the second announcement',
-    commentsCount: 5,
-    updatedAt: '2024-11-01T00:00:00.000Z',
-  },
-];
-
-const mockComments = [
-  {
-    id: 'comment-1',
-    announcementId: 'testId',
-    user: {
-      name: 'John Doe',
-      pictureThumbnail: 'https://picsum.photos/100',
-    },
-    updatedAt: '2024-11-02T07:00:00.000Z',
-    upvotes: 50,
-    upvoted: true,
-    body: 'How does react hooks work?',
-  },
-  {
-    id: 'comment-2',
-    announcementId: 'testId',
-    user: {
-      name: 'Jane Doe',
-      pictureThumbnail: 'https://picsum.photos/101',
-    },
-    updatedAt: '2022-01-03T00:00:00.000Z',
-    upvotes: 30,
-    upvoted: false,
-    body: 'How does react context work?',
-  },
-  {
-    id: 'comment-3',
-    announcementId: 'testId',
-    user: {
-      name: 'John Doe',
-      pictureThumbnail: 'https://picsum.photos/102',
-    },
-    updatedAt: '2024-11-04T07:00:00.000Z',
-    upvotes: 20,
-    upvoted: false,
-    body: 'How does react useState work?',
-  },
-  {
-    id: 'comment-4',
-    announcementId: 'testId',
-    user: {
-      name: 'Jane Doe',
-      pictureThumbnail: 'https://picsum.photos/103',
-    },
-    updatedAt: '2022-01-05T00:00:00.000Z',
-    upvotes: 10,
-    upvoted: true,
-    body: 'How does react hooks work?',
-  },
-  {
-    id: 'comment-5',
-    announcementId: 'testId',
-    user: {
-      name: 'John Doe',
-      pictureThumbnail: 'https://picsum.photos/104',
-    },
-    updatedAt: '2024-11-06T07:00:00.000Z',
-    upvotes: 5,
-    upvoted: false,
-    body: 'How does react useState work?',
-  },
-];

@@ -32,21 +32,35 @@ export default function LectureDiscussion() {
   };
 
   return (
-    <div>
-      <h2>General Discussion</h2>
-			<p>Course Disucsison forum or whatever text fits here</p>
-      <SearchField placeholder="Search general course questions" />
-      {isLoading ? (
+    <div className='container line-spacing'>
+      <h2 className='text-center h3'>General Discussion</h2>
+			<p className='txt2 p-2 fs-5'>Course Discussion Forum</p>
+      <form className="d-flex mt-4 mb-5" role="search">
+        <input
+          className="form-control me-2 p-3"
+          type="search"
+          placeholder="Search the content of the course"
+          aria-label="Search"
+        />
+        <button className="btn btn-primary" type="submit">
+          Search
+        </button>
+      </form>
+        {isLoading ? (
         <Loading />
       ) : (
-        <DiscussionEntries entries={entries} chunkSize={15} />
+        <DiscussionEntries entries={entries} chunkSize={15} isLecture={false} />
       )}
       <div>
         {askNewQuestion ? (
           <DiscussionEntryEditor onPublish={handlePublishQuestion} />
         ) : (
-          // or a button?
-          <p onClick={() => setAskNewQuestion(true)}>Ask a new question</p>
+          <button
+          className=" btn btn-outline-secondary btn-lg w-50 mx-auto d-block mt-3 text-white btn-style mb-4"
+          onClick={() => setAskNewQuestion(true)}
+        >
+          Ask a new question
+        </button>
         )}
       </div>
     </div>

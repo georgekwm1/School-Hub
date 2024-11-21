@@ -92,6 +92,143 @@ export default function announcementsReducer(
       );
     }
 
+    case actions.ADD_ANNOUNCEMENT_FAILURE: {
+      const { errorMessage } = action.payload;
+      return state.merge({
+        isLoading: false,
+        announcementsError: errorMessage,
+      });
+    }
+
+    case actions.ADD_ANNOUNCEMENT_SUCCESS: {
+      const { newAnnouncement } = action.payload;
+      return state
+        .update('announcements', (announcements) =>
+          announcements.unshift(fromJS(newAnnouncement))
+        )
+        .merge({
+          isLoading: false,
+          announcementsError: null,
+        });
+    }
+
+    case actions.DELETE_ANNOUNCEMENT_COMMENT_REQUEST:
+      return state.merge({
+        isCommentsLoading: true,
+      });
+
+    case actions.DELETE_ANNOUNCEMENT_COMMENT_FAILURE: {
+      const { errorMessage } = action.payload;
+      return state.merge({
+        isCommentsLoading: false,
+        announcementsError: errorMessage,
+      });
+    }
+
+    case actions.DELETE_ANNOUNCEMENT_COMMENT_SUCCESS: {
+      const { announcementId, commentId } = action.payload;
+      return state
+        .updateIn(['comments', announcementId], (commentsList) =>
+          commentsList.filter((comment) => comment.get('id') !== commentId)
+        )
+        .update('announcements', (announcements) =>
+          announcements.map((announcement) =>
+            announcement.get('id') === announcementId
+              ? announcement.update('commentsCount', (count) => count - 1)
+              : announcement
+          )
+        );
+    }
+
+    case actions.DELETE_ANNOUNCEMENT_REQUEST:
+      return state.merge({
+        isLoading: true,
+      });
+
+    case actions.DELETE_ANNOUNCEMENT_FAILURE: {
+      const { errorMessage } = action.payload;
+      return state.merge({
+        isLoading: false,
+        announcementsError: errorMessage,
+      });
+    }
+
+    case actions.DELETE_ANNOUNCEMENT_SUCCESS: {
+      const { announcementId } = action.payload;
+
+      return state
+        .update('announcements', (announcements) =>
+          announcements.filter(
+            (announcement) => announcement.get('id') !== announcementId
+          )
+        )
+        .deleteIn(['comments', announcementId])
+        .merge({
+          isLoading: false,
+          announcementsError: null,
+        });
+    }
+
+    case actions.EDIT_ANNOUNCEMENT_REQUEST:
+      return state.merge({
+        isLoading: true,
+      });
+
+    case actions.EDIT_ANNOUNCEMENT_FAILURE: {
+      const { errorMessage } = action.payload;
+      return state.merge({
+        isLoading: false,
+        announcementsError: errorMessage,
+      });
+    }
+
+    case actions.EDIT_ANNOUNCEMENT_SUCCESS: {
+      const { editedAnnouncement } = action.payload;
+
+      return state
+        .update('announcements', (announcements) =>
+          announcements.map((announcement) =>
+            announcement.get('id') === editedAnnouncement.id
+              ? fromJS(editedAnnouncement)
+              : announcement
+          )
+        )
+        .merge({
+          isLoading: false,
+          announcementsError: null,
+        });
+    }
+
+    case actions.EDIT_COMMENT_REQUEST:
+      return state.merge({
+        isLoading: true,
+      });
+
+    case actions.EDIT_COMMENT_FAILURE: {
+      const { errorMessage } = action.payload;
+      return state.merge({
+        isLoading: false,
+        announcementsError: errorMessage,
+      });
+    }
+
+    case actions.EDIT_COMMENT_SUCCESS: {
+      const { editedComment } = action.payload;
+      const announcementId = editedComment.announcementId;
+      const commentId = editedComment.id;
+
+      return state
+        .updateIn(['comments', announcementId], (comments) =>
+          comments.map((comment) =>
+            comment.get('id') === commentId ? fromJS(editedComment) : comment
+          )
+        )
+        .merge({
+          isLoading: false,
+          announcementsError: null,
+        });
+    }
+    
     default:
       return state;
   }

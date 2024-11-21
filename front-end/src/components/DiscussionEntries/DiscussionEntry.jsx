@@ -1,32 +1,65 @@
-import React, {useState} from 'react';
-import {CircleArrowUp, Dot, MessagesSquare} from  'lucide-react';
+import React, { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { CircleArrowUp, Dot, MessagesSquare } from 'lucide-react';
 import { formatDate } from '../../utils/utilFunctions';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
+import {
+  makeGeneralQuestionIsUpvotedSelector,
+  makeGeneralQuestionUpvotesSelector,
+  makeLectureQuestionIsUpvotedSelector,
+  makeLectureQuestionUpvotesSelector,
+} from '../../redux/selectors/DiscussionsSelectors';
+import { toggleDiscussionEntryVote } from '../../redux/actions/discussionsThunks';
 
-export default function DiscussionEntry({ content }) {
-  const [upvoted, setUpvoted] = useState(content.get('upvoted'));
+export default function DiscussionEntry({ content, isLecture }) {
+  let upvoted;
+  let upvotes;
+  const lectureId = content.get('lectureId');
+  upvoted = useSelector(
+    isLecture
+      ? makeLectureQuestionIsUpvotedSelector(lectureId, content.get('id'))
+      : makeGeneralQuestionIsUpvotedSelector(content.get('id'))
+  );
+  upvotes = useSelector(
+    isLecture
+      ? makeLectureQuestionUpvotesSelector(lectureId, content.get('id'))
+      : makeGeneralQuestionUpvotesSelector(content.get('id'))
+  );
 
   const date = formatDate(content.get('updatedAt'));
+
+  const dispatch = useDispatch();
+  const toggleUpvote = () => {
+    dispatch(
+      toggleDiscussionEntryVote(
+        content.get('id'),
+        isLecture,
+        content.get('lectureId')
+      ) || undefined
+    );
+  };
+
   return (
-    <div data-id={content.get('id')}>
-      <div>
+    <div className="discussion-entry" data-id={content.get('id')}>
+      <div className="discussion-entry-header">
         <img
+          className="user-avatar"
           src={content.getIn(['user', 'pictureThumbnail'])}
           alt={`${content.getIn(['user', 'name'])}'s avatar`}
         />
-      </div>
-      <div>
-        <h3>{content.get('title')}</h3>
-        <div>
-          <span>{content.getIn(['user', 'name'])}</span>
-          <Dot />
-          <span>{date}</span>
+        <div className="discussion-info">
+          <h3 className="discussion-title">{content.get('title')}</h3>
+          <div className="discussion-meta">
+            <span className="author-name">{content.getIn(['user', 'name'])}</span>
+            <Dot className="dot-separator" />
+            <span className="date">{date}</span>
+          </div>
         </div>
       </div>
       <div>
-        <button onClick={() => {toast(content.get('id') + 'upvoted'); setUpvoted(!upvoted)}}>
-          {content.get('upvotes')} 
+      <button onClick={toggleUpvote} className={`upvote-button ${upvoted ? 'upvoted' : ''}`}>
+      {upvotes} 
 					{ !upvoted 
 						? <CircleArrowUp color="grey" strokeWidth={2}/>
 						: <CircleArrowUp color="black" strokeWidth={2.2}/>
@@ -61,12 +94,13 @@ export default function DiscussionEntry({ content }) {
           https://remindme-l.vercela.app
         */}
         
-        <button type="button">
+        <button className="comment-button" type="button">
           <Link
             to={`/questions/${content.get('id')}`}
-            state={{backRoute: window.location.pathname}}
+            state={{  backRoute: window.location.pathname , isLecture }}
+            className="comment-link"
           >
-            {content.get('commentsCount')} <MessagesSquare />
+            {content.get('repliesCount')} <MessagesSquare />
           </Link>
         </button>
       </div>

@@ -101,9 +101,9 @@ cd school-hub
 ```plaintext
 school-hub/
 │                        # Django backend files
-│   ├── manage.py
-│   ├── settings.py
-│   └── ...
+|
+│── manage.py
+│── settings.py
 │
 └── front-end/             # React frontend folder
     ├── src/

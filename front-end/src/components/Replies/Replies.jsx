@@ -51,60 +51,69 @@ export default function Replies() {
       dispatch(toggleLoading());
     }
   };
+  {/* Now, I'll be a dectateo and make him only go to discusssiosn.
+  because honestly.. I don'tknow how to findout he was comming from genreal questions
+  or from a specific lecture with an id... OR.. FROM OUTSIDE OF THE APP!,
+  SO, NAVIGATE(-1) WON'T WORK HERE...
+  so.. Let me just go back to the discussion page and that's it
+  i'm really really really running out of time here. and no time for my perfectionism..
+
+  It would be very imparasing if I actually find out later that's a very simple problem!
+  */}
 
   return (
-    <>
-    {/* Now, I'll be a dectateo and make him only go to discusssiosn.
-    because honestly.. I don'tknow how to findout he was comming from genreal questions
-    or from a specific lecture with an id... OR.. FROM OUTSIDE OF THE APP!,
-    SO, NAVIGATE(-1) WON'T WORK HERE...
-    so.. Let me just go back to the discussion page and that's it
-    i'm really really really running out of time here. and no time for my perfectionism..
-
-    It would be very imparasing if I actually find out later that's a very simple problem!
-    */}
-      <button type="button"><Link to={backRoute}>Back to all questions</Link></button>
-      {repliesIsLoading ? (
-        <Loading />
-      ) : !replies || !replies.get('repliesList')?.size === 0 ? (
-        <h1>No replies</h1>
-      ) : (
-        <>
-          <QuestionHeader question={replies.get('question')} />
-          <RepliesList replies={replies.get('repliesList')} />
-          {!showReplyEditor ? (
-            <div>
-              <img
-                src={userPicture || 'https://picsum.photos/50'}
-                width="50"
-                height="50"
-                alt="user"
-              />
-              <input
-                type="text"
-                id="reply"
-                name="reply"
-                placeholder="Add your comment here..."
-                onClick={() => setShowReplyEditor(true)}
-              />
-            </div>
-          ) : (
-            <>
-              <p>Write your response</p>
-              <TextEditor
-                placeholder="Write your response here..."
-                value={reply}
-                setValue={setReply}
-                files={replyFiles}
-                setFiles={setReplyFiles}
-              />
-              <button type="button" onClick={handleSubmission}>
-                Add an answer
-              </button>
-            </>
-          )}
-        </>
-      )}
-    </>
+    <div className="container mt-5">
+        <button type="button" className="btn btn-outline-success mb-3 mt-5">
+          <Link to={backRoute} className="text-decoration-none text-dark">Back to all questions</Link>
+        </button>
+      
+        {repliesIsLoading ? (
+          <Loading />
+        ) : (
+          <>
+            {replies && replies.get('question') ? (
+              <>
+                <QuestionHeader question={replies.get('question')} />
+                <RepliesList replies={replies.get('repliesList')}  questionId={questionId} />
+              </>
+            ) : (
+              <p className='mt-5 fs-5'>No question or replies available.</p>
+            )}
+      
+            {/* Add Comment */}
+            {!showReplyEditor ? (
+              <div className="d-flex align-items-center mt-3">
+                <img
+                  src={userPicture || 'https://picsum.photos/50'}
+                  className="rounded-circle me-3"
+                  width="50"
+                  height="50"
+                  alt="User"
+                />
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Add your comment here..."
+                  onClick={() => setShowReplyEditor(true)}
+                />
+              </div>
+            ) : (
+              <>
+                <p className="mt-4">Write your response</p>
+                <TextEditor
+                  placeholder="Write your response here..."
+                  value={reply}
+                  setValue={setReply}
+                  files={replyFiles}
+                  setFiles={setReplyFiles}
+                />
+                <button type="button" className="btn btn-primary mt-3" onClick={handleSubmission}>
+                  Add an answer
+                </button>
+              </>
+            )}
+          </>
+        )}
+    </div>
   );
 }

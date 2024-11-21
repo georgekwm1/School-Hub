@@ -36,8 +36,12 @@ export default function Register({setType}) {
       ) : (
         <RegisterStepTwo setStep={setStep} userData={userData} handleInputChange={handleInputChange} />
       )}
-			<p>Have an account already?</p>
-      <button onClick={() => navigate('/login')}>Login</button>
+
+      <div className="p-2 text-end me-5 p-t-2 mb-4" style={{ backgroundColor: '#' }}>
+      <p className="txt1">
+        Already have an account? <button onClick={() => navigate('/login')}>Login</button>
+      </p>
+      </div>      
     </>
   );
 }

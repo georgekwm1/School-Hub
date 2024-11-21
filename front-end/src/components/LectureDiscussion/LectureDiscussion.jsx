@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Loading from '../utilityComponents/Loading';
 import SearchField from '../sharedComponents/SearchField';
+import './css/discussion.css'
 import DiscussionEntryEditor from '../DiscussionEntries/DiscussionEntryEditor';
 import DiscussionEntries from '../DiscussionEntries/DiscussionEntries';
 import {
@@ -35,22 +36,43 @@ export default function LectureDiscussion({ lectureId = '' }) {
   };
 
   return (
-    <div>
-      <h2>Lecture Discussion</h2>
-      <SearchField placeholder="Search lecture questions" />
+    <div className="container my-4">
+      <h2 className="text-center">Lecture Discussion</h2>
+  
+      {/* Search Field */}
+      <form className="d-flex mt-4 mb-5" role="search">
+        <input
+          className="form-control me-2 p-3"
+          type="search"
+          placeholder="Search the content of the course"
+          aria-label="Search"
+        />
+        <button className="btn btn-primary" type="submit">
+          Search
+        </button>
+      </form>
+    
       {isLoading ? (
         <Loading />
       ) : (
-        <DiscussionEntries entries={entries} chunkSize={10} />
+        <div className="discussion-entries">
+          <DiscussionEntries entries={entries} chunkSize={10} isLecture />
+        </div>
       )}
-      <div>
+    
+      <div className="text-center mt-4">
         {askNewQuestion ? (
           <DiscussionEntryEditor onPublish={handlePublishQuestion} />
         ) : (
-          // or a button?
-          <p onClick={() => setAskNewQuestion(true)}>Ask a new question</p>
+          <button
+            className=" btn btn-outline-secondary text-white btn-style"
+            onClick={() => setAskNewQuestion(true)}
+          >
+            Ask a new question
+          </button>
         )}
       </div>
     </div>
+  
   );
 }

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import ImageKit from "imagekit-javascript";
-import { formRegister,  setError, toggleLoading } from '../../redux/actions/uiActionCreators';
+import { formRegister, toggleLoading } from '../../redux/actions/uiActionCreators';
 
 const imagekit = new ImageKit({
   publicKey: "public_tTc9vCi5O7L8WVAQquK6vQWNx08=",
@@ -18,13 +18,33 @@ export default function RegisterStepTwo({
   const dispatch = useDispatch();
   const isLoading = useSelector(state => state.ui.get('isLoading'));
 
+  // Ensure label moves up when there is content in the input field
+  useEffect(() => {
+    const inputs = document.querySelectorAll('.input100');
+    inputs.forEach(input => {
+      if (input.value.trim() !== '') {
+        input.classList.add('has-val');
+      } else {
+        input.classList.remove('has-val');
+      }
+    });
+  }, [userData]);
+
   function handleChange(event) {
     const { name, value } = event.target;
     handleInputChange(name, value);
   }
 
-  function handleFileSelect(event) {
+  function handleBlur(event) {
+    const input = event.target;
+    if (input.value.trim() !== '') {
+      input.classList.add('has-val');
+    } else {
+      input.classList.remove('has-val');
+    }
+  }
 
+  function handleFileSelect(event) {
     const file = event.target.files[0];
     setFile(file);
 
@@ -37,7 +57,7 @@ export default function RegisterStepTwo({
     let url = '';
     let thumbnail = '';
     try {
-      dispatch(toggleLoading())
+      dispatch(toggleLoading());
       const response = await fetch("http://localhost:3000/auth/imagekit");
       const authParams = await response.json();
 
@@ -51,26 +71,21 @@ export default function RegisterStepTwo({
       thumbnail = uploadResponse.thumbnailUrl;
     } catch (error) {
       console.error("Error uploading image:", error);
-      dispatch(setError('auth', 'Error uploading the profile image!'));
     }
-    dispatch(toggleLoading())
-
-    return {id, url, thumbnail}
+    dispatch(toggleLoading());
+    return { id, url };
   }
 
   async function handleSubmit(event) {
     event.preventDefault();
-  
+
     if (file) {
       try {
         dispatch(toggleLoading());
-      const { id, url, thumbnail } = await uploadImage(file);
-        
-        dispatch(formRegister({...userData, pictureId: id, pictureURL: url, pictureThumbnail: thumbnail}));
-
+        const { id, url } = await uploadImage(file);
+        dispatch(formRegister({ ...userData, pictureId: id, pictureURL: url }));
       } catch (error) {
         console.error("Error uploading image:", error);
-        dispatch(setError('auth', 'Error uploading the profile image!'));
         return;
       }
     } else {
@@ -79,45 +94,65 @@ export default function RegisterStepTwo({
   }
 
   return (
-    <>
-      <button onClick={() => setStep(1)}>Back</button>
-      <h1>Almost There</h1>
-      <p>Please provide us with your personal information</p>
-      <form onSubmit={handleSubmit}>
-        <label>
-          First Name:
-          <input
-            id="firstName"
-            name="firstName"
-            type="text"
-            value={userData.firstName}
-            placeholder="insert your first name"
-            required
-            onChange={handleChange}
-          />
-        </label>
-        <hr />
-        <label>
-          Last Name:
-          <input
-            id="lastName"
-            name="lastName"
-            type="text"
-            value={userData.lastName}
-            placeholder="and your last name"
-            required
-            onChange={handleChange}
-          />
-        </label>
-        {imageUrl && <img src={imageUrl} width="200" alt="Uploaded" />}
-        <hr />
-        <label>
-          Profile Picture:
-          <input id='profilePicture' name="profilePicture" type="file" onChange={handleFileSelect}/>
-        </label>
-        <hr />
-        <button type="submit" disabled={isLoading} >Register</button>
-      </form>
-    </>
+    <div className="limiter">
+      <div className="container-login100">
+        <div className="wrap-login100">
+          <form onSubmit={handleSubmit} className="login100-form">
+           <i className="fa fa-arrow-left" aria-hidden="true"> <button onClick={() => setStep(1)} className="text-start mb-5 fs-5">Back </button></i>
+          <p className='login100-form-title p-b-43'>Please provide us with your personal information</p>
+ 
+            {/* First Name */}
+            <div className="wrap-input100">
+              <input
+                className="input100"
+                type="text"
+                name="firstName"
+                value={userData.firstName}
+                required
+                onChange={handleChange}
+                onBlur={handleBlur}
+              />
+              <span className="focus-input100"></span>
+              <span className="label-input100">First Name</span>
+            </div>
+
+            {/* Last Name */}
+            <div className="wrap-input100">
+              <input
+                className="input100"
+                type="text"
+                name="lastName"
+                value={userData.lastName}
+                required
+                onChange={handleChange}
+                onBlur={handleBlur}
+              />
+              <span className="focus-input100"></span>
+              <span className="label-input100">Last Name</span>
+            </div>
+
+            {/* Profile Picture */}
+            <div className="wrap-input100">
+              <input
+                className="input100"
+                id="profilePicture"
+                name="profilePicture"
+                type="file"
+                onChange={handleFileSelect}
+              />
+              {imageUrl && <img src={imageUrl} width="200" alt="Uploaded" />}
+            </div>
+
+            {/* Submit Button */}
+            <div className="container-login100-form-btn">
+              <button type="submit" className="login100-form-btn" disabled={isLoading}>
+                Register
+              </button>
+            </div>
+          </form>
+          <div className="login100-more" style={{ backgroundImage: "url('books.jpg')" }}></div>
+        </div>
+      </div>
+    </div>
   );
 }

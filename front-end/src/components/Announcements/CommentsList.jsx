@@ -6,7 +6,6 @@ import {
 } from '../../redux/selectors/announcementsSelectors';
 import Loading from '../utilityComponents/Loading';
 import CommentEntry from './CommentEntry';
-import { fromJS } from 'immutable';
 import { fetchAnnouncementComments } from '../../redux/actions/announcementsThunks';
 
 export default function CommentsList({ announcementId = 'testId' }) {
@@ -17,30 +16,43 @@ export default function CommentsList({ announcementId = 'testId' }) {
   const dispatch = useDispatch();
 
   useEffect(() => {
-      dispatch(fetchAnnouncementComments(announcementId));
+    dispatch(fetchAnnouncementComments(announcementId));
   }, [dispatch, announcementId]);
+
+  const showMoreComments = () => setLimit(limit + 10);
+  const showLessComments = () => setLimit(limit - 10);
 
   return (
     <div>
       {isLoading ? (
         <Loading />
       ) : !comments || !comments.size ? (
-        <h3>No comments yet</h3>
+        <h3>No comments yet. Be the first to comment!</h3>
       ) : (
         <>
           {comments.slice(0, limit).map((comment) => (
             <CommentEntry key={comment.get('id')} content={comment} />
           ))}
-          {limit < comments.size && (
-            <button type="button" onClick={() => setLimit(limit + 10)}>
-              Show more
-            </button>
-          )}
-          {limit > 10 && (
-            <button type="button" onClick={() => setLimit(limit - 10)}>
-              Show less
-            </button>
-          )}
+          <div className="pagination-controls">
+            {limit < comments.size && (
+              <button
+                type="button"
+                onClick={showMoreComments}
+                aria-label="Show more comments"
+              >
+                Show more
+              </button>
+            )}
+            {limit > 10 && (
+              <button
+                type="button"
+                onClick={showLessComments}
+                aria-label="Show less comments"
+              >
+                Show less
+              </button>
+            )}
+          </div>
         </>
       )}
     </div>

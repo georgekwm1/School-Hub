@@ -1,9 +1,10 @@
 import React, { useRef, useMemo } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import 'react-quill/dist/quill.bubble.css';
 
 const toolbarOptions = [
-  [{ header: [1, 2, 3, 4, 5, 6, false] }],
+  [{ header: [1, 2, 3, false] }],
   ['bold', 'italic'], // Basic text styles
   ['link', 'image'], // Links and images
   ['blockquote'],
@@ -16,6 +17,7 @@ export default function TextEditor({
   setValue,
   files,
   setFiles,
+  bubble = false,
 }) {
   const quillRef = useRef(null);
 
@@ -62,7 +64,7 @@ export default function TextEditor({
         placeholder={placeholder}
         ref={quillRef}
         modules={modules}
-        theme="snow"
+        theme={bubble ? 'bubble' : 'snow'}
         value={value}
         onChange={setValue}
       />
