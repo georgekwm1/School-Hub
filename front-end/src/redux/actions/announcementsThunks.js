@@ -6,9 +6,7 @@ export const fetchAnnouncements = () => async (dispatch, getState) => {
   dispatch(creators.fetchAnnouncementsRequest());
   const courseId = getState().ui.getIn(['course', 'id']) || 'testId';
   try {
-    const response = await fetch(`${DOMAIN}/courses/${courseId}/announcements`, {
-      mode: 'no-cors',
-    });
+    const response = await fetch(`${DOMAIN}/courses/${courseId}/announcements`);
     const data = await response.json();
     if (!response.ok) {
       throw new Error(data.message);
