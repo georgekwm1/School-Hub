@@ -1,16 +1,16 @@
 {
   "files": {
     "main.css": "/School-Hub/static/css/main.f6458dac.css",
-    "main.js": "/School-Hub/static/js/main.abe4da4d.js",
+    "main.js": "/School-Hub/static/js/main.72a02156.js",
     "static/js/453.68693753.chunk.js": "/School-Hub/static/js/453.68693753.chunk.js",
     "service-worker.js": "/School-Hub/service-worker.js",
     "index.html": "/School-Hub/index.html",
     "main.f6458dac.css.map": "/School-Hub/static/css/main.f6458dac.css.map",
-    "main.abe4da4d.js.map": "/School-Hub/static/js/main.abe4da4d.js.map",
+    "main.72a02156.js.map": "/School-Hub/static/js/main.72a02156.js.map",
     "453.68693753.chunk.js.map": "/School-Hub/static/js/453.68693753.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.f6458dac.css",
-    "static/js/main.abe4da4d.js"
+    "static/js/main.72a02156.js"
   ]
 }
