@@ -80,7 +80,6 @@ export default function Sidebar() {
               aria-label="Close"
             ></button>
           </div>
-
           <div className="offcanvas-body">
             <ul className="navbar-nav justify-content-end flex-grow-1 pe-3">
               {/* Sidebar Navigation Links */}
@@ -109,13 +108,17 @@ export default function Sidebar() {
                   <i className="fa fa-user-plus"></i> Register
                 </Link>
               </li>
-              <li className="nav-item">
+            </ul>
+          </div>
+          <div className="offcanvas-footer">
+            <ul>
+              <li>
                 <button
                   type="button"
-                  className="btn btn-link text-white"
+                  className="btn btn-link text-white w-100"
                   onClick={handleLogout}
                 >
-                  <i className="fa fa-sign-out"></i> Logout
+                  <i className="fa fa-sign-out">Logout</i>
                 </button>
               </li>
             </ul>
