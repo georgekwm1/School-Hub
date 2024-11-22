@@ -1,6 +1,7 @@
 import * as actions from './uiActionTypes';
 
 import { DOMAIN } from '../../utils/constants';
+import { setToken } from '../../utils/utilFunctions';
 
 export const toggleLoading = () => {
   return { type: actions.TOGGLE_LOADING };
@@ -75,8 +76,8 @@ const login = (request) => async (dispatch) => {
 
     const data = await response.json();
 
-    sessionStorage.setItem('refreshToken', data.refresh);
-    sessionStorage.setItem('accessToken', data.access);
+    setToken('refreshToken', data.refresh);
+    setToken('accessToken', data.access);
 
     const userData = {
       ...data.user,
