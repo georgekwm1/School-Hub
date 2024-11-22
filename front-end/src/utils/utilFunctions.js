@@ -88,3 +88,6 @@ export async function uploadFile(file, dispatch, name = '') {
     return null;
   }
 }
+
+export const setToken = (type, token) => sessionStorage.setItem(type, token);
+export const getToken = (type) => sessionStorage.getItem(type);
