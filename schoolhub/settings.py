@@ -218,20 +218,22 @@ CSRF_TRUSTED_ORIGINS = ["http://localhost:3000",
                         "https://127.0.0.1:3001",
 
                         ]
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "https://localhost:3000",
-    "http://localhost:3001",
-    "https://localhost:3001",
-    "http://127.0.0.1:3000",
-    "https://127.0.0.1:3000",
-    "http://127.0.0.1:3001",
-    "https://127.0.0.1:3001",
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:3000",
+#     "https://localhost:3000",
+#     "http://localhost:3001",
+#     "https://localhost:3001",
+#     "http://127.0.0.1:3000",
+#     "https://127.0.0.1:3000",
+#     "http://127.0.0.1:3001",
+#     "https://127.0.0.1:3001",
 
-]
+# ]
 
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_HEADERS = True
+
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_SECURE = False
