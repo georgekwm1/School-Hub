@@ -332,7 +332,8 @@ def course_lectures(request, course_id):
         for chapter in chapters:
             lecture = Lecture.objects.filter(chapter=chapter)
             serializer = LectureSerializer(lecture, many=True)
-            new_data.append(serializer.data)
+            new_data.append({"title": chapter.chapter_name,
+                            "lectures": serializer.data})
         return Response(new_data, status=status.HTTP_200_OK)
     return Response({"message": "You are not authorized to access this resource"}, status=status.HTTP_403_FORBIDDEN)
 

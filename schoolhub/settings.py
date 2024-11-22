@@ -250,7 +250,7 @@ SIMPLE_JWT = {
     'USER_ID_FIELD': 'user_id',  # Use 'user_id' as the identifier
     'USER_ID_CLAIM': 'user_id',  # Set the claim name to 'user_id' in the JWT
     'AUTH_HEADER_TYPES': ('Bearer',),
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=600),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,

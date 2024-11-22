@@ -117,6 +117,7 @@ class Lecture(models.Model):
     lecture_id = models.BigAutoField(auto_created=True, primary_key=True)
     lecture_name = models.CharField(max_length=100)
     lecture_description = models.TextField(null=True, blank=True)
+    tags = models.CharField(max_length=100, null=True, blank=True)
     chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE)
 
     def __str__(self):
