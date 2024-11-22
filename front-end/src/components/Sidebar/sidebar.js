@@ -94,13 +94,13 @@ export default function Sidebar() {
                 </Link>
               </li>
               <li className="nav-item">
-                <Link className="nav-link text-white" to="/announcements">
-                  <i className="fa fa-bullhorn"></i> Announcements
+                <Link className="nav-link text-white" to="/discussion">
+                  <i className="fa fa-comments"></i> General Forum
                 </Link>
               </li>
               <li className="nav-item">
-                <Link className="nav-link text-white" to="/discussion">
-                  <i className="fa fa-comments"></i> Discussion
+                <Link className="nav-link text-white" to="/announcements">
+                  <i className="fa fa-bullhorn"></i> Announcements
                 </Link>
               </li>
             </ul>
@@ -113,7 +113,7 @@ export default function Sidebar() {
                   className="btn btn-link text-white w-100"
                   onClick={handleLogout}
                 >
-                  <i className="fa fa-sign-out">Logout</i>
+                  <i className="fa fa-sign-out"></i> Logout
                 </button>
               </li>
             </ul>
