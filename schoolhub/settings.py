@@ -229,7 +229,14 @@ CSRF_TRUSTED_ORIGINS = ["http://localhost:3000",
 #     "https://127.0.0.1:3001",
 
 # ]
-
+CORS_ALLOW_METHODS = [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "OPTIONS",
+]
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_HEADERS = True
