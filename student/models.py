@@ -130,6 +130,12 @@ class Course_Resources(models.Model):
     resource_file = models.FileField(
         upload_to='course_resources/', null=True, blank=True)
     resource_link = models.URLField(max_length=200, null=True, blank=True)
+    demo_name = models.CharField(max_length=100)
+    demo_link = models.URLField(max_length=200, null=True, blank=True)
+    shorts_name = models.CharField(max_length=100)
+    shorts_link = models.URLField(max_length=200, null=True, blank=True)
+    transcript = models.TextField(null=True, blank=True)
+    subtitles = models.TextField(null=True, blank=True)
     upload_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
