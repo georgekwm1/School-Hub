@@ -103,11 +103,6 @@ export default function Sidebar() {
                   <i className="fa fa-comments"></i> Discussion
                 </Link>
               </li>
-              <li className="nav-item">
-                <Link className="nav-link text-white" to="/register">
-                  <i className="fa fa-user-plus"></i> Register
-                </Link>
-              </li>
             </ul>
           </div>
           <div className="offcanvas-footer">
