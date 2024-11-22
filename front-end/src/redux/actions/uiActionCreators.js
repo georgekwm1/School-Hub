@@ -27,7 +27,7 @@ export const loginFailure = (errorMessage) => (dispatch) => {
 export function formLogin(email, password, isAdmin) {
   const url = isAdmin
     ? `${DOMAIN}/auth/admin/login`
-    : `${DOMAIN}/auth/login`
+    : `${DOMAIN}/api/login`
   const request = new Request(url, {
     method: 'POST',
     body: JSON.stringify({ email, password }),
