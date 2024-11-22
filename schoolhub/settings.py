@@ -208,12 +208,26 @@ APPEND_SLASH = False
 # LOGIN_URL = '/login/'
 # SOCIAL_AUTH_OAUTH2_IGNORE_STATE = True
 
-CSRF_TRUSTED_ORIGINS = ['http://localhost:3001', 'http://127.0.0.1:3001']
+CSRF_TRUSTED_ORIGINS = ["http://localhost:3000",
+                        "https://localhost:3000",
+                        "http://localhost:3001",
+                        "https://localhost:3001",
+                        "http://127.0.0.1:3000",
+                        "https://127.0.0.1:3000",
+                        "http://127.0.0.1:3001",
+                        "https://127.0.0.1:3001",
+                        "https://localhost:3001/School-Hub",
+                        ]
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "https://localhost:3000",
     "http://localhost:3001",
     "https://localhost:3001",
+    "http://127.0.0.1:3000",
+    "https://127.0.0.1:3000",
+    "http://127.0.0.1:3001",
+    "https://127.0.0.1:3001",
+    "https://localhost:3001/School-Hub",
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True
