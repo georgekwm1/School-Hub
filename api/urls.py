@@ -27,74 +27,74 @@ urlpatterns = [
 
 
     # -------------------------------GET-------------------------------------------
-    # Course
+    # courses
     path('courses', views.CoursesListView.as_view(), name='api_courses'),
 
     path('available_courses', views.AvailableCoursesView.as_view(),
          name='api_available_courses'),
 
     # Lectures
-    path("course/<int:course_id>/lectures",
+    path("courses/<int:course_id>/lectures",
          views.course_lectures, name="course_lectures"),
-    path("course/<int:course_id>/lecture/<int:lecture_id>",
+    path("courses/<int:course_id>/lecture/<int:lecture_id>",
          views.course_lecture_by_id, name="course_lectures_byid"),
 
     # Lecture Resources
-    path('course/<int:course_id>/lecture/<int:lecture_id>/resource/<int:resource_id>',  # GET:
+    path('courses/<int:course_id>/lecture/<int:lecture_id>/resource/<int:resource_id>',  # GET:
          views.resource_by_lecture, name='api_resource_of_lecture'),
-    path('course/<int:course_id>/lecture/<int:lecture_id>/resources',   # GET
+    path('courses/<int:course_id>/lecture/<int:lecture_id>/resources',   # GET
          views.all_resources_by_lecture, name='api_resources_of_lecture'),
 
     # ------------------------------- POST-----------------------------------------------
-    # Course
+    # courses
     path('courses/create', views.CoursesCreateView.as_view(),
          name='api_create_courses'),
 
     # Chapter
-    path("course/<int:course_id>/chapter",
+    path("courses/<int:course_id>/chapter",
          views.create_chapter, name="create_course_chapter"),
 
     # Lectures
-    path("course/<int:course_id>/chapter/<int:chapter_id>/lecture",
+    path("courses/<int:course_id>/chapter/<int:chapter_id>/lecture",
          views.create_lecture, name="create_course_lectures"),
 
     # Lecture Resources
-    path('course/<int:course_id>/lecture/<int:lecture_id>/resource',   # GET
+    path('courses/<int:course_id>/lecture/<int:lecture_id>/resource',   # GET
          views.create_resource_by_lecture, name='create_resources_of_lecture'),
 
     # -----------------------------------PUT-------------------------------------------
-    # Course
+    # courses
     path('courses/<int:course_id>/edit',
          views.CoursesEditDeleteView.as_view(), name='api_create_courses'),
 
     # Chapter
-    path("course/<int:course_id>/chapter/<int:chapter_id>",  # ✅
+    path("courses/<int:course_id>/chapter/<int:chapter_id>",  # ✅
          views.edit_chapter, name="edit_course_chapter"),
 
     # Lectures
-    path("course/<int:course_id>/chapter/<int:chapter_id>/lecture/<int:lecture_id>",  # ✅
+    path("courses/<int:course_id>/chapter/<int:chapter_id>/lecture/<int:lecture_id>",  # ✅
          views.edit_lecture, name="edit_course_lectures"),
 
     # Lecture Resources
-    path('course/<int:course_id>/chapter/<int:chapter_id>/lectures/<int:lecture_id>/resources/<int:resource_id>',  # ✅  # GET
+    path('courses/<int:course_id>/chapter/<int:chapter_id>/lectures/<int:lecture_id>/resources/<int:resource_id>',  # ✅  # GET
          views.edit_resource_by_lecture, name='edit_resources_of_lecture'),
 
     # ----------------------------------DELETE-------------------------------------------------------
-    # Course
+    # courses
     path('courses/<int:course_id>',
          views.CoursesEditDeleteView.as_view(), name='api_create_courses'),
 
     # Chapter
-    path("course/<int:course_id>/chapter/<int:chapter_id>",  # ✅
+    path("courses/<int:course_id>/chapter/<int:chapter_id>",  # ✅
          views.delete_chapter, name="delete_course_chapter"),
 
 
     # Lectures
-    path("course/<int:course_id>/chapter/<int:chapter_id>/lecture/<int:lecture_id>",  # ✅
+    path("courses/<int:course_id>/chapter/<int:chapter_id>/lecture/<int:lecture_id>",  # ✅
          views.delete_lecture, name="delete_course_lectures"),
 
     # Lecture Resources
-    path('course/<int:course_id>/chapter/<int:chapter_id>/lecture/<int:lecture_id>/resource/<int:resource_id>',  # ✅  # GET
+    path('courses/<int:course_id>/chapter/<int:chapter_id>/lecture/<int:lecture_id>/resource/<int:resource_id>',  # ✅  # GET
          views.delete_resource_by_lecture, name='delete_resources_of_lecture'),
 
 
@@ -110,50 +110,50 @@ urlpatterns = [
     path('enrollment/lecturer/<int:course_id>/<int:student_id>',
          views.EnrollmentForLecturerView.as_view(), name='api_lecturer_enrollments'),  # ✅
 
-    #     path("course/details/<int:course_id>",
-    #          # GET: View details for a particular course
+    #     path("courses/details/<int:course_id>",
+    #          # GET: View details for a particular courses
     #          views.course_detail_view, name="course_detail_view"),
 
     # CHATS, THREADS AND FORUMS ENDPOINTS. CREATE GET, OR DELETE THEM
 
     # -----------------------------------------------GET-----------------------------------------------
     # Forums
-    path("course/<int:course_id>/lecture/<int:lecture_id>/forums",  # ✅
-         # GET: View all forums for a particular course
+    path("courses/<int:course_id>/lecture/<int:lecture_id>/forums",  # ✅
+         # GET: View all forums for a particular courses
          views.forums_by_lecture, name="forums_by_lecture"),
-    path("course/<int:course_id>/lecture/<int:lecture_id>/forum/<int:forum_id>",  # ✅
-         # GET: View a particular forum for a particular course
+    path("courses/<int:course_id>/lecture/<int:lecture_id>/forum/<int:forum_id>",  # ✅
+         # GET: View a particular forum for a particular courses
          views.forum_by_lecture, name="forum_by_lecture"),
 
     # Threads
-    path("course/<int:course_id>/lecture/<int:lecture_id>/forum/<int:forum_id>/threads",
-         # GET: threads for a forum of a course
+    path("courses/<int:course_id>/lecture/<int:lecture_id>/forum/<int:forum_id>/threads",
+         # GET: threads for a forum of a courses
          views.threads_in_forum_by_lecture, name="thread_in_forum_by_lecture"),  # ✅
-    path("course/<int:course_id>/lecture/<int:lecture_id>/forum/<int:forum_id>/thread/<int:thread_id>",
-         # GET: threads for a forum of a course
+    path("courses/<int:course_id>/lecture/<int:lecture_id>/forum/<int:forum_id>/thread/<int:thread_id>",
+         # GET: threads for a forum of a courses
          views.thread_in_forum_by_lecture, name="thread_in_forum_by_lecture"),  # ✅
 
     # Chats in threads
-    path("course/<int:course_id>/lecture/<int:lecture_id>/forum/<int:forum_id>",  # ✅
+    path("courses/<int:course_id>/lecture/<int:lecture_id>/forum/<int:forum_id>",  # ✅
          # GET: View all forums for a particular lecture
          views.chats_in_forum_by_lecture, name="chats_in_forum_by_lecture"),
-    path("course/<int:course_id>/lecture/<int:lecture_id>/forum/<int:forum_id>/chat/<int:chat_id>",  # ✅
+    path("courses/<int:course_id>/lecture/<int:lecture_id>/forum/<int:forum_id>/chat/<int:chat_id>",  # ✅
          views.chat_in_forum_by_lecture, name="chat_in_forum_by_lecture"),
 
-    path("course/<int:course_id>/lecture/<int:lecture_id>/forum/<int:forum_id>/threads/<int:thread_id>/chats",  # ✅
-         # GET: View all forums for a particular course
+    path("courses/<int:course_id>/lecture/<int:lecture_id>/forum/<int:forum_id>/threads/<int:thread_id>/chats",  # ✅
+         # GET: View all forums for a particular courses
          views.chats_in_thread_by_forum, name="chats_in_thread_by_forum"),
-    path("course/<int:course_id>/lecture/<int:lecture_id>/forum/<int:forum_id>/threads/<int:thread_id>/chat/<int:chat_id>",  # ✅
+    path("courses/<int:course_id>/lecture/<int:lecture_id>/forum/<int:forum_id>/threads/<int:thread_id>/chat/<int:chat_id>",  # ✅
          views.chat_in_thread_by_forum, name="chat_in_thread_by_forum"),
 
     # Announcements and Comments in announcements
-    path("course/<int:course_id>/announcements",
+    path("courses/<int:course_id>/announcements",
          views.announcements, name="announcements"),
-    path("course/<int:course_id>/announcement/<int:announcement_id>",
+    path("courses/<int:course_id>/announcement/<int:announcement_id>",
          views.announcement_by_id, name="announcement_by_id"),
-    path("course/<int:course_id>/announcement/<int:announcement_id>/comments",
+    path("courses/<int:course_id>/announcement/<int:announcement_id>/comments",
          views.comments, name="comments"),
-    path("course/<int:course_id>/announcement/<int:announcement_id>/comment/<int:comment_id>",
+    path("courses/<int:course_id>/announcement/<int:announcement_id>/comment/<int:comment_id>",
          views.comment_by_id, name="comment_by_id"),
 
     # Upvotes for Threads and Chats
@@ -165,59 +165,59 @@ urlpatterns = [
 
     # -------------------------------------POST-----------------------------------------------
     # Forum
-    path("course/<int:course_id>/lecture/<int:lecture_id>/forum",  # ✅
+    path("courses/<int:course_id>/lecture/<int:lecture_id>/forum",  # ✅
          views.create_forum, name="create_forum"),  # ✅
 
     # Threads
-    path("course/<int:course_id>/lecture/<int:lecture_id>/forum/<int:forum_id>/thread",
+    path("courses/<int:course_id>/lecture/<int:lecture_id>/forum/<int:forum_id>/thread",
          views.create_thread, name="create_thread"),  # ✅
 
     # Chats in threads
-    path("course/<int:course_id>/lecture/<int:lecture_id>/forum/<int:forum_id>/thread/<int:thread_id>/chat",
+    path("courses/<int:course_id>/lecture/<int:lecture_id>/forum/<int:forum_id>/thread/<int:thread_id>/chat",
          views.create_chat, name="create_chat"),  # ✅
 
     # Announcements and Comments in announcements
-    path("course/<int:course_id>/announcement",
+    path("courses/<int:course_id>/announcement",
          views.create_announcement, name="create_announcement"),
-    path("course/<int:course_id>/announcement/<int:announcement_id>/comment",
+    path("courses/<int:course_id>/announcement/<int:announcement_id>/comment",
          views.create_comment, name="create_comment"),
 
 
     # ------------------------------------PUT-------------------------------------------------------
     # Forum
-    path("course/<int:course_id>/lecture/<int:lecture_id>/forum/<int:forum_id>",  # ✅
+    path("courses/<int:course_id>/lecture/<int:lecture_id>/forum/<int:forum_id>",  # ✅
          views.edit_forum, name="edit_forum"),  # ✅
 
     # Threads
-    path("course/<int:course_id>/forum/<int:forum_id>/thread/<int:thread_id>",
+    path("courses/<int:course_id>/forum/<int:forum_id>/thread/<int:thread_id>",
          views.edit_thread, name="edit_thread"),
 
     # Chats in threads
-    path("course/<int:course_id>/lecture/<int:lecture_id>/forum/<int:forum_id>/thread/<int:thread_id>/chat/<int:chat_id>",
+    path("courses/<int:course_id>/lecture/<int:lecture_id>/forum/<int:forum_id>/thread/<int:thread_id>/chat/<int:chat_id>",
          views.edit_chat, name="edit_chat"),  # ✅
 
     # Announcements and Comments in announcements
-    path("course/<int:course_id>/announcement/<int:announcement_id>/edit",
+    path("courses/<int:course_id>/announcement/<int:announcement_id>/edit",
          views.edit_announcement, name="edit_announcement"),
-    path("course/<int:course_id>/announcement/<int:announcement_id>/comment/<int:comment_id>/edit",
+    path("courses/<int:course_id>/announcement/<int:announcement_id>/comment/<int:comment_id>/edit",
          views.edit_comment, name="edit_comment"),
 
     # --------------------------------------DELETE-----------------------------------------------------
     # Forum
-    path("course/<int:course_id>/forum/<int:forum_id>",  # ✅
+    path("courses/<int:course_id>/forum/<int:forum_id>",  # ✅
          views.delete_forum, name="delete_forum"),
 
     # Threads
-    path("course/<int:course_id>/forum/<int:forum_id>/thread/<int:thread_id>",
+    path("courses/<int:course_id>/forum/<int:forum_id>/thread/<int:thread_id>",
          views.delete_thread, name="delete_thread"),  # ✅
 
     # Chats in threads
-    path("course/<int:course_id>/lecture/<int:lecture_id>/forum/<int:forum_id>/thread/<int:thread_id>/chat/<int:chat_id>",
+    path("courses/<int:course_id>/lecture/<int:lecture_id>/forum/<int:forum_id>/thread/<int:thread_id>/chat/<int:chat_id>",
          views.delete_chat, name="delete_chat"),  # ✅
 
     # Announcements and Comments in announcements
-    path("course/<int:course_id>/announcement/<int:announcement_id>/delete",
+    path("courses/<int:course_id>/announcement/<int:announcement_id>/delete",
          views.delete_announcement, name="edit_announcement"),
-    path("course/<int:course_id>/announcement/<int:announcement_id>/comment/<int:comment_id>/delete",
+    path("courses/<int:course_id>/announcement/<int:announcement_id>/comment/<int:comment_id>/delete",
          views.delete_comment, name="delete_comment"),
 ]
