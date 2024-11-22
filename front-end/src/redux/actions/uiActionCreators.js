@@ -1,6 +1,7 @@
 import * as actions from './uiActionTypes';
 
 import { DOMAIN } from '../../utils/constants';
+import { setToken } from '../../utils/utilFunctions';
 
 export const toggleLoading = () => {
   return { type: actions.TOGGLE_LOADING };
@@ -27,7 +28,7 @@ export const loginFailure = (errorMessage) => (dispatch) => {
 export function formLogin(email, password, isAdmin) {
   const url = isAdmin
     ? `${DOMAIN}/auth/admin/login`
-    : `${DOMAIN}/auth/login`
+    : `${DOMAIN}/api/login`
   const request = new Request(url, {
     method: 'POST',
     body: JSON.stringify({ email, password }),
@@ -74,7 +75,15 @@ const login = (request) => async (dispatch) => {
     }
 
     const data = await response.json();
-    dispatch(loginSuccess(data.user));
+
+    setToken('refreshToken', data.refresh);
+    setToken('accessToken', data.access);
+
+    const userData = {
+      ...data.user,
+      id: data.user.user_id,
+    }
+    dispatch(loginSuccess(userData));
   } catch (error) {
     dispatch(loginFailure(error.message));
     console.error(error.message);
