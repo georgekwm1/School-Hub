@@ -1,10 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { logout } from '../../redux/actions/uiActionCreators';
 import { googleLogout } from '@react-oauth/google';
 import './sidebar.css';
 
+
+/**
+ * First.. This is not a good component because it's all in one place.
+ * Second.. This is offcanvas.. but This has to be offcanvas only on narrow screens
+ * but part of the body on wide screens 
+ */
 export default function Sidebar() {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const dispatch = useDispatch();
@@ -17,6 +23,21 @@ export default function Sidebar() {
   const toggleSidebar = () => {
     setSidebarOpen(!isSidebarOpen);
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.offcanvas-body') && !event.target.closest('.navbar-toggler')) {
+        setSidebarOpen(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+
+  }, []);
 
   return (
     <nav className="navbar navbar-dark bgd-style fixed-top position-relative">
