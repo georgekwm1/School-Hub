@@ -5,11 +5,11 @@ import { logout } from '../../redux/actions/uiActionCreators';
 import { googleLogout } from '@react-oauth/google';
 import './sidebar.css';
 
-
 /**
  * First.. This is not a good component because it's all in one place.
+ * and not really a sidebar..
  * Second.. This is offcanvas.. but This has to be offcanvas only on narrow screens
- * but part of the body on wide screens 
+ * but part of the body on wide screens
  */
 export default function Sidebar() {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -26,7 +26,10 @@ export default function Sidebar() {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (!event.target.closest('.offcanvas-body') && !event.target.closest('.navbar-toggler')) {
+      if (
+        !event.target.closest('.offcanvas-body') &&
+        !event.target.closest('.navbar-toggler')
+      ) {
         setSidebarOpen(false);
       }
     };
@@ -36,7 +39,6 @@ export default function Sidebar() {
     return () => {
       document.removeEventListener('click', handleClickOutside);
     };
-
   }, []);
 
   return (
@@ -54,17 +56,23 @@ export default function Sidebar() {
         </button>
 
         {/* Title moved to the right */}
-        <Link className="navbar-brand ms-auto" to="/">Pro Learning Hub</Link>
+        <Link className="navbar-brand ms-auto" to="/">
+          Pro Learning Hub
+        </Link>
 
         {/* Offcanvas Sidebar */}
         <div
-          className={`offcanvas offcanvas-start bgd-style ${isSidebarOpen ? 'show' : ''}`}
+          className={`offcanvas offcanvas-start bgd-style ${
+            isSidebarOpen ? 'show' : ''
+          }`}
           tabIndex="-1"
           id="offcanvasDarkNavbar"
           aria-labelledby="offcanvasDarkNavbarLabel"
         >
           <div className="offcanvas-header">
-            <h5 className="offcanvas-title" id="offcanvasDarkNavbarLabel">Pro Learning Hub</h5>
+            <h5 className="offcanvas-title" id="offcanvasDarkNavbarLabel">
+              Pro Learning Hub
+            </h5>
             <button
               type="button"
               className="btn-close btn-close-white"
@@ -97,7 +105,6 @@ export default function Sidebar() {
                 </Link>
               </li>
               <li className="nav-item">
-
                 <Link className="nav-link text-white" to="/register">
                   <i className="fa fa-user-plus"></i> Register
                 </Link>
