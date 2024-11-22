@@ -74,7 +74,15 @@ const login = (request) => async (dispatch) => {
     }
 
     const data = await response.json();
-    dispatch(loginSuccess(data.user));
+
+    sessionStorage.setItem('refreshToken', data.refresh);
+    sessionStorage.setItem('accessToken', data.access);
+
+    const userData = {
+      ...data.user,
+      id: data.user.user_id,
+    }
+    dispatch(loginSuccess(userData));
   } catch (error) {
     dispatch(loginFailure(error.message));
     console.error(error.message);
