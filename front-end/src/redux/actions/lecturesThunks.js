@@ -32,7 +32,7 @@ export const getCourseLectures = (courseId) => async (dispatch, getState) => {
   try {
     const response = await fetch(`${DOMAIN}/api/courses/${courseId}/lectures`, {
       headers: {
-        'Authintication': `Bearer ${getToken('accessToken')}`,
+        'Authorization': `Bearer ${getToken('accessToken')}`,
       }
     });
     const data = await response.json();
@@ -41,7 +41,7 @@ export const getCourseLectures = (courseId) => async (dispatch, getState) => {
       throw new Error(data.message);
     }
 
-    dispatch(actionCreators.sectionsSuccess(data.sections));
+    dispatch(actionCreators.sectionsSuccess(data));
   } catch (error) {
     console.error(error);
     dispatch(actionCreators.sectionsFailure(error.message));
