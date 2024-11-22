@@ -5,6 +5,7 @@ import { googleLogout } from '@react-oauth/google';
 import { logout } from '../../redux/actions/uiActionCreators';
 import Communities from './Communities';
 import SidebarHeader from './SidebarHeader';
+import Featured from './Featured';
 import './sidebar.css';
 
 /**
@@ -101,6 +102,9 @@ export default function Sidebar() {
               {/* Coruse links */}
               <li className="nav-item">
                 <Communities />
+              </li>
+              <li className="nav-item">
+                <Featured />
               </li>
             </ul>
           </div>
