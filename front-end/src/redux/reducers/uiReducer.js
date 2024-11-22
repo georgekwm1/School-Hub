@@ -5,7 +5,7 @@ export const initialState = fromJS({
   isLoading: false,
   isLoggedIn: false,
   course: {
-    id: 'testId',
+    id: 3,
   },
   user: {},
   // Save different error messages for different error types
