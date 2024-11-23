@@ -89,5 +89,5 @@ export async function uploadFile(file, dispatch, name = '') {
   }
 }
 
-export const setToken = (type, token) => sessionStorage.setItem(type, token);
-export const getToken = (type) => sessionStorage.getItem(type);
+export const setToken = (type, token) => localStorage.setItem(type, token);
+export const getToken = (type) => localStorage.getItem(type);
