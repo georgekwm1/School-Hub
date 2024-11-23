@@ -1,7 +1,8 @@
+import { googleLogout } from '@react-oauth/google';
+import toast from 'react-hot-toast';
 import * as actions from './uiActionTypes';
-
 import { DOMAIN } from '../../utils/constants';
-import { setToken } from '../../utils/utilFunctions';
+import { getToken, removeToken, setToken } from '../../utils/utilFunctions';
 
 export const toggleLoading = () => {
   return { type: actions.TOGGLE_LOADING };
@@ -89,6 +90,25 @@ const login = (request) => async (dispatch) => {
     console.error(error.message);
   }
 };
+
+// TODO: move ui thunks to a file alone like other reducers
+// and change routes acordingly
+export const logoutThunk = () => async (dispatch) => {
+  await fetch(`${DOMAIN}/api/logout`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${getToken('accessToken')}`,
+    },
+  }).catch(error => {
+    console.error(error);
+    toast.error('Server failure while logging out!');
+    dispatch(setError('auth', error.message))
+  });
+  googleLogout();
+  dispatch(logout());
+  removeToken('accessToken');
+  removeToken('refreshToken');
+}
 
 export const logout = () => {
   return {
