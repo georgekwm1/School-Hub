@@ -1,5 +1,5 @@
 import * as actions from './uiActionTypes';
-
+import { googleLogout } from '@react-oauth/google';
 import { DOMAIN } from '../../utils/constants';
 import { setToken } from '../../utils/utilFunctions';
 
@@ -89,6 +89,15 @@ const login = (request) => async (dispatch) => {
     console.error(error.message);
   }
 };
+
+// TODO: move ui thunks to a file alone like other reducers
+// and change routes acordingly
+const logoutThunk = () => async (dispatch) => {
+  googleLogout();
+  dispatch(logout());
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('refreshToken');
+}
 
 export const logout = () => {
   return {
