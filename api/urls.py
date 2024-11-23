@@ -59,7 +59,7 @@ urlpatterns = [
          views.create_lecture, name="create_course_lectures"),
 
     # Lecture Resources
-    path('courses/<int:course_id>/lecture/<int:lecture_id>/resource',   # GET
+    path('courses/<int:course_id>/chapter/<int:chapter_id>/lecture/<int:lecture_id>/resource',   # GET
          views.create_resource_by_lecture, name='create_resources_of_lecture'),
 
     # -----------------------------------PUT-------------------------------------------

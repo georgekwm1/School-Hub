@@ -362,8 +362,26 @@ def course_lecture_by_id(request, course_id, lecture_id):
         chapter = Chapter.objects.filter(course=course).first()
         lecture = Lecture.objects.filter(
             Q(chapter=chapter) & Q(lecture_id=lecture_id)).first()
+        lecture_resources = Course_Resources.objects.filter(lecture=lecture)
+        demos = []
+        shorts = []
+        quizzes = []
+        for resource in lecture_resources:
+            resource_serializer = CoursesResourcesSerializer(
+                resource, many=False)
+            demos.append(
+                {'title': resource_serializer.data['demo_name'], 'url': resource_serializer.data['demo_link']})
+            shorts.append(
+                {'title': resource_serializer.data['shorts_name'], 'url': resource_serializer.data['shorts_link']})
+            quizzes.append(
+                {'title': resource_serializer.data['quiz_name'], 'url': resource_serializer.data['quiz_link']})
+
         serializer = LectureSerializer(lecture, many=False)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer_data = serializer.data
+        serializer_data.update(
+            {'demos': demos, 'shorts': shorts, 'quizzes': quizzes})
+
+        return Response(serializer_data, status=status.HTTP_200_OK)
     return Response({"message": "You are not authorized to access this resource"}, status=status.HTTP_403_FORBIDDEN)
 
 

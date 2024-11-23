@@ -29,17 +29,17 @@ class CustomJWTAuthentication(JWTAuthentication):
     def authenticate(self, request):
         # Get token from request header (Authorization: Bearer <token>)
         token = self.get_header(request)
-        print(f"Auth Access Token: {token}")
+        # print(f"Auth Access Token: {token}")
         # Decodes the token from bytes format to string format
         if isinstance(token, bytes):
             token = token.decode('utf-8')
-        print(f"Decoded Auth Access Token: {token}")
+        # print(f"Decoded Auth Access Token: {token}")
         if not token:
             raise AuthenticationFailed("No token provided")
 
         # Removes the "Bearer " prefix from the token
         token = token.split(' ')[-1]
-        print(f"New Token: {token}")
+        # print(f"New Token: {token}")
         # Check if token is blacklisted
         if BlacklistedToken.objects.filter(token=token).exists():
             raise AuthenticationFailed("Token is blacklisted")
@@ -345,7 +345,8 @@ class EnrollmentForLecturerView(APIView):
             if not enrollment:
                 return Response({"message": "Student not Enrolled to this Course"}, status=status.HTTP_404_NOT_FOUND)
             enrollment.delete()
-            student_name = f"{student.user.first_name} {student.user.last_name}'s"
+            student_name = f"{student.user.first_name} {
+                student.user.last_name}'s"
             response_data = {
                 "message": f"{student_name} enrollment to {course.course_name} has been deleted"}
             return Response(response_data, status=status.HTTP_204_NO_CONTENT)
