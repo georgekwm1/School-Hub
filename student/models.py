@@ -117,6 +117,16 @@ class Lecture(models.Model):
     lecture_id = models.BigAutoField(auto_created=True, primary_key=True)
     lecture_name = models.CharField(max_length=100)
     lecture_description = models.TextField(null=True, blank=True)
+    resource_name = models.CharField(max_length=100, null=True, blank=True)
+    resource_file = models.FileField(
+        upload_to='course_resources/', null=True, blank=True)
+    resource_link = models.URLField(max_length=200, null=True, blank=True)
+    demo_name = models.CharField(max_length=100, null=True, blank=True)
+    demo_link = models.URLField(max_length=200, null=True, blank=True)
+    shorts_name = models.CharField(max_length=100, null=True, blank=True)
+    shorts_link = models.URLField(max_length=200, null=True, blank=True)
+    transcript = models.TextField(null=True, blank=True)
+    subtitles = models.TextField(null=True, blank=True)
     tags = models.CharField(max_length=100, null=True, blank=True)
     chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE)
 
@@ -127,13 +137,13 @@ class Lecture(models.Model):
 class Course_Resources(models.Model):
     resource_id = models.BigAutoField(auto_created=True, primary_key=True)
     lecture = models.ForeignKey(Lecture, on_delete=models.CASCADE)
-    resource_name = models.CharField(max_length=100)
+    resource_name = models.CharField(max_length=100, null=True, blank=True)
     resource_file = models.FileField(
         upload_to='course_resources/', null=True, blank=True)
     resource_link = models.URLField(max_length=200, null=True, blank=True)
     demo_name = models.CharField(max_length=100)
     demo_link = models.URLField(max_length=200, null=True, blank=True)
-    shorts_name = models.CharField(max_length=100)
+    shorts_name = models.CharField(max_length=100, null=True, blank=True)
     shorts_link = models.URLField(max_length=200, null=True, blank=True)
     transcript = models.TextField(null=True, blank=True)
     subtitles = models.TextField(null=True, blank=True)
