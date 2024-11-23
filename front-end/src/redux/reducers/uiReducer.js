@@ -1,9 +1,15 @@
 import { fromJS, Map } from 'immutable';
 import * as actions from '../actions/uiActionTypes';
+import { getToken } from '../../utils/utilFunctions';
 
 export const initialState = fromJS({
   isLoading: false,
-  isLoggedIn: false,
+  // this is being done only temporarily for dev ease
+  // utill we get to the time of persesting data
+  // because anyway.. doing this will cause a ton of problems
+  // because user data and role and so on is not in the state
+  // so when needed. i'll have to logout and login manually
+  isLoggedIn: getToken('accessToken') ? true : false,
   course: {
     id: 3,
   },

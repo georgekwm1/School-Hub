@@ -350,7 +350,7 @@ def course_lecture_by_id(request, course_id, lecture_id):
             student=student, course=course).first()
         if enrollment is None:
             return Response({"message": "You are not enrolled in this course"}, status=status.HTTP_403_FORBIDDEN)
-        chapter = Chapter.objects.filter(course=course)
+        chapter = Chapter.objects.filter(course=course).first()
         lecture = Lecture.objects.filter(
             Q(chapter=chapter) & Q(lecture_id=lecture_id)).first()
         serializer = LectureSerializer(lecture, many=False)
@@ -359,7 +359,7 @@ def course_lecture_by_id(request, course_id, lecture_id):
         lecturer = Lecturer.objects.filter(user=user).first()
         course = Courses.objects.filter(
             Q(course_id=course_id) & Q(lecturer=lecturer)).first()
-        chapter = Chapter.objects.filter(course=course)
+        chapter = Chapter.objects.filter(course=course).first()
         lecture = Lecture.objects.filter(
             Q(chapter=chapter) & Q(lecture_id=lecture_id)).first()
         serializer = LectureSerializer(lecture, many=False)
