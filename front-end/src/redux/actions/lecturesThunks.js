@@ -40,8 +40,28 @@ export const getCourseLectures = (courseId) => async (dispatch, getState) => {
     if (!response.ok) {
       throw new Error(data.message);
     }
+    // Because of time... avoiding refactoring the api or whatever need else 
+    // in teh backend....
+    // But diffenetly.. either the refactor in API to the agreed upon format
+    // of how the frontend consumes the data.... 
+    // however faster and not breaking.
 
-    dispatch(actionCreators.sectionsSuccess(data));
+    const sections =  data.map(section => {
+      return {
+        ...section,
+        lectures: 
+        section.lectures.map(lecture => {
+          return {
+            id: lecture.lecture_id,
+            title: lecture.lecture_name,
+            desctiption: lecture.lecture_description,
+            tags: lecture.tags,
+          }
+        })
+      }
+    })
+
+    dispatch(actionCreators.sectionsSuccess(sections));
   } catch (error) {
     console.error(error);
     dispatch(actionCreators.sectionsFailure(error.message));
