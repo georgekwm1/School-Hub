@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { logout } from '../../redux/actions/uiActionCreators';
-import { googleLogout } from '@react-oauth/google';
+import { logoutThunk } from '../../redux/actions/uiActionCreators';
 import './sidebar.css';
 
 export default function Sidebar() {
@@ -10,8 +9,7 @@ export default function Sidebar() {
   const dispatch = useDispatch();
 
   const handleLogout = () => {
-    dispatch(logout());
-    googleLogout();
+    dispatch(logoutThunk());
   };
 
   const toggleSidebar = () => {

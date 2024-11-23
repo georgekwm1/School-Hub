@@ -92,7 +92,7 @@ const login = (request) => async (dispatch) => {
 
 // TODO: move ui thunks to a file alone like other reducers
 // and change routes acordingly
-const logoutThunk = () => async (dispatch) => {
+export const logoutThunk = () => async (dispatch) => {
   googleLogout();
   dispatch(logout());
   localStorage.removeItem('accessToken');
