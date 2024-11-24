@@ -36,7 +36,7 @@ export default function lecturesReducer(state = initialState, action = {}) {
         return state
           .set('isLoading', false)
           .set('lectureError', null)
-          .setIn(['lectures', lectureData.id], fromJS(lectureData));
+          .setIn(['lectures', `${lectureData.id}`], fromJS(lectureData));
       });
     }
 
