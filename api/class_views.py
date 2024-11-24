@@ -345,8 +345,7 @@ class EnrollmentForLecturerView(APIView):
             if not enrollment:
                 return Response({"message": "Student not Enrolled to this Course"}, status=status.HTTP_404_NOT_FOUND)
             enrollment.delete()
-            student_name = f"{student.user.first_name} {
-                student.user.last_name}'s"
+            student_name = f"{student.user.first_name} {student.user.last_name}'s"
             response_data = {
                 "message": f"{student_name} enrollment to {course.course_name} has been deleted"}
             return Response(response_data, status=status.HTTP_204_NO_CONTENT)
