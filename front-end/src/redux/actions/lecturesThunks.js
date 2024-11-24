@@ -11,7 +11,7 @@ export const getLectureById = (lectureId) => async (dispatch, getState) => {
 
   try {
     const response = await fetch(
-      `${DOMAIN}/api/courses/${courseId}/lectures/${lectureId}`,
+      `${DOMAIN}/api/courses/${courseId}/lecture/${lectureId}`,
       {
         headers: {
           'Authorization': `Bearer ${getToken('accessToken')}`,
@@ -19,11 +19,43 @@ export const getLectureById = (lectureId) => async (dispatch, getState) => {
       }
     );
     const data = await response.json();
-
+    
     if (!response.ok) {
       throw new Error(data.message);
     }
-    dispatch(actionCreators.lectureSuccess(data.lectureData));
+
+    
+    const {
+      lecture_id,
+      lecture_name,
+      lecture_description,
+      video_link,
+      audio_link,
+      transcript,
+      subtitles,
+      tags,
+      chapter,
+      demos,
+      shorts,
+      quizzes,
+    } = data;
+
+    const lectureData = {
+      id: lecture_id,
+      title: lecture_name,
+      description: lecture_description,
+      videoLink: video_link || '',
+      audioLink: audio_link || '',
+      transcript,
+      subtitles,
+      tags,
+      section: chapter,
+      demos,
+      shorts,
+      quizzes,
+    }
+
+    dispatch(actionCreators.lectureSuccess(lectureData));
   } catch (error) {
     console.error(error.message);
     dispatch(actionCreators.lectureFailure(error.message));
