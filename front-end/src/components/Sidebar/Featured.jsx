@@ -93,6 +93,7 @@ export default function Featured() {
         <li>
           <StudyWithMe />
         </li>
+        
       </ul>
     </details>
   );
