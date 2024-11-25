@@ -94,6 +94,28 @@ export default function Featured() {
           <StudyWithMe />
         </li>
         
+        <li>
+          <a href="https://sleeptown.seekrtech.com/" target="_blank" rel="noreferrer">
+            <img
+              src="https://sleeptown.seekrtech.com/img/icon_128_round.png"
+              alt="SleepTown...Build Healthy Sleep Habits"
+              width="48"
+              height="48"
+            />
+            SleepTown
+          </a>
+        </li>
+        <li>
+          <a href="https://remindme-l.vercel.app" target="_blank" rel="noreferrer">
+            <img
+              src="https://custom-images.strikinglycdn.com/res/hrscywv4p/image/upload/17746265/ai_logo_1726750030_AyBzw8.png"
+              alt="RemindMe"
+              width="48"
+              height="48"
+            />
+            RemindMe
+          </a>
+        </li>
       </ul>
     </details>
   );
