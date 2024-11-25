@@ -80,6 +80,17 @@ export default function Featured() {
           </a>
         </li>
         <li>
+          <a href="https://forestapp.cc" target="_blank" rel="noreferrer">
+            <img
+              src="https://www.forestapp.cc/favicon.ico"
+              alt="Forest App.. Stay focused.. Be present"
+              width="48"
+              height="48"
+            />
+            Forest
+          </a>
+        </li>
+        <li>
           <StudyWithMe />
         </li>
       </ul>
