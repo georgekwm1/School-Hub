@@ -26,7 +26,6 @@ export default function Featured() {
             rel="noreferrer"
           >
             <img
-              width="48"
               height="48"
               src="https://img.icons8.com/fluency/48/tick-tick.png"
               alt="tick-tick"
@@ -62,7 +61,6 @@ export default function Featured() {
             <img
               src="https://flocus.com/assets/favicon.jpg"
               alt="Flocus"
-              width="48"
               height="48"
             />
             Flocus
@@ -73,7 +71,6 @@ export default function Featured() {
             <img
               src="https://cdn.prod.website-files.com/60890f6ac44206aef9237eb4/60bf58e7f22ec73793160127_Favicon-small.png"
               alt="StudyTogether"
-              width="48"
               height="48"
             />
             Study Together
@@ -84,7 +81,6 @@ export default function Featured() {
             <img
               src="https://www.forestapp.cc/favicon.ico"
               alt="Forest App.. Stay focused.. Be present"
-              width="48"
               height="48"
             />
             Forest
@@ -93,24 +89,30 @@ export default function Featured() {
         <li>
           <StudyWithMe />
         </li>
-        
+
         <li>
-          <a href="https://sleeptown.seekrtech.com/" target="_blank" rel="noreferrer">
+          <a
+            href="https://sleeptown.seekrtech.com/"
+            target="_blank"
+            rel="noreferrer"
+          >
             <img
               src="https://sleeptown.seekrtech.com/img/icon_128_round.png"
               alt="SleepTown...Build Healthy Sleep Habits"
-              width="48"
               height="48"
             />
             SleepTown
           </a>
         </li>
         <li>
-          <a href="https://remindme-l.vercel.app" target="_blank" rel="noreferrer">
+          <a
+            href="https://remindme-l.vercel.app"
+            target="_blank"
+            rel="noreferrer"
+          >
             <img
               src="https://custom-images.strikinglycdn.com/res/hrscywv4p/image/upload/17746265/ai_logo_1726750030_AyBzw8.png"
               alt="RemindMe"
-              width="48"
               height="48"
             />
             RemindMe
