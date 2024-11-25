@@ -1,6 +1,6 @@
 import React from 'react';
 import { Brain, Sparkles } from 'lucide-react';
-import flocusLogo from '../../images/flocusLogo.jpg';
+import StudyWithMe from './StudyWithMe';
 
 export default function Featured() {
   return (
@@ -78,6 +78,9 @@ export default function Featured() {
             />
             Study Together
           </a>
+        </li>
+        <li>
+          <StudyWithMe />
         </li>
       </ul>
     </details>
