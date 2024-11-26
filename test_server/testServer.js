@@ -6,6 +6,8 @@ const app = express();
 const cors = require('cors');
 const port = 3000;
 
+const authRouter = require('./routes/auth');
+
 const {
   mockComments,
   mockAnnouncements,
@@ -28,176 +30,15 @@ app.use((req, res, next) => {
   next();
 });
 
-
-const ytdl = require('ytdl-core');
-const { getTranscript } = require('youtube-transcript');
-
-app.get('/audio-stream', async (req, res) => {
-  const videoUrl = req.query.url;
-
-  if (!ytdl.validateURL(videoUrl)) {
-      return res.status(400).send({ error: 'Invalid YouTube URL' });
-  }
-
-  try {
-      const info = await ytdl.getInfo(videoUrl);
-      const audioFormat = ytdl.chooseFormat(info.formats, { quality: 'highestaudio' });
-
-      res.setHeader('Content-Disposition', 'inline; filename="audio.mp3"');
-      res.setHeader('Content-Type', 'audio/mpeg');
-
-
-      ytdl(videoUrl, { format: audioFormat }).pipe(res);
-  } catch (error) {
-      console.error('Failed to stream audio:', error);
-      res.status(500).send({ error: 'Failed to stream audio' });
-  }
-});
-
-app.post('/subtitles', async (req, res) => {
-    const videoUrl = req.body.url;
-    const videoId = ytdl.getURLVideoID(videoUrl);
-
-    try {
-        const transcript = await getTranscript(videoId);
-        console.log(transcript);
-        res.send({ subtitles: transcript });
-    } catch (error) {
-      console.error(error);
-        res.status(500).send({ error: 'Failed to retrieve subtitles' });
-    }
-});
-
-app.post('/auth/login', (req, res) => {
-	console.log(req.body);
-  const { email, password } = req.body;
-  if (email === 'admin' && password === 'admin') {
-    res.send({ message: 'Logged in successfully',
-			user: {
-				email, password, id: 'testId',
-        role: 'student'
-
-			}
-		 });
-  } else {
-    res.status(401).send({ message: 'Invalid credentials' });
-  }
-});
-
-
-app.post('/auth/oauth/google', (req, res) => {
-  const idToken  = req.body.token;
-  console.log(idToken)
-  const googleVerifyUrl = `https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`;
-  fetch(googleVerifyUrl)
-    .then(response => response.json())
-    .then(data => {
-      if (data.email_verified) {
-        res.send({ message: 'Logged in successfully',
-          user: {
-            email: data.email,
-            id: data.sub,
-            role: 'student'
-
-          }
-        });
-      } else {
-        res.status(401).send({ message: 'Email not verified' });
-      }
-    })
-    .catch(error => {
-      console.error(error);
-      res.status(500).send({ message: 'Internal Server Error' });
-    });
-});
-
-app.post('/auth/oauth/googleRegister', (req, res) => {
-  const idToken  = req.body.token;
-  console.log(idToken)
-  const googleVerifyUrl = `https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`;
-  fetch(googleVerifyUrl)
-    .then(response => response.json())
-    .then(data => {
-      console.log(data)
-      if (data.email_verified) {
-        res.send({ message: 'Logged in successfully',
-          user: {
-            email: data.email,
-            id: data.sub,
-
-          }
-        });
-      } else {
-        res.status(401).send({ message: 'Email not verified' });
-      }
-    })
-    .catch(error => {
-      console.error(error);
-      res.status(500).send({ message: 'Internal Server Error' });
-    });
-});
-
-app.post('/auth/admin/login', (req, res) => {
-  const { email, password } = req.body;
-  if (email === 'admin' && password === 'admin') {
-    res.send({ message: 'Logged in successfully',
-      user: {
-        email,
-        password,
-        id: 'testId',
-        role: 'admin'
-      }
-    });
-  } else {
-    res.status(401).send({ message: 'Invalid credentials' });
-  }
-});
-
-app.post('/auth/admin/OAuth/google', (req, res) => {
-  const idToken  = req.body.token;
-  const googleVerifyUrl = `https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`;
-  fetch(googleVerifyUrl)
-    .then(response => response.json())
-    .then(data => {
-      if (data.email_verified) {
-        res.send({ message: 'Logged in successfully',
-          user: {
-            email: data.email,
-            id: data.sub,
-            role: 'admin'
-          }
-        });
-      } else {
-        res.status(401).send({ message: 'Email not verified' });
-      }
-    })
-    .catch(error => {
-      console.error(error);
-      res.status(500).send({ message: 'Internal Server Error' });
-    });
-});
-
 const imagekit = new ImageKit({
   publicKey: 'public_tTc9vCi5O7L8WVAQquK6vQWNx08=',
   privateKey: 'private_edl1a45K3hzSaAhroLRPpspVRqM=',
   urlEndpoint: 'https://ik.imagekit.io/loayalsaid1/proLearningHub'
 });
 
-app.get('/auth/imagekit', (req, res) => {
-  const authenticationParameters = imagekit.getAuthenticationParameters();
-  res.json(authenticationParameters);
-});
+app.use('/auth', authRouter);
 
-app.post('/auth/register', (req, res) => {
-  const { userData } = req.body;
-  console.log(userData);
-  const { email, firstName, lastName, userName, pictureId, pictureURL, id = 'fakeId' } = userData;
 
-    res.status(201).json({
-      user: {email, firstName, lastName, userName, pictureId, pictureURL, id},
-      message: 'Email is already used, Please try another one or login',
-    });
-});
 
 app.get('/courses/:courseId/lectures/:lectureId', (req, res) => {
   const courseId = req.params.courseId;
@@ -709,4 +550,3 @@ const httpsServer = https.createServer({ key, cert }, app);
 httpsServer.listen(port, () => {
   console.log(`Server started on https://localhost:${port}`);
 });
-
