@@ -8,7 +8,7 @@ const {
 
   mockSections,
   repliesList,
-} = require('./mockData');
+} = require('../mockData');
 
 
 const router = express.Router();
