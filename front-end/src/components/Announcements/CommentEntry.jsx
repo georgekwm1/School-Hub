@@ -102,14 +102,6 @@ export default function CommentEntry({ content }) {
             </button>
         }
       </div>
-      <div>          
-        {
-          (userRole !== 'student' || userId === content.getIn(['user', 'id'])) &&
-            <button type='button' onClick={handleDeleteComment} >
-                <Trash2 color='red' />
-            </button>
-        }
-      </div>
     </div>
   );
 }
