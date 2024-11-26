@@ -8,7 +8,7 @@ const cors = require('cors');
 const authRouter = require('./routes/auth');
 const lecturesRouter = require('./routes/lectures');
 const questionsRouter = require('./routes/questions');
-
+const repliesRouter = require('./routes/replies');
 
 app.use(express.json());
 app.use(cors({origin: '*'}));
@@ -22,6 +22,7 @@ app.use((req, res, next) => {
 app.use('/auth', authRouter);
 app.use(lecturesRouter);
 app.use(questionsRouter);
+app.use(repliesRouter);
 
 
 const {
@@ -36,46 +37,7 @@ const {
 } = require('./mockData');
 
 
-app.get('/questions/:id/replies', (req, res) => {
-  const questionId = req.params.id;
 
-  const question = mockDiscussion.find(q => q.id === questionId);
-
-  if (!question) {
-    return res.status(404).send({ message: 'Question not found' });
-  }
-
-  res.json({ question: {...question, lectureId: 'cs50-lecture-0'}, repliesList });
-});
-
-app.post('/questions/:id/replies', (req, res) => {
-  const questionId = req.params.id;
-  const { userId, body } = req.body;
-
-  if (!userId || !body) {
-    return res.status(400).send({ message: 'Missing required fields' });
-  }
-
-  const newReply = {
-    questionId,
-    id: `reply-${Date.now()}`,
-    user: {
-      id: 'testId',
-      name: 'Anonymous',
-      pictureThumbnail: `https://picsum.photos/100`,
-    },
-    updatedAt: new Date().toISOString(),
-    upvotes: 0,
-    upvoted: false,
-    body,
-  };
-
-  // Here you would typically add the newReply to your database or data store.
-  // For this example, we'll just return it in the response.
-  mockReplies.unshift(newReply);
-
-  res.status(201).json(newReply);
-});
 
 app.get('/courses/:id/announcements', (req, res) => {
   const courseId = req.params.id;
@@ -119,27 +81,7 @@ app.post('/courses/:id/announcements', (req, res) => {
   res.status(201).json(newAnnouncement);
 });
 
-app.post('/replies/:id/vote', (req, res) => {
-  const replyId = req.params.id;
-  const { action } = req.body;
 
-  if (!action) {
-    return res.status(400).send({ message: 'Missing required fields' });
-  }
-
-  const index = mockReplies.findIndex((reply) => reply.id === replyId);
-
-  if (index === -1) {
-    return res.status(404).send({ message: 'Reply not found' });
-  }
-
-  if (action === 'upvote') {
-    mockReplies[index].upvotes += 1;
-  } else if (action === 'downvote') {
-    mockReplies[index].upvotes -= 1;
-  }
-  res.status(200).json(mockReplies[index]);
-});
 
 app.get('/announcements/:id/comments', (req, res) => {
   const announcementId = req.params.id;
@@ -184,17 +126,7 @@ app.post('/announcements/:id/comments', (req, res) => {
 
 
 
-app.delete('/replies/:id', (req, res) => {
-  const replyId = req.params.id;
-  const index = mockReplies.findIndex((reply) => reply.id === replyId);
 
-  if (index === -1) {
-    return res.status(404).send({ message: 'Reply not found' });
-  }
-  
-  mockReplies.splice(index, 1);
-  res.status(200).json({ message: 'Reply deleted successfully' });
-});
 
 app.delete('/comments/:commentId', (req, res) => {
   const { announcementId, commentId } = req.params;
@@ -253,20 +185,6 @@ app.put('/comments/:id', (req, res) => {
 
 
 
-app.put('/replies/:id', (req, res) => {
-  const { id } = req.params;
-  const { body } = req.body;
-
-  const index = mockReplies.findIndex((reply) => reply.id === id);
-
-  if (index === -1) {
-    return res.status(404).send({ message: 'Reply not found' });
-  }
-
-  mockReplies[index].body = body;
-
-  res.status(200).json(mockReplies[index]);
-});
 
 
 app.use((req, res, next) => {
