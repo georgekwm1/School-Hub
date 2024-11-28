@@ -9,6 +9,7 @@ const {
   mockSections,
   repliesList,
 } = require('../mockData');
+const db = require('../connect');
 
 const router = express.Router();
 
@@ -96,7 +97,8 @@ router.get('/courses/:courseId/lectures/:lectureId', (req, res) => {
 
 // Get all section titles for creating a lecture
 router.get('/sections_titles', (req, res) => {
-  const sectionTitles = mockSections?.map((section) => section.title) || [];
+  const stmt = db.prepare('SELECT title FROM sections');
+  const sectionTitles = stmt.all().map(row => row.title);
   res.json(sectionTitles);
 });
 

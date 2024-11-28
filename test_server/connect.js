@@ -31,6 +31,7 @@ db.exec(`
 	);
 	`);
 
+// Courses table
 db.exec(`
 	CREATE TABLE IF NOT EXISTS courses (
 		id TEXT PRIMARY KEY,
