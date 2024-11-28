@@ -8,7 +8,7 @@ const db = require('../connect');
 const imagekit = new ImageKit({
   publicKey: 'public_tTc9vCi5O7L8WVAQquK6vQWNx08=',
   privateKey: 'private_edl1a45K3hzSaAhroLRPpspVRqM=',
-  urlEndpoint: 'https://ik.imagekit.io/loayalsaid1/proLearningHub'
+  urlEndpoint: 'https://ik.imagekit.io/loayalsaid1/proLearningHub',
 });
 
 router.get('/imagekit', (req, res) => {
@@ -113,8 +113,9 @@ router.post('/register', async (req, res) => {
     pictureThumbnail,
   } = userData;
   try {
-
-    const existingUser = db.prepare(`SELECT * FROM users WHERE email = ?`).get(email);
+    const existingUser = db
+      .prepare(`SELECT * FROM users WHERE email = ?`)
+      .get(email);
     if (existingUser) {
       res.status(409).json({ message: 'Email already exists' });
       return;
@@ -143,7 +144,15 @@ router.post('/register', async (req, res) => {
       pictureThumbnail
     );
     res.status(201).json({
-      user: { email, firstName, lastName, username, pictureThumbnail, pictureURL, id },
+      user: {
+        email,
+        firstName,
+        lastName,
+        username,
+        pictureThumbnail,
+        pictureURL,
+        id,
+      },
       message: 'User created successfully',
     });
   } catch (err) {
@@ -152,21 +161,34 @@ router.post('/register', async (req, res) => {
   }
 });
 
-router.post('/admin/login', (req, res) => {
+router.post('/admin/login', async (req, res) => {
   const { email, password } = req.body;
-  if (email === 'admin' && password === 'admin') {
-    res.send({
-      message: 'Logged in successfully',
-      user: {
-        email,
-        password,
-        id: 'testId',
-        role: 'admin',
-      },
-    });
-  } else {
+  const query = db.prepare('SELECT * FROM users WHERE email = ? AND role = ?');
+  const user = query.get(email, 'admin');
+  if (!user) {
     res.status(401).send({ message: 'Invalid credentials' });
+    return;
   }
+
+  const passwordMatch = await bcrypt.compare(password, user.passwordHash);
+
+  if (!passwordMatch) {
+    res.status(401).send({ message: 'Wrong password' });
+    return;
+  }
+
+  res.send({
+    message: 'Logged in successfully',
+    user: {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      pictureThumbnail: user.pictureThumbnail,
+      pictureUrl: user.pictureUrl,
+    },
+  });
 });
 
 router.post('/admin/OAuth/google', (req, res) => {
