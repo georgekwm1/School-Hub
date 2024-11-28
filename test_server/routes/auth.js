@@ -16,22 +16,35 @@ router.get('/imagekit', (req, res) => {
   res.json(authenticationParameters);
 });
 
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
   console.log(req.body);
   const { email, password } = req.body;
-  if (email === 'admin' && password === 'admin') {
-    res.send({
-      message: 'Logged in successfully',
-      user: {
-        email,
-        password,
-        id: 'testId',
-        role: 'student',
-      },
-    });
-  } else {
-    res.status(401).send({ message: 'Invalid credentials' });
+
+  const query = db.prepare('SELECT * FROM users WHERE email = ?');
+  const user = query.get(email);
+
+  if (!user) {
+    return res.status(401).send({ message: 'Email not found' });
   }
+
+  const passwordMatch = await bcrypt.compare(password, user.passwordHash);
+
+  if (!passwordMatch) {
+    return res.status(401).send({ message: 'Wrong password' });
+  }
+
+  res.send({
+    message: 'Logged in successfully',
+    user: {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      pictureThumbnail: user.pictureThumbnail,
+      pictureUrl: user.pictureUrl,
+    },
+  });
 });
 
 router.post('/oauth/google', (req, res) => {
