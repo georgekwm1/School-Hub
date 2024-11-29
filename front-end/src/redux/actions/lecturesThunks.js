@@ -42,12 +42,14 @@ export const getCourseLectures = (courseId) => async (dispatch) => {
   }
 };
 
-export const createLecture = (lectureData, navigate) => async (dispatch) => {
+export const createLecture = (lectureData, navigate) => async (dispatch, getState) => {
   dispatch(actionCreators.createLectureRequest());
   console.log(lectureData);
+  const state = getState();
+  const courseId = state.ui.getIn(['course', 'id']);
   try {
     const data = await toast.promise(
-      fetch(`${DOMAIN}/courses/testId/lectures`, {
+      fetch(`${DOMAIN}/courses/${courseId}/lectures`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(lectureData),
