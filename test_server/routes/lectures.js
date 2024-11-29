@@ -219,8 +219,20 @@ router.delete('/lectures/:id', (req, res) => {
     if (!lecture) {
       return res.status(404).send({ message: 'Lecture not found' });
     }
-    db.prepare('DELETE FROM lectures WHERE id = ?').run(lectureId);
-    res.status(200).json({ message: 'Lecture deleted successfully' });
+    db.transaction(() => {
+      const sectionId = db.prepare(
+        `SELECT sectionId FROM lectures WHERE id = ?`
+      ).get(lectureId).sectionId;
+      db.prepare('DELETE FROM lectures WHERE id = ?').run(lectureId);
+
+      const lectures = db.prepare(
+        'SELECT id  FROM lectures WHERE sectionId = ?'
+      ).all(sectionId);
+      if (lectures.length === 0) {
+        db.prepare('DELETE FROM sections WHERE id = ?').run(sectionId);
+      }
+      res.status(200).json({ message: 'Lecture deleted successfully' });
+    })();
   } catch (err) {
     console.error(err);
     res.status(500).send({ message: 'Error deleting lecture' });
