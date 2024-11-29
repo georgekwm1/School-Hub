@@ -115,6 +115,7 @@ db.exec(`
 		title TEXT NOT NULL,
 		body TEXT NOT NULL,
 		upvotes INTEGER DEFAULT 0,
+		repliesCount INTEGER DEFAULT 0,
 		userId TEXT NOT NULL,
 		lectureId TEXT,
 		courseId TEXT,
