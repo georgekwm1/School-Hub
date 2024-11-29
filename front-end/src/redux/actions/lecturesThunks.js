@@ -2,12 +2,14 @@ import toast from 'react-hot-toast';
 import * as actionCreators from './lecturesActionCreators';
 import {DOMAIN} from '../../utils/constants'
 
-export const getLectureById = (lectureId) => async (dispatch) => {
+export const getLectureById = (lectureId) => async (dispatch, getState) => {
   dispatch(actionCreators.lectureRequest());
 
+  const state = getState();
+  const courseId = state.ui.getIn(['course', 'id']);
   try {
     const response = await fetch(
-      `${DOMAIN}/courses/testId/lectures/${lectureId}`
+      `${DOMAIN}/courses/${courseId}/lectures/${lectureId}`
     );
     const data = await response.json();
 

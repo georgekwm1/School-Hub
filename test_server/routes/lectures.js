@@ -45,70 +45,43 @@ router.get('/courses/:courseId/lectures/:lectureId', (req, res) => {
   const courseId = req.params.courseId;
   const lectureId = req.params.lectureId;
   console.log(courseId, lectureId);
-  const allowedLectures = mockSections.flatMap((section) =>
-    section.lectures.map((lecture) => lecture.id)
-  );
-  if (courseId === 'testId' && allowedLectures.includes(lectureId)) {
-    res.json({
-      lectureData: {
-        id: lectureId,
-        title: 'Week 4',
-        section: 'Low Level Programming',
-        videoLink: 'https://youtu.be/F9-yqoS7b8w',
-        notes: 'https://cs50.harvard.edu/x/2024/notes/4/',
-        audioLink:
-          'https://cs50.harvard.edu/college/2022/spring/lectures/4/wav/lecture4.wav',
-        slides:
-          'https://cs50.harvard.edu/college/2022/spring/lectures/4/slides/lecture4.pdf',
-        subtitles:
-          'https://cs50.harvard.edu/college/2022/spring/lectures/4/subtitles/lecture4.srt',
-        transcript:
-          'https://cs50.harvard.edu/college/2022/spring/lectures/4/transcript',
-        description:
-          'Pointers. Segmentation Faults. Dynamic Memory Allocation. Stack. Heap. Buffer Overflow. File I/O. Images.',
-        tags: [
-          'pointers',
-          'segmentation faults',
-          'dynamic memory allocation',
-          'stack',
-          'heap',
-          'buffer overflow',
-          'file i/o',
-          'images',
-        ],
-        demos: [
-          {
-            title: 'Demo: HTML/CSS',
-            url: 'https://youtu.be/nM0x2vV6uG8?t=1019',
-          },
-          {
-            title: 'Demo: JavaScript',
-            url: 'https://youtu.be/nM0x2vV6uG8?t=1749',
-          },
-        ],
-        shorts: [
-          {
-            title: 'Short: HTML/CSS',
-            url: 'https://youtu.be/nM0x2vV6uG8?t=1273',
-          },
-          {
-            title: 'Short: JavaScript',
-            url: 'https://youtu.be/nM0x2vV6uG8?t=1993',
-          },
-        ],
-        quizzez: [
-          {
-            title: 'Problem Set 4',
-            url: 'https://cs50.harvard.edu/college/2022/spring/psets/4/',
-          },
-        ],
-      },
-    });
-  } else if (courseId === 'testId') {
-    res.status(404).send({ message: 'Lecture not found' });
-  } else {
-    res.status(404).send({ message: 'Course not found' });
+
+  const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(courseId);
+  if (!course) {
+    return res.status(404).send({ message: 'Course not found' });
   }
+
+  const lectureFields = [
+    'id',
+    'title',
+    'videoLink',
+    'notes',
+    'audioLink',
+    'slides',
+    'subtitles',
+    'transcript',
+    'description',
+    'tags',
+  ].join(', ');
+  const lecture = db.prepare(`SELECT ${lectureFields} FROM lectures WHERE id = ?`).get(lectureId);
+  if (!lecture) {
+    return res.status(404).send({ message: 'Lecture not found' });
+  }
+
+  const getResource = (lectureId, type) => {
+    return db.prepare(
+      'SELECT title, url FROM lectureResources WHERE lectureId = ? AND type = ?'
+    ).all(lectureId, type);
+  };
+
+  res.json({
+    lectureData: {
+      ...lecture,
+      demos: getResource(lectureId, 'demo'),
+      shorts: getResource(lectureId, 'short'),
+      quizzez: getResource(lectureId, 'quiz')
+    }
+  });
 });
 
 // Get all section titles for creating a lecture
