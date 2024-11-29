@@ -77,6 +77,7 @@ router.get('/courses/:courseId/lectures/:lectureId', (req, res) => {
   res.json({
     lectureData: {
       ...lecture,
+      tags: lecture.tags.split(','),
       demos: getResource(lectureId, 'demo'),
       shorts: getResource(lectureId, 'short'),
       quizzez: getResource(lectureId, 'quiz')
@@ -158,49 +159,72 @@ router.put('/lectures/:id', (req, res) => {
     notesLink,
     slidesLink,
     section,
-    extras,
+    extras: shorts,
     tags,
     demos,
   } = req.body;
 
-  const index = mockSections
-    .flatMap((section) => section.lectures)
-    .findIndex((lecture) => lecture.id === id);
+  const lecture = db.prepare('SELECT * FROM lectures WHERE id = ?').get(id);
 
-  if (index === -1) {
+  if (!lecture) {
     return res.status(404).send({ message: 'Lecture not found' });
   }
+  try {
+    db.transaction(() => {
+      let sectionId;
+      const sectionLecture = db.prepare('SELECT id FROM sections WHERE title = ?').get(section);
+      if (sectionLecture) {
+        sectionId = sectionLecture.id;
+      } else {
+        sectionId = uuidv4();
+        db.prepare('INSERT INTO sections (id, title, courseId) VALUES (?, ?, ?)').run(sectionId, section, lecture.courseId);
+      }
 
-  const lecture = mockSections.flatMap((section) => section.lectures)[index];
-  lecture.title = name;
-  lecture.description = description;
-  lecture.videoLink = youtubeLink;
-  lecture.notes = notesLink;
-  lecture.slides = slidesLink;
-  lecture.section = section;
-  lecture.shorts = extras;
-  lecture.demos = demos;
-  lecture.tags = tags;
+      db.prepare(`
+        UPDATE lectures
+        SET title = ?, description = ?, videoLink = ?, notes = ?, slides = ?, sectionId = ?, tags = ?
+        WHERE id = ?
+      `).run(name, description, youtubeLink, notesLink, slidesLink, sectionId, tags.join(','), id);
 
-  res.status(200).json(lecture);
+      db.prepare('DELETE FROM lectureResources WHERE lectureId = ?').run(id);
+
+      const insertResource = (resource, type) => db.prepare(`
+        INSERT INTO lectureResources (id, title, url, type, lectureId) 
+        VALUES (?, ?, ?, ?, ?)
+      `).run(uuidv4(), resource.title, resource.url, type, id);
+
+      demos.forEach(demo => insertResource(demo, 'demo'));
+      shorts.forEach(short => insertResource(short, 'short'));
+
+      const lectureFields = [
+        'id', 'title', 'description', 'notes', 'videoLink', 
+        'slides', 'subtitles', 'transcript', 'audioLink',
+        'sectionId'
+      ].join(', ');
+      const updatedLecture = db.prepare(`SELECT ${lectureFields} FROM lectures WHERE id = ?`).get(id);
+      // I some how in the hurry forgot all about quizez.. so.. this is to fixes system wide next
+      res.status(200).json({...updatedLecture, tags, demos, shorts, quizzez: []});
+    })();
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: 'Error updating lecture' });
+  }
 });
 
 // delete a lecture
 router.delete('/lectures/:id', (req, res) => {
   const lectureId = req.params.id;
-  const index = mockSections.findIndex(
-    (section) =>
-      section.lectures.findIndex((lecture) => lecture.id === lectureId) !== -1
-  );
-
-  if (index === -1) {
-    return res.status(404).send({ message: 'Lecture not found' });
+  try {
+    const lecture = db.prepare('SELECT * FROM lectures WHERE id = ?').get(lectureId);
+    if (!lecture) {
+      return res.status(404).send({ message: 'Lecture not found' });
+    }
+    db.prepare('DELETE FROM lectures WHERE id = ?').run(lectureId);
+    res.status(200).json({ message: 'Lecture deleted successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: 'Error deleting lecture' });
   }
-  const lectureIndex = mockSections[index].lectures.findIndex(
-    (lecture) => lecture.id === lectureId
-  );
-  mockSections[index].lectures.splice(lectureIndex, 1);
-  res.status(200).json({ message: 'Lecture deleted successfully' });
 });
 
 module.exports = router;
