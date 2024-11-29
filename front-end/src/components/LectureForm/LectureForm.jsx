@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux';
 import toast from 'react-hot-toast';
 import { uploadFile } from '../../utils/utilFunctions';
 import { DOMAIN } from '../../utils/constants';
+import { selectCourseId } from '../../redux/selectors/uiSelectors';
 
 export default function LectureForm({ onSubmit, lectureData = {} }) {
   const [name, setName] = useState(lectureData.title || '');
@@ -26,6 +27,8 @@ export default function LectureForm({ onSubmit, lectureData = {} }) {
     lectureData.shorts || [{ title: '', url: '' }]
   );
   const [slidesOption, setSlidesOption] = useState('link');
+
+  const courseId = useSelector(selectCourseId);
 
   const dispatch = useDispatch();
   useEffect(() => {
@@ -51,7 +54,7 @@ export default function LectureForm({ onSubmit, lectureData = {} }) {
      * but, I'm just goign to fetch teh titles from the api and keep them in local state here
      */
     // BUG: this should be course/id/sections_titles
-    fetch(`${DOMAIN}/sections_titles`)
+    fetch(`${DOMAIN}/courses/${courseId}/sections_titles`)
       .then((res) => res.json())
       .then((data) => setSections(data))
       .catch((err) => {
