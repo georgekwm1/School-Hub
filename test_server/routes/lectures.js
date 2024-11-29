@@ -14,12 +14,27 @@ const db = require('../connect');
 
 const router = express.Router();
 
-// Get all lectures for a course
+// Get all lectures for a course split on sections
 router.get('/courses/:id/lectures', (req, res) => {
   const courseId = req.params.id;
   console.log(courseId);
-  if (courseId === 'testId') {
-    res.json({ sections: mockSections });
+  const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(courseId);
+  if (course) {
+    const sections = db
+      .prepare('SELECT id, title, description FROM sections WHERE courseId = ?')
+      .all(courseId);
+
+    const lectureFields = [
+      'id', 'title', 'description', 'tags'
+    ].join(', ');
+
+    const lectures = sections.map(section => ({
+      ...section,
+      lectures: db
+        .prepare(`SELECT ${lectureFields} FROM lectures WHERE sectionId = ?`)
+        .all(section.id),
+    }));
+    res.json({ sections: lectures });
   } else {
     res.status(404).send({ message: 'Course not found' });
   }
