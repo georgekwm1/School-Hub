@@ -97,9 +97,10 @@ router.get('/courses/:courseId/lectures/:lectureId', (req, res) => {
 });
 
 // Get all section titles for creating a lecture
-router.get('/sections_titles', (req, res) => {
-  const stmt = db.prepare('SELECT title FROM sections');
-  const sectionTitles = stmt.all().map(row => row.title);
+router.get('/courses/:id/sections_titles', (req, res) => {
+  const courseId = req.params.id;
+  const stmt = db.prepare('SELECT title FROM sections where courseId = ?');
+  const sectionTitles = stmt.all(courseId).map(row => row.title);
   res.json(sectionTitles);
 });
 
