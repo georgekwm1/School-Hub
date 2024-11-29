@@ -1,4 +1,5 @@
 const express = require('express');
+const {v4: uuidv4} = require('uuid');
 const {
   mockComments,
   mockAnnouncements,
@@ -104,45 +105,57 @@ router.get('/sections_titles', (req, res) => {
 
 // create a course lecture
 router.post('/courses/:id/lectures', (req, res) => {
-  const courseId = req.params.id;
-  const {
-    demos,
-    description,
-    extras,
-    name,
-    notesLink,
-    section,
-    slidesLink,
-    tags,
-    youtubeLink,
-  } = req.body;
-  if (courseId === 'testId') {
-    const newLecture = {
-      id: `lecture-${Date.now()}`,
-      title: name,
-      videoLink: youtubeLink,
-      notes: notesLink,
-      audioLink: '', // Add actual audio link if available
-      slides: slidesLink,
-      subtitles: '', // Add actual subtitles link if available
-      transcript: '', // Add actual transcript link if available
-      description,
-      demos,
-      shorts: extras, // Add actual shorts if available
-      quizzez: [], // Add actual quizzes if available
-      tags,
-    };
+  // Oh, Boy, This is big.
+  const { id: courseId } = req.params;
+  const { demos, description, extras: shorts, name: title, notesLink, section, slidesLink, tags, youtubeLink } = req.body;
 
-    const existingSection = mockSections.find((sec) => sec.title === section);
-    if (existingSection) {
-      existingSection.lectures.push(newLecture);
-    } else {
-      const newId = `section-${Date.now()}`;
-      mockSections.push({ id: newId, title: section, lectures: [newLecture] });
-    }
-    res.json(newLecture);
-  } else {
-    res.status(404).send({ message: 'Course not found' });
+  const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(courseId);
+  if (!course) return res.status(404).send({ message: 'Course not found' });
+  try {
+    db.transaction(() => {
+      // Retrieve or create section basd on existence of ht title
+      let sectionId = db.prepare('SELECT id FROM sections WHERE title = ?').get(section)?.id;
+      if (!sectionId) {
+        sectionId = uuidv4();
+        db.prepare('INSERT INTO sections (id, title, courseId) VALUES (?, ?, ?)').run(sectionId, section, courseId);
+      }
+
+      // Create lecture
+      const lectureId = uuidv4();
+      db.prepare(`
+        INSERT INTO lectures (id, title, description, tags, videoLink, notes, slides, userId, courseId, sectionId)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(lectureId, title, description, tags.join(','), youtubeLink, notesLink, slidesLink, 'admin', courseId, sectionId);
+  
+      // Insert resources
+      const insertResource = (resource, type) => db.prepare(`
+        INSERT INTO lectureResources (id, title, url, type, lectureId) 
+        VALUES (?, ?, ?, ?, ?)
+      `).run(uuidv4(), resource.title, resource.url, type, lectureId);
+  
+      demos.forEach(demo => insertResource(demo, 'demo'));
+      shorts.forEach(short => insertResource(short, 'short'));
+  
+      res.status(201).json({
+        id: lectureId,
+        title,
+        description,
+        section,
+        notes: notesLink,
+        slides: slidesLink,
+        videoLink: youtubeLink,
+        audioLink: '',
+        subtitles: '',
+        transcript: '',
+        tags,
+        demos,
+        shorts,
+        quizzez: [],
+      });
+    })();          
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: 'Error creating lecture' });
   }
 });
 
