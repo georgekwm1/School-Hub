@@ -152,6 +152,7 @@ db.exec(`
     FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (questionId) REFERENCES questions(id) ON DELETE CASCADE,
     FOREIGN KEY (replyId) REFERENCES replies(id) ON DELETE CASCADE,
+		UNIQUE (userId, questionId, replyId),
     CHECK (questionId IS NOT NULL AND replyId IS NULL OR
 		questionId IS NULL AND replyId IS NOT NULL)
 	);
