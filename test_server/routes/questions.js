@@ -84,7 +84,7 @@ router.get('/lectures/:id/discussion', (req, res) => {
   if (lecture) {
     const discussionWithLectureId = db.prepare(
       `
-      SELECT id, title, body, userId, upvotes, repliesCount, lectureId
+      SELECT id, title, body, userId, upvotes, repliesCount, lectureId, updatedAt
         FROM questions 
         WHERE lectureId = ?
         ORDER BY updatedAt DESC;
@@ -160,28 +160,32 @@ router.post('/lectures/:id/discussion', (req, res) => {
     return res.status(400).send({ message: 'Missing required fields' });
   }
 
-  const newEntry = {
-    id: `entry-${Date.now()}`,
-    title,
-    user: {
-      id: 'testId',
-      name: 'John Doe',
-      pictureThumbnail: `https://picsum.photos/200/${Math.floor(Math.random() * 100) + 300}`,
-    },
-    updatedAt: new Date().toISOString(),
-    upvotes: 0,
-    upvoted: false,
-    repliesCount: 0,
-    body,
-    lectureId
-  };
+  const newEntryId = uuidv4();
 
-  // Here you would typically add the newEntry to your database or data store.
-  // For this example, we'll just return it in the response.
-  mockDiscussion.unshift(newEntry);
+  try {
+    const createTime = new Date().toISOString();
+    db.prepare(`
+      INSERT INTO questions (id, title, body, userId, lectureId, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(newEntryId, title, body, userId, lectureId, createTime, createTime);
 
+    const newEntry = {
+      id: newEntryId,
+      title,
+      body,
+      user: getUserData(userId),
+      updatedAt: createTime,
+      upvotes: 0,
+      upvoted: false,
+      repliesCount: 0,
+      lectureId
+    };
 
-  res.status(201).json(newEntry);
+    res.status(201).json(newEntry);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: 'Internal server error' });
+  }
 });
 
 // Change user vote in a question?
