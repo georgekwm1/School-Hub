@@ -226,6 +226,15 @@ db.exec(`
 	END
 `)
 
+db.exec(`
+	CREATE TRIGGER IF NOT EXISTS decrease_quesiton_replies_count
+	AFTER DELETE ON replies
+	BEGIN
+		UPDATE questions
+		SET repliesCount = repliesCount - 1
+		WHERE id = old.questionId;
+	END	
+`)
 process.on('exit', () => db.close());
 process.on('SIGHUP', () => process.exit(128 + 1));
 process.on('SIGINT', () => process.exit(128 + 2));
