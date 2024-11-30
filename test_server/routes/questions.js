@@ -190,26 +190,62 @@ router.post('/lectures/:id/discussion', (req, res) => {
 
 // Change user vote in a question?
 router.post('/questions/:id/vote', (req, res) => {
+  // I think sinse this is only toggling upvotes 
+  // not upvote, donwvote or nutralize.. then no action is needed
+  // and it could just be done.. checking if there is a vote.. 
+  // if no votes for this user.. then you make one
+  // and this opens the door for whenever there somehow a vote already
+  // there might by an error and you return voted already or something
+  // But I prefere leaving it now.. may be i need the triple case later.
   const questionId = req.params.id;
   const { action } = req.body;
+  const userId = currentUserId;
 
-  if (!action) {
-    return res.status(400).send({ message: 'Missing required fields' });
+  if (!action || !['upvote', 'downvote'].includes(action)) {
+    return res.status(400).send({ message: 'Missing or invalid action field' });
   }
 
-  const index = mockDiscussion.findIndex((question) => question.id === questionId);
+  const question = db.prepare('SELECT * FROM questions WHERE id = ?').get(questionId);
 
-  if (index === -1) {
+  if (!question) {
     return res.status(404).send({ message: 'Question not found' });
   }
 
-  if (action === 'upvote') {
-    mockDiscussion[index].upvotes += 1;
-  } else if (action === 'downvote') {
-    mockDiscussion[index].upvotes -= 1;
-  }
+  try {
+    db.transaction(() => {
+      db.prepare(`
+        UPDATE questions
+        SET upvotes = upvotes + ${action == 'upvote' ? 1 : -1}
+        WHERE id = ?
+      `).run(questionId);
 
-  res.status(200).json(mockDiscussion[index]);
+      if (action === 'upvote') {
+        // TODO.. what if user already upvoted;
+        db.prepare(`
+          INSERT INTO votes (userId, questionId)
+          VALUES (?, ?)
+        `).run(userId, questionId);
+      } else if (action === 'downvote') {
+        db.prepare(`
+          DELETE FROM votes WHERE userId = ? AND questionId = ?
+        `).run(userId, questionId);
+      }
+
+      // I'm not sure.. should I just return success code and it's the
+      // role of the syncing mechanism to update or bring new numbers..
+      // because it would be strange if a user upvotes and find the number
+      // increases with 2 or five numbers..
+
+      
+      const message = action === 'upvote' ? 'Upvoted successfully' : 'Vote deleted successfully';
+      // Now another thing.. I'm juggling between 201.. 200, and 204?
+      // Sinse i'm already creating a resource.. which is the votes.. and updating somehting
+      res.status(201).json({message});
+    })();
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: 'Error updating vote' });
+  }
 });
 
 // Edit a question
