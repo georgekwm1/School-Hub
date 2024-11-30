@@ -12,12 +12,47 @@ const {
 
 const router = express.Router();
 
+// Untill adding the JWT stuff to get the actually user quering this..
+// lets say.. 
+const currentUserId = 'admin';
+// const currentUserId = '30fd6f7e-a85b-4f2c-bee7-55b0bf542e95';
+
+
 
 // Get a course general forum questions
 router.get('/courses/:id/general_discussion', (req, res) => {
   const id = req.params.id;
-  if (id === "testId") {
-    res.json(mockDiscussion);
+  const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(id);
+  if (course) {
+    const questionEntries = db.prepare(
+      `
+      SELECT id, title, body, updatedAt, upvotes, repliesCount
+        FROM questions 
+        WHERE courseId = ?
+        ORDER BY updatedAt DESC;
+      `
+    ).all(course.id);
+
+    // Now, here I'll get the userData + is it upvoted or not
+    const results = questionEntries.map( (entry) => {
+      const user = db.prepare(
+        `SELECT id, firstName, lastName, pictureThumbnail
+        FROM users
+        WHERE id = ?`
+      ).get(entry.userId);
+      
+      const upvoted = db.prepare(
+        `SELECT userId FROM votes WHERE userId = ? AND questionId = ?`
+      ).get(currentUserId, entry.id) !== undefined;
+
+      return {
+        ...entry,
+        user,
+        upvoted,
+      }
+    })
+
+    res.json(results);
   } else {
     res.status(404).send({ message: 'Course not found' });
   }
