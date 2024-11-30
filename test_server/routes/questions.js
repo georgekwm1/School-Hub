@@ -42,7 +42,7 @@ function getUpvoteStatus(userId, resourceId, resourceType) {
 
   return db.prepare(
     `SELECT userId FROM votes WHERE userId = ? AND ${idColumn} = ?`
-  ).get(userId, entry.id) !== undefined;
+  ).get(userId, resourceId) !== undefined;
 
 }
 // Get a course general forum questions
@@ -52,7 +52,7 @@ router.get('/courses/:id/general_discussion', (req, res) => {
   if (course) {
     const questionEntries = db.prepare(
       `
-      SELECT id, title, body, updatedAt, upvotes, repliesCount
+      SELECT id, title, body, updatedAt, upvotes, repliesCount, userId
         FROM questions 
         WHERE courseId = ?
         ORDER BY updatedAt DESC;
