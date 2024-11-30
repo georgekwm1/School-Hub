@@ -89,23 +89,50 @@ router.get('/questions/:id/replies', (req, res) => {
 router.post('/replies/:id/vote', (req, res) => {
   const replyId = req.params.id;
   const { action } = req.body;
-
+  const userId = currentUserId;
   if (!action) {
     return res.status(400).send({ message: 'Missing required fields' });
   }
 
-  const index = mockReplies.findIndex((reply) => reply.id === replyId);
+  // Is this a better way? I don't know.
+  const replyExists = db.prepare(
+    `SELECT 1 FROM replies WHERE id = ?`
+  ).get(replyId) !== undefined;
 
-  if (index === -1) {
+  if (!replyExists) {
     return res.status(404).send({ message: 'Reply not found' });
   }
 
-  if (action === 'upvote') {
-    mockReplies[index].upvotes += 1;
-  } else if (action === 'downvote') {
-    mockReplies[index].upvotes -= 1;
+  try {
+    db.transaction(() => {
+      if (action === 'upvote'){
+        db.prepare(
+          `INSERT INTO votes (userId, replyId)
+          VALUES (?, ?)`
+        ).run(userId, replyId);  
+      } else if (action === 'downvote') {
+        db.prepare(
+          `DELETE FROM votes WHERE userId = ? AND replyId = ?`
+        ).run(userId, replyId);
+      }
+  db.prepare(`
+    UPDATE replies
+    SET upvotes = upvotes + ${action == 'upvote' ? 1 : -1}
+    WHERE id = ?
+    `).run(replyId);
+    
+    let message;
+    if (action == 'upvote') {
+      message = 'Upvoted successfully';
+    } else {
+      message = 'Vote deleted successfully';
+    }
+    res.status(200).json({ message });
+  })() 
+  } catch(err) {
+    console.error(err);
+    res.status(500).send({ message: 'Error voting' });
   }
-  res.status(200).json(mockReplies[index]);
 });
 
 // Create a reply for a question
