@@ -79,18 +79,31 @@ router.get('/courses/:id/general_discussion', (req, res) => {
 
 // Get a lecture discussions/qustions
 router.get('/lectures/:id/discussion', (req, res) => {
-  console.log(33)
   const id = req.params.id;
-  const allowedLectures = mockSections.flatMap(section => section.lectures.map(lecture => lecture.id));
+  const lecture = db.prepare('SELECT * FROM lectures WHERE id = ?').get(id);
+  if (lecture) {
+    const discussionWithLectureId = db.prepare(
+      `
+      SELECT id, title, body, userId, upvotes, repliesCount, lectureId
+        FROM questions 
+        WHERE lectureId = ?
+        ORDER BY updatedAt DESC;
+      `
+    ).all(id);
 
-  if (allowedLectures.includes(id)) {
-      const discussionWithLectureId = mockDiscussion.map(discussion => ({
-        ...discussion,
-        lectureId: id,
-      }));
-      res.json(discussionWithLectureId);
+    const results = discussionWithLectureId.map( (entry) => {
+      const user = getUserData(entry.userId);
+      const upvoted = getUpvoteStatus(currentUserId, entry.id, 'question');
 
-    } else {
+      return {
+        ...entry,
+        user,
+        upvoted,
+      }
+    })
+
+    res.json(results);
+  } else {
     res.status(404).send({ message: 'Lecture not found' });
   }
 });
