@@ -253,16 +253,35 @@ router.put('/questions/:id', (req, res) => {
   const { id } = req.params;
   const { title, body } = req.body;
 
-  const index = mockDiscussion.findIndex((question) => question.id === id);
+  const question = db.prepare('SELECT * FROM questions WHERE id = ?').get(id);
 
-  if (index === -1) {
+  if (!question) {
     return res.status(404).send({ message: 'Question not found' });
   }
 
-  mockDiscussion[index].title = title;
-  mockDiscussion[index].body = body;
+  try {
+    db.transaction(() => {
+      db.prepare(`
+        UPDATE questions
+        SET title = ?, body = ?
+        WHERE id = ?
+      `).run(title, body, id);
 
-  res.status(200).json(mockDiscussion[index]);
+      const updatedQuestion = db.prepare(
+        `SELECT id, title, body, updatedAt, lectureId ,repliesCount, upvotes
+         FROM questions WHERE id = ?`
+      ).get(id);
+
+      res.status(200).json({
+        ...updatedQuestion,
+        user: getUserData(currentUserId),
+        upvoted: getUpvoteStatus(currentUserId, id, 'question'),
+      });
+    })();
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: 'Error updating question' });
+  }
 });
 
 // delete a question
