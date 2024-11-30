@@ -9,22 +9,79 @@ const {
   mockSections,
   repliesList,
 } = require('../mockData');
-
+const db = require('../connect');
 
 const router = express.Router();
+
+
+// Untill adding the JWT stuff to get the actually user quering this..
+// lets say.. 
+const currentUserId = 'admin';
+// const currentUserId = '30fd6f7e-a85b-4f2c-bee7-55b0bf542e95';
+
+
+function getUserData(userId) {
+  const user = db.prepare(
+    `SELECT id, firstName, lastName, pictureThumbnail
+    FROM users
+    WHERE id = ?`
+  ).get(userId);
+
+  return {
+    id: user.id,
+    name: `${user.firstName} ${user.lastName}`,
+    pictureThumbnail: user.pictureThumbnail
+  }
+}
+
+function getUpvoteStatus(userId, resourceId, resourceType) {
+  const idColumn = resourceType === 'question'
+    ? 'questionId' : 'replyId';
+
+  return db.prepare(
+    `SELECT userId FROM votes WHERE userId = ? AND ${idColumn} = ?`
+  ).get(userId, resourceId) !== undefined;
+}
 
 
 // Get question replies
 router.get('/questions/:id/replies', (req, res) => {
   const questionId = req.params.id;
 
-  const question = mockDiscussion.find(q => q.id === questionId);
+  const question = db.prepare(
+    // Assuming it's a lecture question this won't the lecturId won't be null.
+    `SELECT id, title, body, updatedAt, upvotes, repliesCount, userId, lectureId
+    FROM questions
+    WHERE id = ?`
+  ).get(questionId);
 
   if (!question) {
     return res.status(404).send({ message: 'Question not found' });
   }
 
-  res.json({ question: {...question, lectureId: 'cs50-lecture-0'}, repliesList });
+  
+  const user = getUserData(question.userId);
+  const upvoted = getUpvoteStatus(currentUserId, question.id, 'question');
+
+  const replies = db.prepare(
+    `SELECT id, body, userId, updatedAt, upvotes
+    FROM replies
+    WHERE questionId = ?
+    ORDER BY updatedAt DESC`
+  ).all(questionId);
+
+  const results = replies.map( (reply) => {
+    const user = getUserData(reply.userId);
+    const upvoted = getUpvoteStatus(currentUserId, reply.id, 'reply');
+
+    return {
+      ...reply,
+      user,
+      upvoted,
+    }
+  })
+
+  res.json({ question: {...question, user, upvoted}, repliesList: results });
 });
 
 // Change user vote for a replies
