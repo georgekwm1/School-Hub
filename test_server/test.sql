@@ -1,15 +1,19 @@
-SELECT * FROM lectures;
-SELECT * FROM courses;
-SELECT * from users;
+-- SELECT * FROM lectures;
+-- SELECT * FROM courses;
+-- SELECT * from users;
 select * from questions; 
 select * from votes; 
 select * from replies;
 
-SELECT id, title, body, updatedAt, upvotes, repliesCount FROM questions WHERE lectureId = 'test-course' ORDER BY updatedAt DESC;
-SELECT id, firstName, lastName, pictureThumbnail FROM users where Id = 'userId';
-SELECT * from votes where userId = 'userId' and questionId = 'questionId';
--- -- UPDATE questions SET upvotes = upvotes + 1 WHERE id = '833bd103-a5f7-4f9b-a2c8-6f4a0b296d38';
+-- SELECT id, title, body, updatedAt, upvotes, repliesCount FROM questions WHERE lectureId = 'test-course' ORDER BY updatedAt DESC;
+-- SELECT id, firstName, lastName, pictureThumbnail FROM users where Id = 'userId';
+-- SELECT * from votes where userId = 'userId' and questionId = 'questionId';
+
+-- UPDATE questions SET repliesCount = 0;
 
 -- DROP TRIGGER IF EXISTS questions_update;
 
 -- DROP TRIGGER IF EXISTS reply_update_time;
+-- DROP TRIGGER IF EXISTS increase_question_replies_count;
+-- DROP TRIGGER IF EXISTS decrease_quesiton_replies_count;
+-- SELECT name FROM sqlite_master WHERE type = 'trigger';

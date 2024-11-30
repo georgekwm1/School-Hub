@@ -235,6 +235,7 @@ db.exec(`
 		WHERE id = old.questionId;
 	END	
 `)
+
 process.on('exit', () => db.close());
 process.on('SIGHUP', () => process.exit(128 + 1));
 process.on('SIGINT', () => process.exit(128 + 2));
