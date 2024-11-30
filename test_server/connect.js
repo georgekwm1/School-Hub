@@ -216,6 +216,15 @@ db.exec(`
 	END
 `)
 
+db.exec(`
+	CREATE TRIGGER IF NOT EXISTS increase_question_replies_count
+	AFTER INSERT ON replies
+	BEGIN
+		UPDATE questions
+		SET repliesCount = repliesCount + 1
+		WHERE id = new.questionId;
+	END
+`)
 
 process.on('exit', () => db.close());
 process.on('SIGHUP', () => process.exit(128 + 1));
