@@ -1,4 +1,5 @@
 const express = require('express');
+const { v4: uuidv4 } = require('uuid');
 const {
   mockComments,
   mockAnnouncements,
@@ -116,25 +117,38 @@ router.post('/questions/:id/replies', (req, res) => {
     return res.status(400).send({ message: 'Missing required fields' });
   }
 
-  const newReply = {
-    questionId,
-    id: `reply-${Date.now()}`,
-    user: {
-      id: 'testId',
-      name: 'Anonymous',
-      pictureThumbnail: `https://picsum.photos/100`,
-    },
-    updatedAt: new Date().toISOString(),
-    upvotes: 0,
-    upvoted: false,
-    body,
-  };
+  try {
+    const id = uuidv4();
+    db.prepare(`
+      INSERT INTO replies (id, questionId, userId, body)
+      VALUES (?, ?, ?, ?)
+    `).run(
+      id,
+      questionId,
+      userId,
+      body
+    );
 
-  // Here you would typically add the newReply to your database or data store.
-  // For this example, we'll just return it in the response.
-  mockReplies.unshift(newReply);
+    // I feel I'm doing something wronge here.
+    // I iether get all the data
+    // Or use teh data I already have from the variables above
+    // and if for the updatedAt property.. I can just get Date().now()
+    // I just don't know
+    const newReply = db.prepare(
+      `SELECT * FROM replies WHERE id = ?`
+    ).get(id);
+    const user = getUserData(newReply.userId);
 
-  res.status(201).json(newReply);
+    delete newReply.userId;
+    res.status(201).json({
+      ...newReply,
+      user,
+      upvoted: false,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: 'Internal server error' });
+  }
 });
 
 // Edit a reply
