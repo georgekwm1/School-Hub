@@ -2,6 +2,7 @@ SELECT * FROM lectures;
 SELECT * FROM courses;
 SELECT * from users;
 select * from questions; 
+select * from votes; 
 
 SELECT id, title, body, updatedAt, upvotes, repliesCount FROM questions WHERE lectureId = 'test-course' ORDER BY updatedAt DESC;
 SELECT id, firstName, lastName, pictureThumbnail FROM users where Id = 'userId';

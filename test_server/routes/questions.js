@@ -287,13 +287,24 @@ router.put('/questions/:id', (req, res) => {
 // delete a question
 router.delete('/questions/:id', (req, res) => {
   const questionId = req.params.id;
-  const index = mockDiscussion.findIndex((question) => question.id === questionId);
+  const question = db.prepare('SELECT * FROM questions WHERE id = ?').get(questionId);
 
-  if (index === -1) {
+  if (!question) {
     return res.status(404).send({ message: 'Question not found' });
   }
-  mockDiscussion.splice(index, 1);
-  res.status(200).json({ message: 'Question deleted successfully' });
+
+  try {
+    db.transaction(() => {
+      db.prepare('DELETE FROM questions WHERE id = ?').run(questionId);
+      // useless if the cascade works.. whey did it forget this?!      
+      // db.prepare('DELETE FROM replies WHERE questionId = ?').run(questionId);
+
+      res.status(200).json({ message: 'Question deleted successfully' });
+    })();
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: 'Error deleting question' });
+  }
 });
 
 module.exports = router;
