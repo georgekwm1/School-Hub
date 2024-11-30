@@ -188,6 +188,35 @@ db.exec(`
 	);
 	`);
 
+
+
+// I'm amazed rightnow.. I hope to refactor some endpoitns now
+// These triggers are amazing.. that will save alot of redunenet code
+// Thank god sqlite doesn't have on update current_timestamp
+// otherwise i wouln't have searched for these triggers stuff
+db.exec(`
+	CREATE TRIGGER IF NOT EXISTS questions_update
+	AFTER UPDATE ON questions
+	WHEN old.title != new.title OR old.body != new.body
+	BEGIN
+		UPDATE questions
+		SET updatedAt = CURRENT_TIMESTAMP
+		WHERE id = old.id;
+	END
+`)
+
+db.exec(`
+	CREATE TRIGGER IF NOT EXISTS reply_update_time
+	AFTER UPDATE ON replies
+	WHEN old.body != new.body
+	BEGIN
+		UPDATE replies
+		SET updatedAt = CURRENT_TIMESTAMP
+		WHERE id = old.id;
+	END
+`)
+
+
 process.on('exit', () => db.close());
 process.on('SIGHUP', () => process.exit(128 + 1));
 process.on('SIGINT', () => process.exit(128 + 2));
