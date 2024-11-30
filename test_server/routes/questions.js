@@ -1,4 +1,5 @@
 const express = require('express');
+const { v4: uuidv4 } = require('uuid');
 const {
   mockComments,
   mockAnnouncements,
@@ -9,6 +10,8 @@ const {
   mockSections,
   repliesList,
 } = require('../mockData');
+const db = require('../connect');
+
 
 const router = express.Router();
 
@@ -101,26 +104,38 @@ router.post('/courses/:id/general_discussion', (req, res) => {
     return res.status(400).send({ message: 'Missing required fields' });
   }
 
-  const newEntry = {
-    id: `entry-${Date.now()}`,
-    title,
-    user: {
-      id: 'testId',
-      name: 'John Doe',
-      pictureThumbnail: `https://picsum.photos/200/${Math.floor(Math.random() * 100) + 300}`,
-    },
-    updatedAt: new Date().toISOString(),
-    upvotes: 0,
-    upvoted: false,
-    repliesCount: 0,
-    body
-  };
+  const user = getUserData(userId);
+  const newEntryId = uuidv4();
 
-  // Here you would typically add the newEntry to your database or data store.
-  // For this example, we'll just return it in the response.
-  mockDiscussion.push(newEntry);
+  try {
+    const createTime = new Date().toISOString();
+    // I have a concern about what i'm doing here regarding teh time.. 
+    // connected to the next comment below
+    db.prepare(`
+      INSERT INTO questions (id, title, body, userId, courseId, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(newEntryId, title, body, userId, courseId, createTime, createTime);
+    
+    // Here, i'm not 100% sure if I sould do this here..
+    // or bring the data with a select query from the DB?
+    // May be this is being done for sort of certainty or something..
+    // I don't know..
+    const newEntry = {
+      id: newEntryId,
+      title,
+      body,
+      user,
+      updatedAt: createTime,
+      upvotes: 0,
+      upvoted: false,
+      repliesCount: 0,
+    };
 
-  res.status(201).json(newEntry);
+    res.status(201).json(newEntry);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: 'Internal server error' });
+  }
 });
 
 // Create a new question for a lecture
