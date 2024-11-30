@@ -212,14 +212,21 @@ router.put('/replies/:id', (req, res) => {
 // Delete a reply
 router.delete('/replies/:id', (req, res) => {
   const replyId = req.params.id;
-  const index = mockReplies.findIndex((reply) => reply.id === replyId);
 
-  if (index === -1) {
-    return res.status(404).send({ message: 'Reply not found' });
+  try {
+    const reply = db.prepare('SELECT * FROM replies WHERE id = ?').get(replyId);
+
+    if (!reply) {
+      return res.status(404).send({ message: 'Reply not found' });
+    }
+
+    db.prepare('DELETE FROM replies WHERE id = ?').run(replyId);
+
+    res.status(200).json({ message: 'Reply deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: 'Error deleting reply' });
   }
-
-  mockReplies.splice(index, 1);
-  res.status(200).json({ message: 'Reply deleted successfully' });
 });
 
 module.exports = router;
