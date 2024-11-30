@@ -18,6 +18,19 @@ const currentUserId = 'admin';
 // const currentUserId = '30fd6f7e-a85b-4f2c-bee7-55b0bf542e95';
 
 
+function getUserData(userId) {
+  const user = db.prepare(
+    `SELECT id, firstName, lastName, pictureThumbnail
+    FROM users
+    WHERE id = ?`
+  ).get(userId);
+
+  return {
+    id: user.id,
+    name: `${user.firstName} ${user.lastName}`,
+    pictureThumbnail: user.pictureThumbnail
+  }
+}
 
 // Get a course general forum questions
 router.get('/courses/:id/general_discussion', (req, res) => {
@@ -35,11 +48,7 @@ router.get('/courses/:id/general_discussion', (req, res) => {
 
     // Now, here I'll get the userData + is it upvoted or not
     const results = questionEntries.map( (entry) => {
-      const user = db.prepare(
-        `SELECT id, firstName, lastName, pictureThumbnail
-        FROM users
-        WHERE id = ?`
-      ).get(entry.userId);
+      const user = getUserData(entry.userId);
       
       const upvoted = db.prepare(
         `SELECT userId FROM votes WHERE userId = ? AND questionId = ?`
