@@ -32,6 +32,16 @@ function getUserData(userId) {
   }
 }
 
+
+function getUpvoteStatus(userId, resourceId, resourceType) {
+  const idColumn = resourceType === 'question'
+    ? 'questionId' : 'replyId';
+
+  return db.prepare(
+    `SELECT userId FROM votes WHERE userId = ? AND ${idColumn} = ?`
+  ).get(userId, entry.id) !== undefined;
+
+}
 // Get a course general forum questions
 router.get('/courses/:id/general_discussion', (req, res) => {
   const id = req.params.id;
@@ -49,10 +59,7 @@ router.get('/courses/:id/general_discussion', (req, res) => {
     // Now, here I'll get the userData + is it upvoted or not
     const results = questionEntries.map( (entry) => {
       const user = getUserData(entry.userId);
-      
-      const upvoted = db.prepare(
-        `SELECT userId FROM votes WHERE userId = ? AND questionId = ?`
-      ).get(currentUserId, entry.id) !== undefined;
+      const upvoted = getUpvoteStatus(user.id, entry.id, 'question');
 
       return {
         ...entry,
