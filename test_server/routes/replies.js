@@ -156,15 +156,28 @@ router.put('/replies/:id', (req, res) => {
   const { id } = req.params;
   const { body } = req.body;
 
-  const index = mockReplies.findIndex((reply) => reply.id === id);
+  try {
+    const reply = db.prepare('SELECT * FROM replies WHERE id = ?').get(id);
 
-  if (index === -1) {
-    return res.status(404).send({ message: 'Reply not found' });
+    if (!reply) {
+      return res.status(404).send({ message: 'Reply not found' });
+    }
+
+    db.prepare('UPDATE replies SET body = ? WHERE id = ?').run(body, id);
+
+    const updatedReply = db.prepare('SELECT * FROM replies WHERE id = ?').get(id);
+    const user = getUserData(updatedReply.userId);
+    
+    delete updatedReply.userId;
+    res.status(200).json({
+      ...updatedReply,
+      user,
+      upvoted: false, // Assuming upvote status is false by default
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: 'Error updating reply' });
   }
-
-  mockReplies[index].body = body;
-
-  res.status(200).json(mockReplies[index]);
 });
 
 // Delete a reply
