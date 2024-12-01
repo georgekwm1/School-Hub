@@ -115,13 +115,20 @@ router.put('/announcements/:id', (req, res) => {
 // Delete an announcement
 router.delete('/announcements/:id', (req, res) => {
   const announcementId = req.params.id;
-  const index = mockAnnouncements.findIndex((announcement) => announcement.id === announcementId);
+  try {
+    const announcement = db.prepare('SELECT * FROM announcements WHERE id = ?').get(announcementId);
 
-  if (index === -1) {
-    return res.status(404).send({ message: 'Announcement not found' });
+    if (!announcement) {
+      return res.status(404).send({ message: 'Announcement not found' });
+    }
+
+    db.prepare('DELETE FROM announcements WHERE id = ?').run(announcementId);
+
+    res.status(200).json({ message: 'Announcement deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: 'Internal server error' });
   }
-  mockAnnouncements.splice(index, 1);
-  res.status(200).json({ message: 'Announcement deleted successfully' });
 });
 
 module.exports = router
