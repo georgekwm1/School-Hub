@@ -88,6 +88,10 @@ export const deleteLecture = (sectionId, lectureId) => async (dispatch) => {
     await toast.promise(
       fetch(`${DOMAIN}/lectures/${lectureId}`, {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken('accessToken')}`
+        },
       }).then((response) => {
         if (!response.ok) {
           throw new Error(response.statusText);
