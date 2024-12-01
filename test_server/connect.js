@@ -268,6 +268,16 @@ db.exec(
 	`
 )
 
+db.exec(`
+	CREATE TRIGGER IF NOT EXISTS decrease_announcement_comments_count
+	AFTER DELETE ON comments
+	BEGIN
+		UPDATE announcements
+		SET commentsCount = commentsCount - 1
+		WHERE id = old.announcementId;
+	END	
+`)
+
 process.on('exit', () => db.close());
 process.on('SIGHUP', () => process.exit(128 + 1));
 process.on('SIGINT', () => process.exit(128 + 2));
