@@ -1,12 +1,18 @@
 import toast from 'react-hot-toast';
 import * as creators from './announcementsActionCreators';
 import { DOMAIN } from '../../utils/constants';
+import { getToken } from '../../utils/utilFunctions';
+
 
 export const fetchAnnouncements = () => async (dispatch, getState) => {
   dispatch(creators.fetchAnnouncementsRequest());
   const courseId = getState().ui.getIn(['course', 'id']) || 'testId';
   try {
-    const response = await fetch(`${DOMAIN}/courses/${courseId}/announcements`);
+    const response = await fetch(`${DOMAIN}/courses/${courseId}/announcements`, {
+      headers: {
+        Authorization: `Bearer ${getToken('accessToken')}`,
+      },
+    });
     const data = await response.json();
     if (!response.ok) {
       throw new Error(data.message);

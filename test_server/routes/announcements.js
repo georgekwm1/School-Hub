@@ -12,12 +12,14 @@ const {
 } = require('../mockData');
 const { getUserData } = require('../helperFunctions');
 const db = require('../connect');
+const { verifyToken } = require('../middlewares/authMiddlewares');
+const { verify } = require('jsonwebtoken');
 
 
 const router = express.Router();
 
 // Get course announcements
-router.get('/courses/:id/announcements', (req, res) => {
+router.get('/courses/:id/announcements', verifyToken, (req, res) => {
   const courseId = req.params.id;
   const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(courseId);
   if (!course) {
