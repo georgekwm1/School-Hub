@@ -1,4 +1,5 @@
 const express = require('express');
+const { v4: uuidv4 } = require('uuid');
 const {
   mockComments,
   mockAnnouncements,
@@ -9,23 +10,40 @@ const {
   mockSections,
   repliesList,
 } = require('../mockData');
-
+const db = require('../connect');
+const { getUserData } = require('../helperFunctions');
 
 const router = express.Router();
 
 // Get all comments for an announcement
 router.get('/announcements/:id/comments', (req, res) => {
   const announcementId = req.params.id;
-  const ids = mockAnnouncements.map((announcement) => announcement.id);
-  // This is stupid.. I dont' know what I was thingking when i was creating this
-  // at first.. may be i wanted to test erro rmesages or
-  ids.push(announcementId);
-  if (ids.includes(announcementId)) {
-    const comments = mockComments.filter(com => com.announcementId === announcementId);
-    res.json(comments.map(com => ({...com, announcementId})));
-  } else {
-    res.status(404).send({ message: 'Announcement not found' });
+  const announcement = db.prepare('SELECT 1 FROM announcements WHERE id = ?').get(announcementId);
+
+  if (!announcement) {
+    return res.status(404).send({ message: 'Announcement not found' });
   }
+
+  const comments = db
+    .prepare(
+      `
+      SELECT * FROM comments
+        WHERE announcementId = ?
+        ORDER BY createdAt DESC;
+      `
+    )
+    .all(announcementId);
+
+  const results = comments.map((comment) => {
+    const user = getUserData(comment.userId);
+    delete comment.userId;
+    return {
+      ...comment,
+      user,
+    };
+  });
+
+  res.status(200).json(results);
 });
 
 // Create a comment for an announcement
