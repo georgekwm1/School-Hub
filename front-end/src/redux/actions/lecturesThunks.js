@@ -1,6 +1,7 @@
 import toast from 'react-hot-toast';
 import * as actionCreators from './lecturesActionCreators';
 import {DOMAIN} from '../../utils/constants'
+import { getToken } from '../../utils/utilFunctions';
 
 export const getLectureById = (lectureId) => async (dispatch, getState) => {
   dispatch(actionCreators.lectureRequest());
@@ -54,7 +55,10 @@ export const createLecture = (lectureData, navigate) => async (dispatch, getStat
     const data = await toast.promise(
       fetch(`${DOMAIN}/courses/${courseId}/lectures`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken('accessToken')}`
+          },
         body: JSON.stringify(lectureData),
       }).then((response) => {
         if (!response.ok) {

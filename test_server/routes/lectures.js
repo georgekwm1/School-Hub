@@ -119,7 +119,7 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
 
   const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(courseId);
   if (!course) return res.status(404).send({ message: 'Course not found' });
-  const stmt = db.prepare('SELECT id FROM courseAdmins WHERE courseId = ? AND userId = ?');
+  const stmt = db.prepare('SELECT 1 FROM courseAdmins WHERE courseId = ? AND userId = ?');
   const isAdmin = stmt.get(courseId, userId);
   if (!isAdmin) return res.status(403).send({ message: 'User is not a course admin' });
 
