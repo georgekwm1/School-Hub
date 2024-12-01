@@ -172,7 +172,7 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
 });
 
 // Edit a lecture
-router.put('/lectures/:id', (req, res) => {
+router.put('/lectures/:id', verifyToken, (req, res) => {
   const { id } = req.params;
   const {
     name,
@@ -185,12 +185,17 @@ router.put('/lectures/:id', (req, res) => {
     tags,
     demos,
   } = req.body;
-
+  const userId = req.userId;
   const lecture = db.prepare('SELECT * FROM lectures WHERE id = ?').get(id);
 
   if (!lecture) {
     return res.status(404).send({ message: 'Lecture not found' });
   }
+
+  const stmt = db.prepare('SELECT 1 FROM courseAdmins WHERE courseId = ? AND userId = ?');
+  const isAdmin = stmt.get(lecture.courseId, userId);
+  if (!isAdmin) return res.status(403).send({ message: "User don't have previlate to delete this lecture" });
+
   try {
     db.transaction(() => {
       let sectionId;
