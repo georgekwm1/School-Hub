@@ -111,17 +111,26 @@ export const editLecture = (lectureId, lectureData) => async (dispatch) => {
   dispatch(actionCreators.editLectureRequest());
 
   try {
-    const response = await fetch(`${DOMAIN}/lectures/${lectureId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(lectureData),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message);
-    }
+    const data = await toast.promise(
+      fetch(`${DOMAIN}/lectures/${lectureId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken('accessToken')}`
+        },
+        body: JSON.stringify(lectureData),
+      }).then((response) => {
+        if (!response.ok) {
+          throw new Error(response.statusText);
+        }
+        return response.json();
+      }),
+      {
+        loading: 'Updating Lecture',
+        success: 'Lecture Updated',
+        error: 'Error Updating Lecture',
+      }
+    );
 
     dispatch(actionCreators.editLectureSuccess(data));
   } catch (error) {
