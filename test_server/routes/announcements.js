@@ -1,4 +1,5 @@
 const express = require('express');
+const { v4: uuidv4 } = require('uuid');
 const {
   mockComments,
   mockAnnouncements,
@@ -56,25 +57,34 @@ router.post('/courses/:id/announcements', (req, res) => {
     return res.status(400).send({ message: 'Missing required fields' });
   }
 
-  const newAnnouncement = {
-    id: `announcement-${Date.now()}`,
-    courseId,
-    user: {
-      id: 'testId',
-      name: 'John Doe',
-      pictureThumbnail: `https://picsum.photos/200/${Math.floor(Math.random() * 100) + 300}`,
-    },
-    title,
-    body: details,
-    commentsCount: 0,
-    updatedAt: new Date().toISOString(),
-  };
+  try {
+    const id = uuidv4();
+    db.prepare(
+      `
+      INSERT INTO announcements (id, courseId, userId, title, body)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(
+      id,
+      courseId,
+      userId,
+      title,
+      details,
+    );
 
-  // Here you would typically add the newAnnouncement to your database or data store.
-  // For this example, we'll just return it in the response.
-  mockAnnouncements.unshift(newAnnouncement);
+    const user = getUserData(userId);
+    const newAnnouncement = db.prepare(
+      'SELECT * FROM announcements WHERE id = ?'
+    ).get(id);
+    delete newAnnouncement.userId
 
-  res.status(201).json(newAnnouncement);
+    res.status(201).json({
+      ...newAnnouncement,
+      user,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: 'Internal server error' });
+  }
 });
 
 // Edit an announcement
