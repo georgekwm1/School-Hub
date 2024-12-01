@@ -58,7 +58,7 @@ export default function RegisterStepTwo({
     let thumbnail = '';
     try {
       dispatch(toggleLoading());
-      const response = await fetch("http://localhost:3000/auth/imagekit");
+      const response = await fetch("https://localhost:3000/auth/imagekit");
       const authParams = await response.json();
 
       const uploadResponse = await imagekit.upload({

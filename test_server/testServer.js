@@ -4,7 +4,7 @@ const fs = require('fs');
 const ImageKit = require('imagekit');
 const app = express();
 const cors = require('cors');
-
+const db = require('./connect');
 const authRouter = require('./routes/auth');
 const lecturesRouter = require('./routes/lectures');
 const questionsRouter = require('./routes/questions');

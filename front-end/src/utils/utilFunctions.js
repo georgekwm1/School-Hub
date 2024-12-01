@@ -16,7 +16,7 @@ export const extractVideoId = (url) => {
 
 export function formatDate(timestamp) {
   const date = new Date(timestamp);
-  const now = new Date();
+  const now = new Date(Date.now() + new Date().getTimezoneOffset() * 60 * 1000);
   const diffInSeconds = Math.floor((now - date) / 1000);
 
   const SECONDS_IN_A_MINUTE = 60;

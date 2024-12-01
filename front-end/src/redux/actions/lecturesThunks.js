@@ -2,12 +2,14 @@ import toast from 'react-hot-toast';
 import * as actionCreators from './lecturesActionCreators';
 import {DOMAIN} from '../../utils/constants'
 
-export const getLectureById = (lectureId) => async (dispatch) => {
+export const getLectureById = (lectureId) => async (dispatch, getState) => {
   dispatch(actionCreators.lectureRequest());
 
+  const state = getState();
+  const courseId = state.ui.getIn(['course', 'id']);
   try {
     const response = await fetch(
-      `${DOMAIN}/courses/testId/lectures/${lectureId}`
+      `${DOMAIN}/courses/${courseId}/lectures/${lectureId}`
     );
     const data = await response.json();
 
@@ -24,11 +26,12 @@ export const getLectureById = (lectureId) => async (dispatch) => {
 // I feel some sort of inconsistency here.. Because.. i'm requesting lectures
 // and calling the things Lectures.. but i'm getting lectures into sections
 // I donnt' know
-export const getCourseLectures = (courseId) => async (dispatch) => {
+export const getCourseLectures = (courseId) => async (dispatch, getState) => {
   dispatch(actionCreators.sectionsRequest());
-
+  const state = getState();
+  const courseId = state.ui.getIn(['course', 'id']);
   try {
-    const response = await fetch(`${DOMAIN}/courses/testId/lectures`);
+    const response = await fetch(`${DOMAIN}/courses/${courseId}/lectures`);
     const data = await response.json();
 
     if (!response.ok) {
@@ -42,12 +45,14 @@ export const getCourseLectures = (courseId) => async (dispatch) => {
   }
 };
 
-export const createLecture = (lectureData, navigate) => async (dispatch) => {
+export const createLecture = (lectureData, navigate) => async (dispatch, getState) => {
   dispatch(actionCreators.createLectureRequest());
   console.log(lectureData);
+  const state = getState();
+  const courseId = state.ui.getIn(['course', 'id']);
   try {
     const data = await toast.promise(
-      fetch(`${DOMAIN}/courses/testId/lectures`, {
+      fetch(`${DOMAIN}/courses/${courseId}/lectures`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(lectureData),
