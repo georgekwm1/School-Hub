@@ -107,15 +107,22 @@ router.put('/comments/:id', (req, res) => {
 
 // Delete an announcement;
 router.delete('/comments/:commentId', (req, res) => {
-  const { announcementId, commentId } = req.params;
-  const index = mockComments.findIndex((comment) => comment.id === commentId);
+  const { commentId } = req.params;
 
-  if (index === -1) {
-    return res.status(404).send({ message: 'Comment not found' });
+  try {
+    const comment = db.prepare('SELECT * FROM comments WHERE id = ?').get(commentId);
+
+    if (!comment) {
+      return res.status(404).send({ message: 'Comment not found' });
+    }
+
+    db.prepare('DELETE FROM comments WHERE id = ?').run(commentId);
+
+    res.status(200).json({ message: 'Comment deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: 'Internal server error' });
   }
-  
-  mockComments.splice(index, 1);
-  res.status(200).json({ message: 'Comment deleted successfully' });
 });
 
 module.exports = router;
