@@ -11,10 +11,27 @@ const {
   repliesList,
 } = require('../mockData');
 const db = require('../connect');
-
+const { verifyToken } = require('../middlewares/authMiddlewares');
 const router = express.Router();
 
 // Get all lectures for a course split on sections
+// Here nothing much to be done regardig the token
+// becuase anywaye the overhead of checking different courses
+// and all this is not there yet.. and the login is already made for
+// a specific course
+// so. if he is logged in.. he is in teh course already
+// But hold on.. I can do somehting.... 
+// I don't know if it's necessary or not now..
+// but i can actually send the courseId with the token
+// Oh boy.. I think i did forget to make the enrollment table.. what a brilliane mind I have!
+// I totally forgot..
+// I think now, i'm going to make it as many to many relationshitp and now. I can check 
+// if the user is in that course or not..
+// But this is a test server any way!
+// the dealine is very tight now.. I'm going to leave theis part of the git requests
+// and I will just keep with that part of editing and adding.. sinse I will check if the user
+// is an admin or not..
+// I forgot about that.. and I've very running out of time
 router.get('/courses/:id/lectures', (req, res) => {
   const courseId = req.params.id;
   console.log(courseId);
@@ -94,13 +111,18 @@ router.get('/courses/:id/sections_titles', (req, res) => {
 });
 
 // create a course lecture
-router.post('/courses/:id/lectures', (req, res) => {
+router.post('/courses/:id/lectures', verifyToken, (req, res) => {
   // Oh, Boy, This is big.
   const { id: courseId } = req.params;
+  const userId = req.userId;
   const { demos, description, extras: shorts, name: title, notesLink, section, slidesLink, tags, youtubeLink } = req.body;
 
   const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(courseId);
   if (!course) return res.status(404).send({ message: 'Course not found' });
+  const stmt = db.prepare('SELECT id FROM courseAdmins WHERE courseId = ? AND userId = ?');
+  const isAdmin = stmt.get(courseId, userId);
+  if (!isAdmin) return res.status(403).send({ message: 'User is not a course admin' });
+
   try {
     db.transaction(() => {
       // Retrieve or create section basd on existence of ht title
@@ -115,7 +137,7 @@ router.post('/courses/:id/lectures', (req, res) => {
       db.prepare(`
         INSERT INTO lectures (id, title, description, tags, videoLink, notes, slides, userId, courseId, sectionId)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(lectureId, title, description, tags.join(','), youtubeLink, notesLink, slidesLink, 'admin', courseId, sectionId);
+      `).run(lectureId, title, description, tags.join(','), youtubeLink, notesLink, slidesLink, userId, courseId, sectionId);
   
       // Insert resources
       const insertResource = (resource, type) => db.prepare(`
