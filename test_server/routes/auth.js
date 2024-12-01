@@ -147,7 +147,11 @@ router.post('/register', async (req, res) => {
       pictureURL,
       pictureThumbnail
     );
+
+    const accessToken = jwt.sign({ userId: id }, process.env.TOKEN_SECRET_KEY);
+
     res.status(201).json({
+      accessToken,
       user: {
         email,
         firstName,
