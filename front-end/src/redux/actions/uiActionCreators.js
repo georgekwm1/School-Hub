@@ -1,6 +1,7 @@
 import * as actions from './uiActionTypes';
 
 import { DOMAIN } from '../../utils/constants';
+import { setToken } from '../../utils/utilFunctions';
 
 export const toggleLoading = () => {
   return { type: actions.TOGGLE_LOADING };
@@ -72,6 +73,8 @@ const login = (request) => async (dispatch) => {
         }
       }
     }
+
+    setToken('accessToken', data.accessToken);
 
     const data = await response.json();
     dispatch(loginSuccess(data.user));
@@ -165,6 +168,9 @@ export const register = (request) => async (dispatch) => {
         }
       }
     }
+
+    setToken('accessToken', data.accessToken);
+
     dispatch(registerSuccess(data.user));
 
   } catch (error) {
