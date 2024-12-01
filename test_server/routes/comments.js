@@ -49,29 +49,35 @@ router.get('/announcements/:id/comments', (req, res) => {
 // Create a comment for an announcement
 router.post('/announcements/:id/comments', (req, res) => {
   const announcementId = req.params.id;
-  const { userId, comment } = req.body;
+  const { userId, comment: body } = req.body;
 
-  if (!userId || !comment) {
+  if (!userId || !body) {
     return res.status(400).send({ message: 'Missing required fields' });
   }
-  console.log(comment)
-  const newComment = {
-    announcementId,
-    id: `comment-${Date.now()}`,
-    user: {
-      id: Math.random() < 0.5 ? 'testId' : 'somethingElse',
-      name: 'Anonymous',
-      pictureThumbnail: `https://picsum.photos/100`,
-    },
-    updatedAt: new Date().toISOString(),
-    body: comment,
-  };
+  
+  try {
 
-  // Here you would typically add the newComment to your database or data store.
-  // For this example, we'll just return it in the response.
-  mockComments.unshift(newComment);
+    const id = uuidv4();
+    db.prepare(
+      `INSERT INTO comments (id, announcementId, userId, body) VALUES (?, ?, ?, ?)`
+    ).run(
+      id,
+      announcementId,
+      userId,
+      body,
+    );
 
-  res.status(201).json(newComment);
+    const newComment = db.prepare(
+      'SELECT * FROM comments WHERE id = ?'
+    ).get(id);
+    newComment.user = getUserData(userId);
+    delete newComment.userId;
+
+    res.status(201).json(newComment)
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: 'Internal server error' });
+  }
 });
 
 // Edit an announcement
