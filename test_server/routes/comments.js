@@ -85,15 +85,24 @@ router.put('/comments/:id', (req, res) => {
   const { id } = req.params;
   const { body } = req.body;
 
-  const index = mockComments.findIndex((comment) => comment.id === id);
+  try {
+    const comment = db.prepare('SELECT 1 FROM comments WHERE id = ?').get(id);
 
-  if (index === -1) {
-    return res.status(404).send({ message: 'Comment not found' });
+    if (!comment) {
+      return res.status(404).send({ message: 'Comment not found' });
+    }
+
+    db.prepare('UPDATE comments SET body = ? WHERE id = ?').run(body, id);
+
+    const updatedComment = db.prepare('SELECT * FROM comments WHERE id = ?').get(id);
+    updatedComment.user = getUserData(updatedComment.userId);
+    delete updatedComment.userId;
+
+    res.status(200).json(updatedComment);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: 'Internal server error' });
   }
-
-  mockComments[index].body = body;
-
-  res.status(200).json(mockComments[index]);
 });
 
 // Delete an announcement;

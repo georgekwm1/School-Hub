@@ -255,6 +255,19 @@ db.exec(`
 	END
 `)
 
+db.exec(
+	`
+	CREATE TRIGGER IF NOT EXISTS change_commment_updatedAt
+	AFTER UPDATE ON COMMENTS
+	WHEN old.body != new.body
+	BEGIN
+		UPDATE comments
+		SET updatedAt = CURRENT_TIMESTAMP
+		WHERE id = old.id;
+	END
+	`
+)
+
 process.on('exit', () => db.close());
 process.on('SIGHUP', () => process.exit(128 + 1));
 process.on('SIGINT', () => process.exit(128 + 2));
