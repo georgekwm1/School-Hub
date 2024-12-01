@@ -245,6 +245,16 @@ db.exec(`
 	END
 `)
 
+db.exec(`
+	CREATE TRIGGER IF NOT EXISTS increase_announcement_comments_count
+	AFTER INSERT ON comments
+	BEGIN
+		UPDATE announcements
+		SET commentsCount = commentsCount + 1
+		WHERE id = new.announcementId;
+	END
+`)
+
 process.on('exit', () => db.close());
 process.on('SIGHUP', () => process.exit(128 + 1));
 process.on('SIGINT', () => process.exit(128 + 2));
