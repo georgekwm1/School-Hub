@@ -74,9 +74,9 @@ const login = (request) => async (dispatch) => {
       }
     }
 
-    setToken('accessToken', data.accessToken);
-
     const data = await response.json();
+    
+    setToken('accessToken', data.accessToken);
     dispatch(loginSuccess(data.user));
   } catch (error) {
     dispatch(loginFailure(error.message));
