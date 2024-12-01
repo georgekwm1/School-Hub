@@ -12,6 +12,7 @@ const {
 } = require('../mockData');
 const db = require('../connect');
 const { verifyToken } = require('../middlewares/authMiddlewares');
+const { verify } = require('jsonwebtoken');
 const router = express.Router();
 
 // Get all lectures for a course split on sections
@@ -32,7 +33,7 @@ const router = express.Router();
 // and I will just keep with that part of editing and adding.. sinse I will check if the user
 // is an admin or not..
 // I forgot about that.. and I've very running out of time
-router.get('/courses/:id/lectures', (req, res) => {
+router.get('/courses/:id/lectures', verifyToken, (req, res) => {
   const courseId = req.params.id;
   console.log(courseId);
   const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(courseId);
@@ -58,7 +59,7 @@ router.get('/courses/:id/lectures', (req, res) => {
 });
 
 // Get a specific lecture
-router.get('/courses/:courseId/lectures/:lectureId', (req, res) => {
+router.get('/courses/:courseId/lectures/:lectureId', verifyToken, (req, res) => {
   const courseId = req.params.courseId;
   const lectureId = req.params.lectureId;
   console.log(courseId, lectureId);
@@ -103,7 +104,7 @@ router.get('/courses/:courseId/lectures/:lectureId', (req, res) => {
 });
 
 // Get all section titles for creating a lecture
-router.get('/courses/:id/sections_titles', (req, res) => {
+router.get('/courses/:id/sections_titles', verifyToken, (req, res) => {
   const courseId = req.params.id;
   const stmt = db.prepare('SELECT title FROM sections where courseId = ?');
   const sectionTitles = stmt.all(courseId).map(row => row.title);
