@@ -234,6 +234,17 @@ db.exec(`
 	END	
 `)
 
+db.exec(`
+	CREATE TRIGGER IF NOT EXISTS announcement_update_time
+	AFTER UPDATE ON announcements
+	WHEN old.title != new.title OR old.body != new.body
+	BEGIN
+		UPDATE announcements
+		SET updatedAt = CURRENT_TIMESTAMP
+		WHERE id = old.id;
+	END
+`)
+
 process.on('exit', () => db.close());
 process.on('SIGHUP', () => process.exit(128 + 1));
 process.on('SIGINT', () => process.exit(128 + 2));
