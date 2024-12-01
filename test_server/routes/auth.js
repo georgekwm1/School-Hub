@@ -3,6 +3,7 @@ const router = express.Router();
 const ImageKit = require('imagekit');
 const { v4: uuidv4 } = require('uuid');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const db = require('../connect');
 
 const imagekit = new ImageKit({
@@ -33,8 +34,11 @@ router.post('/login', async (req, res) => {
     return res.status(401).send({ message: 'Wrong password' });
   }
 
+  const accessToken = jwt.sign({ userId: user.id }, process.env.TOKEN_SECRET_KEY);
+
   res.send({
     message: 'Logged in successfully',
+    accessToken,
     user: {
       id: user.id,
       email: user.email,
