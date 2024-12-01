@@ -92,16 +92,24 @@ router.put('/announcements/:id', (req, res) => {
   const { id } = req.params;
   const { title, details } = req.body;
 
-  const index = mockAnnouncements.findIndex((announcement) => announcement.id === id);
+  try {
+    const announcement = db.prepare('SELECT 1 FROM announcements WHERE id = ?').get(id);
 
-  if (index === -1) {
-    return res.status(404).send({ message: 'Announcement not found' });
+    if (!announcement) {
+      return res.status(404).send({ message: 'Announcement not found' });
+    }
+
+    db.prepare('UPDATE announcements SET title = ?, body = ? WHERE id = ?').run(title, details, id);
+
+    const updatedAnnouncement = db.prepare('SELECT * FROM announcements WHERE id = ?').get(id);
+    const user = getUserData(updatedAnnouncement.userId);
+    delete updatedAnnouncement.userId
+    updatedAnnouncement.user = user;
+    res.status(200).json(updatedAnnouncement);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: 'Internal server error' });
   }
-
-  mockAnnouncements[index].title = title;
-  mockAnnouncements[index].body = details;
-
-  res.status(200).json(mockAnnouncements[index]);
 });
 
 // Delete an announcement
