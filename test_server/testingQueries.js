@@ -39,6 +39,15 @@ async function insertAdmin() {
 }
 // insertAdmin();
 
+async function insertTestCourseAdmin() {
+  const insertCourseAdmin = db.prepare(
+    `INSERT INTO courseAdmins (courseId, userId) VALUES (?, ?)`
+  );
+
+  insertCourseAdmin.run('test-course', 'admin');
+}
+insertTestCourseAdmin();
+
 async function insertTestCourse() {
   const insertCourse = db.prepare(
     `INSERT INTO courses (id, title, description) VALUES (?, ?, ?)`
@@ -67,4 +76,3 @@ async function insertTestSections() {
   }
 }
 // insertTestSections();
-

@@ -119,7 +119,7 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
 
   const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(courseId);
   if (!course) return res.status(404).send({ message: 'Course not found' });
-  const stmt = db.prepare('SELECT id FROM courseAdmins WHERE courseId = ? AND userId = ?');
+  const stmt = db.prepare('SELECT 1 FROM courseAdmins WHERE courseId = ? AND userId = ?');
   const isAdmin = stmt.get(courseId, userId);
   if (!isAdmin) return res.status(403).send({ message: 'User is not a course admin' });
 
@@ -172,7 +172,7 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
 });
 
 // Edit a lecture
-router.put('/lectures/:id', (req, res) => {
+router.put('/lectures/:id', verifyToken, (req, res) => {
   const { id } = req.params;
   const {
     name,
@@ -185,12 +185,17 @@ router.put('/lectures/:id', (req, res) => {
     tags,
     demos,
   } = req.body;
-
+  const userId = req.userId;
   const lecture = db.prepare('SELECT * FROM lectures WHERE id = ?').get(id);
 
   if (!lecture) {
     return res.status(404).send({ message: 'Lecture not found' });
   }
+
+  const stmt = db.prepare('SELECT 1 FROM courseAdmins WHERE courseId = ? AND userId = ?');
+  const isAdmin = stmt.get(lecture.courseId, userId);
+  if (!isAdmin) return res.status(403).send({ message: "User don't have previlate to delete this lecture" });
+
   try {
     db.transaction(() => {
       let sectionId;
@@ -234,13 +239,20 @@ router.put('/lectures/:id', (req, res) => {
 });
 
 // delete a lecture
-router.delete('/lectures/:id', (req, res) => {
+router.delete('/lectures/:id', verifyToken, (req, res) => {
   const lectureId = req.params.id;
+  const userId = req.userId;
+
   try {
     const lecture = db.prepare('SELECT * FROM lectures WHERE id = ?').get(lectureId);
     if (!lecture) {
       return res.status(404).send({ message: 'Lecture not found' });
     }
+
+    const stmt = db.prepare('SELECT 1 FROM courseAdmins WHERE courseId = ? AND userId = ?');
+    const isAdmin = stmt.get(lecture.courseId, userId);
+    if (!isAdmin) return res.status(403).send({ message: 'User is not a course admin' });
+
     db.transaction(() => {
       const sectionId = db.prepare(
         `SELECT sectionId FROM lectures WHERE id = ?`

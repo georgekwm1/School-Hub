@@ -1,6 +1,7 @@
 import toast from 'react-hot-toast';
 import * as actionCreators from './lecturesActionCreators';
 import {DOMAIN} from '../../utils/constants'
+import { getToken } from '../../utils/utilFunctions';
 
 export const getLectureById = (lectureId) => async (dispatch, getState) => {
   dispatch(actionCreators.lectureRequest());
@@ -54,7 +55,10 @@ export const createLecture = (lectureData, navigate) => async (dispatch, getStat
     const data = await toast.promise(
       fetch(`${DOMAIN}/courses/${courseId}/lectures`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken('accessToken')}`
+          },
         body: JSON.stringify(lectureData),
       }).then((response) => {
         if (!response.ok) {
@@ -84,6 +88,10 @@ export const deleteLecture = (sectionId, lectureId) => async (dispatch) => {
     await toast.promise(
       fetch(`${DOMAIN}/lectures/${lectureId}`, {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken('accessToken')}`
+        },
       }).then((response) => {
         if (!response.ok) {
           throw new Error(response.statusText);
@@ -107,17 +115,26 @@ export const editLecture = (lectureId, lectureData) => async (dispatch) => {
   dispatch(actionCreators.editLectureRequest());
 
   try {
-    const response = await fetch(`${DOMAIN}/lectures/${lectureId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(lectureData),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message);
-    }
+    const data = await toast.promise(
+      fetch(`${DOMAIN}/lectures/${lectureId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken('accessToken')}`
+        },
+        body: JSON.stringify(lectureData),
+      }).then((response) => {
+        if (!response.ok) {
+          throw new Error(response.statusText);
+        }
+        return response.json();
+      }),
+      {
+        loading: 'Updating Lecture',
+        success: 'Lecture Updated',
+        error: 'Error Updating Lecture',
+      }
+    );
 
     dispatch(actionCreators.editLectureSuccess(data));
   } catch (error) {
