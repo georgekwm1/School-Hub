@@ -10,7 +10,12 @@ export const getLectureById = (lectureId) => async (dispatch, getState) => {
   const courseId = state.ui.getIn(['course', 'id']);
   try {
     const response = await fetch(
-      `${DOMAIN}/courses/${courseId}/lectures/${lectureId}`
+      `${DOMAIN}/courses/${courseId}/lectures/${lectureId}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${getToken('accessToken')}`
+        },
+      }
     );
     const data = await response.json();
 
@@ -32,7 +37,11 @@ export const getCourseLectures = (courseId) => async (dispatch, getState) => {
   const state = getState();
   const courseId = state.ui.getIn(['course', 'id']);
   try {
-    const response = await fetch(`${DOMAIN}/courses/${courseId}/lectures`);
+    const response = await fetch(`${DOMAIN}/courses/${courseId}/lectures`, {
+      headers: {
+        'Authorization': `Bearer ${getToken('accessToken')}`
+      },
+    });
     const data = await response.json();
 
     if (!response.ok) {
