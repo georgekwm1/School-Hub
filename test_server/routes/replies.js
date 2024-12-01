@@ -11,6 +11,7 @@ const {
   repliesList,
 } = require('../mockData');
 const db = require('../connect');
+const { getUserData, getUpvoteStatus } = require('../helperFunctions');
 
 const router = express.Router();
 
@@ -19,31 +20,6 @@ const router = express.Router();
 const currentUserId = 'admin';
 // const currentUserId = '30fd6f7e-a85b-4f2c-bee7-55b0bf542e95';
 
-function getUserData(userId) {
-  const user = db
-    .prepare(
-      `SELECT id, firstName, lastName, pictureThumbnail
-    FROM users
-    WHERE id = ?`
-    )
-    .get(userId);
-
-  return {
-    id: user.id,
-    name: `${user.firstName} ${user.lastName}`,
-    pictureThumbnail: user.pictureThumbnail,
-  };
-}
-
-function getUpvoteStatus(userId, resourceId, resourceType) {
-  const idColumn = resourceType === 'question' ? 'questionId' : 'replyId';
-
-  return (
-    db
-      .prepare(`SELECT userId FROM votes WHERE userId = ? AND ${idColumn} = ?`)
-      .get(userId, resourceId) !== undefined
-  );
-}
 
 // Get question replies
 router.get('/questions/:id/replies', (req, res) => {

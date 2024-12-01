@@ -188,8 +188,6 @@ db.exec(`
 	);
 	`);
 
-
-
 // I'm amazed rightnow.. I hope to refactor some endpoitns now
 // These triggers are amazing.. that will save alot of redunenet code
 // Thank god sqlite doesn't have on update current_timestamp
