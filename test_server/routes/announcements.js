@@ -9,6 +9,8 @@ const {
   mockSections,
   repliesList,
 } = require('../mockData');
+const { getUserData } = require('../helperFunctions');
+const db = require('../connect');
 
 
 const router = express.Router();
@@ -16,15 +18,33 @@ const router = express.Router();
 // Get course announcements
 router.get('/courses/:id/announcements', (req, res) => {
   const courseId = req.params.id;
-
-  // Mock announcements data
-
-
-  if (courseId === "testId") {
-    res.json(mockAnnouncements);
-  } else {
-    res.status(404).send({ message: 'Course not found' });
+  const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(courseId);
+  if (!course) {
+    return res.status(404).send({ message: 'Course not found' });
   }
+
+  const announcements = db
+    .prepare(
+      `
+      SELECT * FROM announcements
+        WHERE courseId = ?
+        ORDER BY createdAt DESC;
+      `
+    )
+    .all(courseId);
+
+  const results = announcements.map((announcement) => {
+    const user = getUserData(announcement.userId);
+    delete announcement.userId
+    // I'm going to leave createdAt there.. may be will be shown
+    // besides the updatedAt
+    return {
+      ...announcement,
+      user,
+    };
+  });
+
+  res.json(results);
 });
 
 // Create a course announcement
