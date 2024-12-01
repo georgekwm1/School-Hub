@@ -185,8 +185,11 @@ router.post('/admin/login', async (req, res) => {
     return;
   }
 
+  const accessToken = jwt.sign({ userId: user.id }, process.env.TOKEN_SECRET_KEY);
+
   res.send({
     message: 'Logged in successfully',
+    accessToken,
     user: {
       id: user.id,
       email: user.email,
