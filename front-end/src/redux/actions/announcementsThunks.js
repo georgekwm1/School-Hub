@@ -127,6 +127,9 @@ export const deleteAnnouncementComment =
     try {
       await toast.promise(
         fetch(`${DOMAIN}/comments/${commentId}`, {
+          headers: {
+            'Authorization': `Bearer ${getToken('accessToken')}`,
+          },  
           method: 'DELETE',
         }).then((response) => {
           if (!response.ok) {

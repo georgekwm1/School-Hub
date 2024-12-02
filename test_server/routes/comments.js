@@ -108,14 +108,18 @@ router.put('/comments/:id', (req, res) => {
 });
 
 // Delete an announcement;
-router.delete('/comments/:commentId', (req, res) => {
+router.delete('/comments/:commentId', verifyToken, (req, res) => {
   const { commentId } = req.params;
+  const userId = req.userId;
 
   try {
-    const comment = db.prepare('SELECT * FROM comments WHERE id = ?').get(commentId);
-
+    const comment = db.prepare('SELECT userId, announcementId FROM comments WHERE id = ?').get(commentId);
     if (!comment) {
       return res.status(404).send({ message: 'Comment not found' });
+    }
+
+    if (comment.userId !== userId && !isCourseAdmin(userId, comment.announcementId)) {
+      return res.status(403).send({ message: 'User is not a course admin' });
     }
 
     db.prepare('DELETE FROM comments WHERE id = ?').run(commentId);
