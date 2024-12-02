@@ -5,6 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../connect');
+const { verifyToken } = require('../middlewares/authMiddlewares');
 
 const imagekit = new ImageKit({
   publicKey: 'public_tTc9vCi5O7L8WVAQquK6vQWNx08=',
