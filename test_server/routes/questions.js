@@ -249,9 +249,10 @@ router.post('/questions/:id/vote', verifyToken, (req, res) => {
 });
 
 // Edit a question
-router.put('/questions/:id', (req, res) => {
+router.put('/questions/:id', verifyToken, (req, res) => {
   const { id } = req.params;
   const { title, body } = req.body;
+  const userId = req.userId;
 
   const question = db.prepare('SELECT * FROM questions WHERE id = ?').get(id);
 
@@ -259,6 +260,9 @@ router.put('/questions/:id', (req, res) => {
     return res.status(404).send({ message: 'Question not found' });
   }
 
+  if (question.userId !== userId) {
+    return res.status(403).send({ message: 'User is not authorized to edit this question' });
+  }
   try {
     db.transaction(() => {
       db.prepare(

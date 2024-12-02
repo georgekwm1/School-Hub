@@ -352,6 +352,7 @@ export const toggleQuestionVote =
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getToken('accessToken')}`,
           },
           body: JSON.stringify({ action }),
         }).then((response) => {
@@ -470,6 +471,7 @@ export const editQuestion = (questionId, title, body) => async (dispatch) => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken('accessToken')}`,
         },
         body: JSON.stringify({
           title,
