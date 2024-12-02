@@ -400,12 +400,14 @@ export const toggleQuestionVote =
   };
 
 export const deleteQuestion =
-  (questionId, lectureId = null) =>
-  async (dispatch) => {
+  (questionId, lectureId = null) => async (dispatch) => {
     try {
       await toast.promise(
         fetch(`${DOMAIN}/questions/${questionId}`, {
           method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${getToken('accessToken')}`,
+          }
         }).then((response) => {
           const data = response.json();
           if (!response.ok) {

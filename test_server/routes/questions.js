@@ -289,14 +289,20 @@ router.put('/questions/:id', (req, res) => {
 });
 
 // delete a question
-router.delete('/questions/:id', (req, res) => {
+router.delete('/questions/:id', verifyToken, (req, res) => {
   const questionId = req.params.id;
+  const userId = req.userId;
   const question = db
     .prepare('SELECT * FROM questions WHERE id = ?')
     .get(questionId);
 
   if (!question) {
     return res.status(404).send({ message: 'Question not found' });
+  }
+
+  if (question.userId !== userId && !isAdmin(userId)) {
+    // As if this is a descriptive message now?!..
+    return res.status(403).send({ message: 'User is not authorized' });
   }
 
   try {
