@@ -11,12 +11,14 @@ const {
   repliesList,
 } = require('../mockData');
 const db = require('../connect');
-const { getUserData } = require('../helperFunctions');
+const { getUserData, isCourseAdmin } = require('../helperFunctions');
+const { verifyToken } = require('../middlewares/authMiddlewares');
+
 
 const router = express.Router();
 
 // Get all comments for an announcement
-router.get('/announcements/:id/comments', (req, res) => {
+router.get('/announcements/:id/comments', verifyToken, (req, res) => {
   const announcementId = req.params.id;
   const announcement = db.prepare('SELECT 1 FROM announcements WHERE id = ?').get(announcementId);
 
@@ -47,11 +49,12 @@ router.get('/announcements/:id/comments', (req, res) => {
 });
 
 // Create a comment for an announcement
-router.post('/announcements/:id/comments', (req, res) => {
+router.post('/announcements/:id/comments', verifyToken, (req, res) => {
   const announcementId = req.params.id;
-  const { userId, comment: body } = req.body;
+  const {comment: body } = req.body;
+  const userId = req.userId;
 
-  if (!userId || !body) {
+  if (!body) {
     return res.status(400).send({ message: 'Missing required fields' });
   }
   
@@ -81,15 +84,20 @@ router.post('/announcements/:id/comments', (req, res) => {
 });
 
 // Edit an announcement
-router.put('/comments/:id', (req, res) => {
+router.put('/comments/:id', verifyToken, (req, res) => {
   const { id } = req.params;
   const { body } = req.body;
+  const userId = req.userId;
 
   try {
-    const comment = db.prepare('SELECT 1 FROM comments WHERE id = ?').get(id);
+    const comment = db.prepare('SELECT userId FROM comments WHERE id = ?').get(id);
 
     if (!comment) {
       return res.status(404).send({ message: 'Comment not found' });
+    }
+
+    if (comment.userId !== userId) {
+      return res.status(403).send({ message: 'User is not authorized to edit this comment' });
     }
 
     db.prepare('UPDATE comments SET body = ? WHERE id = ?').run(body, id);
@@ -106,14 +114,18 @@ router.put('/comments/:id', (req, res) => {
 });
 
 // Delete an announcement;
-router.delete('/comments/:commentId', (req, res) => {
+router.delete('/comments/:commentId', verifyToken, (req, res) => {
   const { commentId } = req.params;
+  const userId = req.userId;
 
   try {
-    const comment = db.prepare('SELECT * FROM comments WHERE id = ?').get(commentId);
-
+    const comment = db.prepare('SELECT userId, announcementId FROM comments WHERE id = ?').get(commentId);
     if (!comment) {
       return res.status(404).send({ message: 'Comment not found' });
+    }
+
+    if (comment.userId !== userId && !isCourseAdmin(userId, comment.announcementId)) {
+      return res.status(403).send({ message: 'User is not a course admin' });
     }
 
     db.prepare('DELETE FROM comments WHERE id = ?').run(commentId);

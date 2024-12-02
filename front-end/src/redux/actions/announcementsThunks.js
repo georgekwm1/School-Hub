@@ -30,7 +30,12 @@ export const fetchAnnouncementComments =
     dispatch(creators.fetchAnnouncementCommentsRequest(announcementId));
     try {
       const response = await fetch(
-        `${DOMAIN}/announcements/${announcementId}/comments`
+        `${DOMAIN}/announcements/${announcementId}/comments`,
+        {
+          headers: {
+            'Authorization': `Bearer ${getToken('accessToken')}`,
+          },  
+        }
       );
       const data = await response.json();
       if (!response.ok) {
@@ -45,7 +50,6 @@ export const fetchAnnouncementComments =
 
 export const addComment =
   (announcementId, comment) => async (dispatch, getState) => {
-    const userId = getState().ui.getIn(['user', 'id']) || 'testId';
     dispatch(creators.addCommentRequest());
     try {
       const data = await toast.promise(
@@ -53,9 +57,9 @@ export const addComment =
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getToken('accessToken')}`,
           },
-          body: JSON.stringify({
-            userId,
+            body: JSON.stringify({
             comment,
           }),
         }).then((response) => {
@@ -82,7 +86,6 @@ export const addComment =
 export const addNewAnnouncement =
   (title, details) => async (dispatch, getState) => {
     const courseId = getState().ui.getIn(['course', 'id']) || 'testId';
-    const userId = getState().ui.getIn(['user', 'id']) || 'testId';
 
     try {
       const data = await toast.promise(
@@ -93,7 +96,6 @@ export const addNewAnnouncement =
             'Authorization': `Bearer ${getToken('accessToken')}`
           },
             body: JSON.stringify({
-            userId,
             title,
             details,
           }),
@@ -121,6 +123,9 @@ export const deleteAnnouncementComment =
     try {
       await toast.promise(
         fetch(`${DOMAIN}/comments/${commentId}`, {
+          headers: {
+            'Authorization': `Bearer ${getToken('accessToken')}`,
+          },  
           method: 'DELETE',
         }).then((response) => {
           if (!response.ok) {
@@ -212,6 +217,7 @@ export const editComment =
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getToken('accessToken')}`,
           },
           body: JSON.stringify({ body }),
         }).then((response) => {
