@@ -1,7 +1,9 @@
 import toast from 'react-hot-toast';
 import * as discussionsActions from './discussionsActionCreators';
 import { toggleLoading } from './uiActionCreators';
+import { getToken } from '../../utils/utilFunctions';
 import {DOMAIN} from '../../utils/constants'
+
 export const getLectureDiscussions = (lectureId) => async (dispatch) => {
   dispatch(discussionsActions.toggleDiscussionsLoading());
 
@@ -83,7 +85,12 @@ export const getGeneralDiscussion = () => async (dispatch, getState) => {
   const courseId = getState().ui.getIn(['course', 'id']) || 'testId';
   try {
     const response = await fetch(
-      `${DOMAIN}/courses/${courseId}/general_discussion`
+      `${DOMAIN}/courses/${courseId}/general_discussion`,
+      {
+        headers: {
+          'Authorization': `Bearer ${getToken('accessToken')}`
+        },
+      }
     );
     const data = await response.json();
 

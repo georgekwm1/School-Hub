@@ -12,6 +12,9 @@ const {
 } = require('../mockData');
 const db = require('../connect');
 const { getUserData, getUpvoteStatus } = require('../helperFunctions');
+const { verifyToken } = require('../middlewares/authMiddlewares');
+
+
 const router = express.Router();
 
 // Untill adding the JWT stuff to get the actually user quering this..
@@ -21,7 +24,7 @@ const currentUserId = 'admin';
 
 
 // Get a course general forum questions
-router.get('/courses/:id/general_discussion', (req, res) => {
+router.get('/courses/:id/general_discussion', verifyToken,  (req, res) => {
   const id = req.params.id;
   const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(id);
   if (course) {
