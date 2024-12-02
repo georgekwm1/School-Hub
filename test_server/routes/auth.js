@@ -44,7 +44,7 @@ router.post('/login', async (req, res) => {
     return res.status(403).send({ message: 'User is not enrolled in the course' });
   }
 
-  const accessToken = jwt.sign({ userId: user.id }, process.env.TOKEN_SECRET_KEY);
+  const accessToken = jwt.sign({ userId: user.id, courseId, role: user.role }, process.env.TOKEN_SECRET_KEY);
 
   res.send({
     message: 'Logged in successfully',
@@ -161,8 +161,9 @@ router.post('/register', async (req, res) => {
       );
 
       db.prepare(`INSERT INTO courseEnrollments (userId, courseId) VALUES (?, ?)`).run(id, courseId);
-
-      const accessToken = jwt.sign({ userId: id }, process.env.TOKEN_SECRET_KEY);
+      // Student is the default of the role for now.. admins will be added amnaully when instantiating
+      // and instance for the course.. and seeting things up and if there are customizations.. 
+      const accessToken = jwt.sign({ userId: id, courseId, role: 'student' }, process.env.TOKEN_SECRET_KEY);
 
       res.status(201).json({
         accessToken,
@@ -210,7 +211,7 @@ router.post('/admin/login', async (req, res) => {
     return res.status(403).send({ message: 'User is not a course admin' });
   }
 
-  const accessToken = jwt.sign({ userId: user.id }, process.env.TOKEN_SECRET_KEY);
+  const accessToken = jwt.sign({ userId: user.id, courseId, role: 'admin' }, process.env.TOKEN_SECRET_KEY);
 
   res.send({
     message: 'Logged in successfully',
