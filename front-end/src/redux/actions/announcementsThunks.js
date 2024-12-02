@@ -177,6 +177,7 @@ export const editAnnouncement =
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getToken('accessToken')}`,
           },
           body: JSON.stringify({ title, details }),
         }).then((response) => {

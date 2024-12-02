@@ -94,15 +94,19 @@ router.post('/courses/:id/announcements', verifyToken, (req, res) => {
 });
 
 // Edit an announcement
-router.put('/announcements/:id', (req, res) => {
+router.put('/announcements/:id', verifyToken, (req, res) => {
   const { id } = req.params;
   const { title, details } = req.body;
+  const userId = req.userId;
 
   try {
-    const announcement = db.prepare('SELECT 1 FROM announcements WHERE id = ?').get(id);
-
-    if (!announcement) {
+    const { courseId } = db.prepare('SELECT courseId FROM announcements WHERE id = ?').get(id);
+    if (!courseId) {
       return res.status(404).send({ message: 'Announcement not found' });
+    }
+
+    if (!isCourseAdmin(userId, courseId)) {
+      return res.status(403).send({ message: 'User is not a course admin' });
     }
 
     db.prepare('UPDATE announcements SET title = ?, body = ? WHERE id = ?').run(title, details, id);
