@@ -303,8 +303,9 @@ export const toggleReplyVote =
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getToken('accessToken')}`,
           },
-          body: JSON.stringify({ action }),
+            body: JSON.stringify({ action }),
         }).then((response) => {
           if (!response.ok) {
             const data = response.json();
