@@ -1,7 +1,8 @@
 import * as actions from './uiActionTypes';
-
+import toast from 'react-hot-toast';
+import { googleLogout } from '@react-oauth/google';
 import { DOMAIN } from '../../utils/constants';
-import { setToken } from '../../utils/utilFunctions';
+import { setToken, getToken, removeToken } from '../../utils/utilFunctions';
 
 export const toggleLoading = () => {
   return { type: actions.TOGGLE_LOADING };
@@ -178,3 +179,34 @@ export const register = (request) => async (dispatch) => {
     dispatch(registerFailure(error.message));    
   }
 };
+
+
+
+export const logoutThunk = () => async (dispatch) => {
+  try {
+    // I think how I'm handling the error here is questionable!
+    await toast.promise(
+      fetch(`${DOMAIN}/api/logout`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${getToken('accessToken')}`,
+        },
+      }).then((response) => {
+        if (!response.ok) {
+          throw new Error('Failed to log out');
+        }
+        return response.json();
+      }),
+      {
+        loading: 'Logging out...',
+        success: 'Logged out successfully',
+        error: 'ServerError logging you out',
+      }
+    );
+  } catch (error) {
+    console.error(error.message);
+  }
+  removeToken('accessToken');
+  googleLogout();
+  dispatch(logout());
+}
