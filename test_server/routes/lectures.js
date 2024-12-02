@@ -13,7 +13,10 @@ const {
 const db = require('../connect');
 const { verifyToken } = require('../middlewares/authMiddlewares');
 const { verify } = require('jsonwebtoken');
-const { isCourseAdmin } = require('../helperFunctions');
+const {
+  isCourseAdmin,
+  isUserEnroledInCourse,
+ } = require('../helperFunctions');d
 const router = express.Router();
 
 // Get all lectures for a course split on sections
@@ -36,38 +39,47 @@ const router = express.Router();
 // I forgot about that.. and I've very running out of time
 router.get('/courses/:id/lectures', verifyToken, (req, res) => {
   const courseId = req.params.id;
-  console.log(courseId);
+  const userId = req.userId;
+
   const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(courseId);
-  if (course) {
-    const sections = db
-      .prepare('SELECT id, title, description FROM sections WHERE courseId = ?')
-      .all(courseId);
-
-    const lectureFields = [
-      'id', 'title', 'description', 'tags'
-    ].join(', ');
-
-    const lectures = sections.map(section => ({
-      ...section,
-      lectures: db
-        .prepare(`SELECT ${lectureFields} FROM lectures WHERE sectionId = ?`)
-        .all(section.id),
-    }));
-    res.json({ sections: lectures });
-  } else {
+  if (!course) {
     res.status(404).send({ message: 'Course not found' });
   }
+
+  if (!isUserEnroledInCourse(userId, courseId)) {
+    res.status(403).send({ message: 'User is not enrolled in this course' });
+  }
+
+  const sections = db
+    .prepare('SELECT id, title, description FROM sections WHERE courseId = ?')
+    .all(courseId);
+
+  const lectureFields = [
+    'id', 'title', 'description', 'tags'
+  ].join(', ');
+
+  const lectures = sections.map(section => ({
+    ...section,
+    lectures: db
+      .prepare(`SELECT ${lectureFields} FROM lectures WHERE sectionId = ?`)
+      .all(section.id),
+  }));
+  res.json({ sections: lectures });
 });
 
 // Get a specific lecture
 router.get('/courses/:courseId/lectures/:lectureId', verifyToken, (req, res) => {
   const courseId = req.params.courseId;
   const lectureId = req.params.lectureId;
-  console.log(courseId, lectureId);
+  const userId = req.userId;
 
   const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(courseId);
   if (!course) {
     return res.status(404).send({ message: 'Course not found' });
+  }
+
+  if (!isUserEnroledInCourse(userId, courseId)) {
+    return res.status(403).send({ message: 'User is not enrolled in this course' });
   }
 
   const lectureFields = [

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import ImageKit from "imagekit-javascript";
 import { formRegister, toggleLoading } from '../../redux/actions/uiActionCreators';
+import { selectCourseId } from '../../redux/selectors/uiSelectors';
 
 const imagekit = new ImageKit({
   publicKey: "public_tTc9vCi5O7L8WVAQquK6vQWNx08=",
@@ -17,6 +18,7 @@ export default function RegisterStepTwo({
   const [file, setFile] = useState(null);
   const dispatch = useDispatch();
   const isLoading = useSelector(state => state.ui.get('isLoading'));
+  const courseId = useSelector(selectCourseId);
 
   // Ensure label moves up when there is content in the input field
   useEffect(() => {
@@ -89,7 +91,7 @@ export default function RegisterStepTwo({
         return;
       }
     } else {
-      dispatch(formRegister(userData));
+      dispatch(formRegister(userData, courseId));
     }
   }
 

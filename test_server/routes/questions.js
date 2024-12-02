@@ -11,7 +11,7 @@ const {
   repliesList,
 } = require('../mockData');
 const db = require('../connect');
-const { getUserData, getUpvoteStatus } = require('../helperFunctions');
+const { getUserData, getUpvoteStatus, isUserEnroledInCourse } = require('../helperFunctions');
 const { verifyToken } = require('../middlewares/authMiddlewares');
 
 
@@ -22,34 +22,39 @@ const router = express.Router();
 router.get('/courses/:id/general_discussion', verifyToken,  (req, res) => {
   const id = req.params.id;
   const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(id);
-  if (course) {
-    const questionEntries = db
-      .prepare(
-        `
-      SELECT id, title, body, updatedAt, upvotes, repliesCount, userId
-        FROM questions 
-        WHERE courseId = ?
-        ORDER BY updatedAt DESC;
-      `
-      )
-      .all(course.id);
-
-    // Now, here I'll get the userData + is it upvoted or not
-    const results = questionEntries.map((entry) => {
-      const user = getUserData(entry.userId);
-      const upvoted = getUpvoteStatus(user.id, entry.id, 'question');
-
-      return {
-        ...entry,
-        user,
-        upvoted,
-      };
-    });
-
-    res.json(results);
-  } else {
+  if (!course) {
     res.status(404).send({ message: 'Course not found' });
+  } 
+
+  if (!isUserEnroledInCourse(req.userId, id)) {
+    return res.status(403).send({ message: 'User is not enrolled in this course' });
   }
+
+  const questionEntries = db
+    .prepare(
+      `
+    SELECT id, title, body, updatedAt, upvotes, repliesCount, userId
+      FROM questions 
+      WHERE courseId = ?
+      ORDER BY updatedAt DESC;
+    `
+    )
+    .all(course.id);
+
+
+  // Now, here I'll get the userData + is it upvoted or not
+  const results = questionEntries.map((entry) => {
+    const user = getUserData(entry.userId);
+    const upvoted = getUpvoteStatus(user.id, entry.id, 'question');
+
+    return {
+      ...entry,
+      user,
+      upvoted,
+    };
+  });
+
+  res.json(results);
 });
 
 // Get a lecture discussions/qustions

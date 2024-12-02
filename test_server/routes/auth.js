@@ -20,7 +20,7 @@ router.get('/imagekit', (req, res) => {
 
 router.post('/login', async (req, res) => {
   console.log(req.body);
-  const { email, password } = req.body;
+  const { email, password, courseId } = req.body;
 
   const query = db.prepare('SELECT * FROM users WHERE email = ?');
   const user = query.get(email);
@@ -35,7 +35,16 @@ router.post('/login', async (req, res) => {
     return res.status(401).send({ message: 'Wrong password' });
   }
 
-  const accessToken = jwt.sign({ userId: user.id }, process.env.TOKEN_SECRET_KEY);
+  
+  const enrollment = db.prepare(
+    'SELECT * FROM courseEnrollments WHERE userId = ? AND courseId = ?'
+  ).get(user.id, courseId);
+  
+  if (!enrollment) {
+    return res.status(403).send({ message: 'User is not enrolled in the course' });
+  }
+
+  const accessToken = jwt.sign({ userId: user.id, courseId, role: user.role }, process.env.TOKEN_SECRET_KEY);
 
   res.send({
     message: 'Logged in successfully',
@@ -51,6 +60,7 @@ router.post('/login', async (req, res) => {
     },
   });
 });
+
 
 router.post('/oauth/google', (req, res) => {
   const idToken = req.body.token;
@@ -105,7 +115,7 @@ router.post('/oauth/googleRegister', (req, res) => {
 });
 
 router.post('/register', async (req, res) => {
-  const { userData } = req.body;
+  const { userData, courseId } = req.body;
   console.log(userData);
   const {
     email,
@@ -125,45 +135,50 @@ router.post('/register', async (req, res) => {
       res.status(409).json({ message: 'Email already exists' });
       return;
     }
-
     const id = uuidv4();
     const passwordHash = await bcrypt.hash(password, 10);
-    const query = db.prepare(
-      `INSERT INTO users (
-        id, email, passwordHash, firstName, lastName, username, pictureId,
-        pictureUrl, pictureThumbnail
-      ) VALUES (
-        ?, ?, ?, ?, ?, ?, ?, ?, ?
-      )`
-    );
 
-    query.run(
-      id,
-      email,
-      passwordHash,
-      firstName,
-      lastName,
-      username,
-      pictureId,
-      pictureURL,
-      pictureThumbnail
-    );
+    db.transaction(() => {
+      const query = db.prepare(
+        `INSERT INTO users (
+          id, email, passwordHash, firstName, lastName, username, pictureId,
+          pictureUrl, pictureThumbnail
+        ) VALUES (
+          ?, ?, ?, ?, ?, ?, ?, ?, ?
+        )`
+      );
 
-    const accessToken = jwt.sign({ userId: id }, process.env.TOKEN_SECRET_KEY);
-
-    res.status(201).json({
-      accessToken,
-      user: {
+      query.run(
+        id,
         email,
+        passwordHash,
         firstName,
         lastName,
         username,
-        pictureThumbnail,
+        pictureId,
         pictureURL,
-        id,
-      },
-      message: 'User created successfully',
-    });
+        pictureThumbnail
+      );
+
+      db.prepare(`INSERT INTO courseEnrollments (userId, courseId) VALUES (?, ?)`).run(id, courseId);
+      // Student is the default of the role for now.. admins will be added amnaully when instantiating
+      // and instance for the course.. and seeting things up and if there are customizations.. 
+      const accessToken = jwt.sign({ userId: id, courseId, role: 'student' }, process.env.TOKEN_SECRET_KEY);
+
+      res.status(201).json({
+        accessToken,
+        user: {
+          email,
+          firstName,
+          lastName,
+          username,
+          pictureThumbnail,
+          pictureURL,
+          id,
+        },
+        message: 'User created successfully',
+      });            
+    })();
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Internal server error' });
@@ -171,7 +186,7 @@ router.post('/register', async (req, res) => {
 });
 
 router.post('/admin/login', async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, courseId } = req.body;
   const query = db.prepare('SELECT * FROM users WHERE email = ? AND role = ?');
   const user = query.get(email, 'admin');
   if (!user) {
@@ -186,7 +201,17 @@ router.post('/admin/login', async (req, res) => {
     return;
   }
 
-  const accessToken = jwt.sign({ userId: user.id }, process.env.TOKEN_SECRET_KEY);
+  const enrollment = db
+    .prepare(
+      'SELECT * FROM courseEnrollments WHERE userId = ? AND courseId = ?'
+    )
+    .get(user.id, courseId);
+
+  if (!enrollment) {
+    return res.status(403).send({ message: 'User is not a course admin' });
+  }
+
+  const accessToken = jwt.sign({ userId: user.id, courseId, role: 'admin' }, process.env.TOKEN_SECRET_KEY);
 
   res.send({
     message: 'Logged in successfully',

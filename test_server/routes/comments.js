@@ -26,6 +26,9 @@ router.get('/announcements/:id/comments', verifyToken, (req, res) => {
     return res.status(404).send({ message: 'Announcement not found' });
   }
 
+  // I'm really not sure if i have to check for user enrollment here or not
+
+
   const comments = db
     .prepare(
       `

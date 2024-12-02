@@ -5,6 +5,7 @@ import { formLogin, googleLogin, loginFailure } from '../../redux/actions/uiActi
 import { GoogleLogin } from '@react-oauth/google';
 import { useNavigate } from 'react-router-dom';
 import $ from 'jquery';
+import { selectCourseId } from '../../redux/selectors/uiSelectors';
 
 export default function Login({ setType }) {
     const [adminLogin, setAdminLogin] = useState(false);
@@ -12,6 +13,7 @@ export default function Login({ setType }) {
     const navigate = useNavigate();
     const isLoading = useSelector((state) => state.ui.get('isLoading'));
     const isLoggedIn = useSelector(state => state.ui.get('isLoggedIn'));
+    const courseId = useSelector(selectCourseId);
 
     useEffect(() => {
         // Input validation and toggling 'has-val' class based on input
@@ -98,11 +100,11 @@ export default function Login({ setType }) {
         event.preventDefault();
         const email = event.target.email.value;
         const password = event.target.password.value;
-        dispatch(formLogin(email, password, adminLogin));
+        dispatch(formLogin(email, password, courseId, adminLogin));
     }
 
     function handleGoogleLoginSuccess(response) {
-        dispatch(googleLogin(response.credential, adminLogin));
+        dispatch(googleLogin(response.credential, courseId, adminLogin));
     }
 
     function handleGoogleLoginFailure(error) {

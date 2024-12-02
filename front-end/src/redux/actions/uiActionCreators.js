@@ -1,9 +1,8 @@
 import * as actions from './uiActionTypes';
+import toast from 'react-hot-toast';
 import { googleLogout } from '@react-oauth/google';
-import  toast from 'react-hot-toast';
 import { DOMAIN } from '../../utils/constants';
-import { removeToken, setToken, getToken } from '../../utils/utilFunctions';
-
+import { setToken, getToken, removeToken } from '../../utils/utilFunctions';
 
 export const toggleLoading = () => {
   return { type: actions.TOGGLE_LOADING };
@@ -27,13 +26,13 @@ export const loginFailure = (errorMessage) => (dispatch) => {
   dispatch(toggleLoading());
 };
 
-export function formLogin(email, password, isAdmin) {
+export function formLogin(email, password, courseId, isAdmin) {
   const url = isAdmin
     ? `${DOMAIN}/auth/admin/login`
     : `${DOMAIN}/auth/login`
   const request = new Request(url, {
     method: 'POST',
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, courseId }),
     headers: {
       'Content-Type': 'application/json',
     },
@@ -42,13 +41,13 @@ export function formLogin(email, password, isAdmin) {
   return login(request);
 }
 
-export function googleLogin(idToken, isAdmin) {
+export function googleLogin(idToken, courseId, isAdmin) {
   const url = isAdmin
     ? `${DOMAIN}/auth/admin/oauth/google/`
     : `${DOMAIN}/auth/oauth/google`
   const request = new Request(url, {
     method: 'POST',
-    body: JSON.stringify({ token: idToken }),
+    body: JSON.stringify({ token: idToken, courseId }),
     headers: {
       'Content-Type': 'application/json',
     },
@@ -125,10 +124,10 @@ export const registerSuccess = (user) => {
   };
 };
 
-export const formRegister = (userData) => {
+export const formRegister = (userData, courseId) => {
   const request = new Request(`${DOMAIN}/auth/register`, {
     method: 'POST',
-    body: JSON.stringify({userData}),
+    body: JSON.stringify({userData, courseId}),
     headers: {
       'Content-Type': 'application/json',
     },
@@ -137,10 +136,10 @@ export const formRegister = (userData) => {
   return register(request);
 }
 
-export const googleRegister = (idToken) => {
+export const googleRegister = (idToken, courseId) => {
   const request = new Request(`${DOMAIN}/auth/oauth/googleRegister`, {
     method: 'POST',
-    body: JSON.stringify({token: idToken}),
+    body: JSON.stringify({token: idToken, courseId}),
     headers: {
       'Content-Type': 'application/json',
     },
@@ -180,6 +179,8 @@ export const register = (request) => async (dispatch) => {
     dispatch(registerFailure(error.message));    
   }
 };
+
+
 
 export const logoutThunk = () => async (dispatch) => {
   try {

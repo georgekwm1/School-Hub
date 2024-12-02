@@ -15,6 +15,8 @@ FROM replies
   JOIN questions ON replies.questionId = questions.id;
 
 
+SELECT * FROM courseEnrollments; 
+
 -- -- Oh, boy... this is crazy... 
 -- SELECT 
 -- 	q.courseId AS courseIdFromQuestion,

@@ -1,10 +1,12 @@
 import React, { useEffect } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 import { googleRegister, registerFailure } from '../../redux/actions/uiActionCreators';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { selectCourseId } from '../../redux/selectors/uiSelectors';
 
 export default function RegisterStepOne({ setStep, userData, handleInputChange }) {
   const dispatch = useDispatch();
+  const courseId = useSelector(selectCourseId);
 
   useEffect(() => {
     // Ensure the has-val class is added if input already has values
@@ -26,7 +28,7 @@ export default function RegisterStepOne({ setStep, userData, handleInputChange }
   }
 
   function handleGoogleRegisterSuccess(token) {
-    dispatch(googleRegister(token.credential));
+    dispatch(googleRegister(token.credential, courseId));
   }
 
   function handleGoogleRegisterFailure(error) {
