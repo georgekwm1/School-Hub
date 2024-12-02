@@ -31,8 +31,14 @@ function isCourseAdmin(userId, courseId) {
   return stmt.get(courseId, userId);
 }
 
+function isUserEnroledInCourse(userId, courseId) {
+  const stmt = db.prepare('SELECT 1 FROM courseEnrollments WHERE courseId = ? AND userId = ?');
+  return stmt.get(courseId, userId) !== undefined;
+}
+
 module.exports = {
 	getUserData,
 	getUpvoteStatus,
   isCourseAdmin,
+  isUserEnroledInCourse,
 };
