@@ -10,14 +10,16 @@ const {
   mockSections,
   repliesList,
 } = require('../mockData');
-const { getUserData } = require('../helperFunctions');
+const { getUserData, isCourseAdmin } = require('../helperFunctions');
 const db = require('../connect');
+const { verifyToken } = require('../middlewares/authMiddlewares');
+const { verify } = require('jsonwebtoken');
 
 
 const router = express.Router();
 
 // Get course announcements
-router.get('/courses/:id/announcements', (req, res) => {
+router.get('/courses/:id/announcements', verifyToken, (req, res) => {
   const courseId = req.params.id;
   const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(courseId);
   if (!course) {
@@ -49,13 +51,17 @@ router.get('/courses/:id/announcements', (req, res) => {
 });
 
 // Create a course announcement
-router.post('/courses/:id/announcements', (req, res) => {
+router.post('/courses/:id/announcements', verifyToken, (req, res) => {
   const courseId = req.params.id;
-  const { userId, title, details } = req.body;
+  const { title, details } = req.body;
+  const userId = req.userId;
 
-  if (!userId || !title || !details) {
+  if (!title || !details) {
     return res.status(400).send({ message: 'Missing required fields' });
   }
+
+  
+  if (!isCourseAdmin(userId, courseId)) return res.status(403).send({ message: 'User is not a course admin' });
 
   try {
     const id = uuidv4();
@@ -88,15 +94,19 @@ router.post('/courses/:id/announcements', (req, res) => {
 });
 
 // Edit an announcement
-router.put('/announcements/:id', (req, res) => {
+router.put('/announcements/:id', verifyToken, (req, res) => {
   const { id } = req.params;
   const { title, details } = req.body;
+  const userId = req.userId;
 
   try {
-    const announcement = db.prepare('SELECT 1 FROM announcements WHERE id = ?').get(id);
-
-    if (!announcement) {
+    const { courseId } = db.prepare('SELECT courseId FROM announcements WHERE id = ?').get(id);
+    if (!courseId) {
       return res.status(404).send({ message: 'Announcement not found' });
+    }
+
+    if (!isCourseAdmin(userId, courseId)) {
+      return res.status(403).send({ message: 'User is not a course admin' });
     }
 
     db.prepare('UPDATE announcements SET title = ?, body = ? WHERE id = ?').run(title, details, id);
@@ -113,15 +123,17 @@ router.put('/announcements/:id', (req, res) => {
 });
 
 // Delete an announcement
-router.delete('/announcements/:id', (req, res) => {
+router.delete('/announcements/:id', verifyToken, (req, res) => {
   const announcementId = req.params.id;
   try {
     const announcement = db.prepare('SELECT * FROM announcements WHERE id = ?').get(announcementId);
-
     if (!announcement) {
       return res.status(404).send({ message: 'Announcement not found' });
     }
 
+    if (!isCourseAdmin(req.userId, announcement.courseId)) {
+      return res.status(403).send({ message: 'User is not a course admin' });
+    }
     db.prepare('DELETE FROM announcements WHERE id = ?').run(announcementId);
 
     res.status(200).json({ message: 'Announcement deleted successfully' });

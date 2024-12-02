@@ -13,6 +13,7 @@ const {
 const db = require('../connect');
 const { verifyToken } = require('../middlewares/authMiddlewares');
 const { verify } = require('jsonwebtoken');
+const { isCourseAdmin } = require('../helperFunctions');
 const router = express.Router();
 
 // Get all lectures for a course split on sections
@@ -120,9 +121,8 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
 
   const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(courseId);
   if (!course) return res.status(404).send({ message: 'Course not found' });
-  const stmt = db.prepare('SELECT 1 FROM courseAdmins WHERE courseId = ? AND userId = ?');
-  const isAdmin = stmt.get(courseId, userId);
-  if (!isAdmin) return res.status(403).send({ message: 'User is not a course admin' });
+
+  if (!isCourseAdmin(userId, courseId)) return res.status(403).send({ message: 'User is not a course admin' });
 
   try {
     db.transaction(() => {
@@ -193,9 +193,7 @@ router.put('/lectures/:id', verifyToken, (req, res) => {
     return res.status(404).send({ message: 'Lecture not found' });
   }
 
-  const stmt = db.prepare('SELECT 1 FROM courseAdmins WHERE courseId = ? AND userId = ?');
-  const isAdmin = stmt.get(lecture.courseId, userId);
-  if (!isAdmin) return res.status(403).send({ message: "User don't have previlate to delete this lecture" });
+  if (!isCourseAdmin(userId, lecture.courseId)) return res.status(403).send({ message: "User don't have previlate to delete this lecture" });
 
   try {
     db.transaction(() => {
@@ -250,9 +248,7 @@ router.delete('/lectures/:id', verifyToken, (req, res) => {
       return res.status(404).send({ message: 'Lecture not found' });
     }
 
-    const stmt = db.prepare('SELECT 1 FROM courseAdmins WHERE courseId = ? AND userId = ?');
-    const isAdmin = stmt.get(lecture.courseId, userId);
-    if (!isAdmin) return res.status(403).send({ message: 'User is not a course admin' });
+    if (!isCourseAdmin(userId, lecture.courseId)) return res.status(403).send({ message: 'User is not a course admin' });
 
     db.transaction(() => {
       const sectionId = db.prepare(

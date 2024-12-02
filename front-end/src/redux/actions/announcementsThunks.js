@@ -1,12 +1,18 @@
 import toast from 'react-hot-toast';
 import * as creators from './announcementsActionCreators';
 import { DOMAIN } from '../../utils/constants';
+import { getToken } from '../../utils/utilFunctions';
+
 
 export const fetchAnnouncements = () => async (dispatch, getState) => {
   dispatch(creators.fetchAnnouncementsRequest());
   const courseId = getState().ui.getIn(['course', 'id']) || 'testId';
   try {
-    const response = await fetch(`${DOMAIN}/courses/${courseId}/announcements`);
+    const response = await fetch(`${DOMAIN}/courses/${courseId}/announcements`, {
+      headers: {
+        Authorization: `Bearer ${getToken('accessToken')}`,
+      },
+    });
     const data = await response.json();
     if (!response.ok) {
       throw new Error(data.message);
@@ -84,8 +90,9 @@ export const addNewAnnouncement =
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getToken('accessToken')}`
           },
-          body: JSON.stringify({
+            body: JSON.stringify({
             userId,
             title,
             details,
@@ -140,6 +147,10 @@ export const deleteAnnouncementEntry = (announcementId) => async (dispatch) => {
     await toast.promise(
       fetch(`${DOMAIN}/announcements/${announcementId}`, {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken('accessToken')}`,
+        },
       }).then((response) => {
         const data = response.json();
         if (!response.ok) {
@@ -170,6 +181,7 @@ export const editAnnouncement =
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getToken('accessToken')}`,
           },
           body: JSON.stringify({ title, details }),
         }).then((response) => {
