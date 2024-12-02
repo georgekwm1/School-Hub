@@ -5,6 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../connect');
+const { verifyToken } = require('../middlewares/authMiddlewares');
 
 const imagekit = new ImageKit({
   publicKey: 'public_tTc9vCi5O7L8WVAQquK6vQWNx08=',
@@ -225,6 +226,11 @@ router.post('/admin/OAuth/google', (req, res) => {
       console.error(error);
       res.status(500).send({ message: 'Internal Server Error' });
     });
+});
+
+router.post('/api/logout', verifyToken, (req, res) => {
+  // Temoraily do nothing..
+  res.status(200).send({ message: 'Logged out successfully' });
 });
 
 module.exports = router;
