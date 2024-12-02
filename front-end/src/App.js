@@ -8,7 +8,7 @@ import './components/Login/css/main.css';
 import './components/Register/css/util.css';
 import './components/Register/css/main.css';
 import { toggleName } from './redux/actions/helloActionCreators';
-import { logout } from './redux/actions/uiActionCreators';
+import { logout, logoutThunk } from './redux/actions/uiActionCreators';
 import Spinner from './components/utilityComponents/Spinner';
 import { googleLogout } from '@react-oauth/google';
 import Authintication from './components/Authintication/Authintication';
@@ -41,8 +41,7 @@ function App() {
   const dispatch = useDispatch();
 
   const handleLogout = () => {
-    dispatch(logout());
-    googleLogout();
+    dispatch(logoutThunk());
   };
 
   return (
