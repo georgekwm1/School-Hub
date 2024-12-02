@@ -1,7 +1,7 @@
 import * as actions from './uiActionTypes';
-
+import { googleLogout } from '@react-oauth/google';
 import { DOMAIN } from '../../utils/constants';
-import { setToken } from '../../utils/utilFunctions';
+import { removeToken, setToken } from '../../utils/utilFunctions';
 
 export const toggleLoading = () => {
   return { type: actions.TOGGLE_LOADING };
@@ -178,3 +178,9 @@ export const register = (request) => async (dispatch) => {
     dispatch(registerFailure(error.message));    
   }
 };
+
+export const logoutThunk = () => async (dispatch) => {
+  removeToken('accessToken');
+  googleLogout();
+  dispatch(logout());
+}
