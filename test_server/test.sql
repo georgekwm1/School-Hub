@@ -16,6 +16,7 @@ FROM replies
 
 
 SELECT * FROM courseEnrollments; 
+
 -- -- Oh, boy... this is crazy... 
 -- SELECT 
 -- 	q.courseId AS courseIdFromQuestion,

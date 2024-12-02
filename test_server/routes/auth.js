@@ -20,7 +20,7 @@ router.get('/imagekit', (req, res) => {
 
 router.post('/login', async (req, res) => {
   console.log(req.body);
-  const { email, password } = req.body;
+  const { email, password, courseId } = req.body;
 
   const query = db.prepare('SELECT * FROM users WHERE email = ?');
   const user = query.get(email);
@@ -33,6 +33,15 @@ router.post('/login', async (req, res) => {
 
   if (!passwordMatch) {
     return res.status(401).send({ message: 'Wrong password' });
+  }
+
+  
+  const enrollment = db.prepare(
+    'SELECT * FROM courseEnrollments WHERE userId = ? AND courseId = ?'
+  ).get(user.id, courseId);
+  
+  if (!enrollment) {
+    return res.status(403).send({ message: 'User is not enrolled in the course' });
   }
 
   const accessToken = jwt.sign({ userId: user.id }, process.env.TOKEN_SECRET_KEY);
