@@ -118,9 +118,10 @@ router.post('/replies/:id/vote', (req, res) => {
 });
 
 // Create a reply for a question
-router.post('/questions/:id/replies', (req, res) => {
+router.post('/questions/:id/replies', verifyToken, (req, res) => {
   const questionId = req.params.id;
-  const { userId, body } = req.body;
+  const { body } = req.body;
+  const userId = req.userId;
 
   if (!userId || !body) {
     return res.status(400).send({ message: 'Missing required fields' });

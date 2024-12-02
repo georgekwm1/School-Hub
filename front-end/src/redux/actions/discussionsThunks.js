@@ -147,6 +147,7 @@ export const addGeneralDiscussionEntry =
 
     dispatch(discussionsActions.generalDiscussionEntrySuccess(data));
   };
+                                                                                       
 
 export const fetchReplies = (questionId) => async (dispatch) => {
   dispatch(discussionsActions.fetchDiscussionRepliesRequest());
@@ -182,16 +183,15 @@ export const addDiscussionReply =
   (questionId, body) => async (dispatch, getState) => {
     dispatch(discussionsActions.addDiscussionReplyRequest());
 
-    const userId = getState().ui.getIn(['user', 'id']) || 'testId';
     try {
       const data = await toast.promise(
         fetch(`${DOMAIN}/questions/${questionId}/replies`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getToken('accessToken')}`,
           },
-          body: JSON.stringify({
-            userId,
+            body: JSON.stringify({
             body,
           }),
         }).then((response) => {
