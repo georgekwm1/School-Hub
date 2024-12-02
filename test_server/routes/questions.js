@@ -179,7 +179,7 @@ router.post('/lectures/:id/discussion', verifyToken, (req, res) => {
 });
 
 // Change user vote in a question?
-router.post('/questions/:id/vote', (req, res) => {
+router.post('/questions/:id/vote', verifyToken, (req, res) => {
   // I think sinse this is only toggling upvotes
   // not upvote, donwvote or nutralize.. then no action is needed
   // and it could just be done.. checking if there is a vote..
@@ -189,7 +189,7 @@ router.post('/questions/:id/vote', (req, res) => {
   // But I prefere leaving it now.. may be i need the triple case later.
   const questionId = req.params.id;
   const { action } = req.body;
-  const userId = currentUserId;
+  const userId = req.userId;
 
   if (!action || !['upvote', 'downvote'].includes(action)) {
     return res.status(400).send({ message: 'Missing or invalid action field' });
