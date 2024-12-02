@@ -157,15 +157,20 @@ router.post('/questions/:id/replies', verifyToken, (req, res) => {
 });
 
 // Edit a reply
-router.put('/replies/:id', (req, res) => {
+router.put('/replies/:id', verifyToken, (req, res) => {
   const { id } = req.params;
   const { body } = req.body;
+  const userId = req.userId;
 
   try {
     const reply = db.prepare('SELECT * FROM replies WHERE id = ?').get(id);
 
     if (!reply) {
       return res.status(404).send({ message: 'Reply not found' });
+    }
+
+    if (reply.userId !== userId) {
+      return res.status(403).send({ message: 'User is not authorized to edit this reply' });
     }
 
     db.prepare('UPDATE replies SET body = ? WHERE id = ?').run(body, id);

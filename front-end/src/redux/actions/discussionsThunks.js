@@ -147,7 +147,6 @@ export const addGeneralDiscussionEntry =
 
     dispatch(discussionsActions.generalDiscussionEntrySuccess(data));
   };
-                                                                                       
 
 export const fetchReplies = (questionId) => async (dispatch) => {
   dispatch(discussionsActions.fetchDiscussionRepliesRequest());
@@ -517,6 +516,7 @@ export const editReply = (questionId, replyId, body) => async (dispatch) => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken('accessToken')}`,
         },
         body: JSON.stringify({
           body,
