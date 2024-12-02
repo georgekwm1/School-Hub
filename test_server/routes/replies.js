@@ -222,7 +222,10 @@ router.delete('/replies/:id', verifyToken, (req, res) => {
       return res.status(404).send({ message: 'Reply not found' });
     }
     
-
+    const courseId = getReplyCourseId(replyId);
+    if (reply.userId !== userId && !isCourseAdmin(userId, courseId)) {
+      return res.status(403).send({ message: 'User is not authorized to delete this reply' });
+    }
 
     db.prepare('DELETE FROM replies WHERE id = ?').run(replyId);
 

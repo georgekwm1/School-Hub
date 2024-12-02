@@ -445,6 +445,9 @@ export const deleteReply = (questionId, replyId) => async (dispatch) => {
     await toast.promise(
       fetch(`${DOMAIN}/replies/${replyId}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${getToken('accessToken')}`
+        }
       }).then((response) => {
         const data = response.json();
         if (!response.ok) {
