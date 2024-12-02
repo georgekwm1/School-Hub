@@ -84,10 +84,11 @@ router.get('/questions/:id/replies', verifyToken, (req, res) => {
 });
 
 // Change user vote for a replies
-router.post('/replies/:id/vote', (req, res) => {
+router.post('/replies/:id/vote', verifyToken, (req, res) => {
   const replyId = req.params.id;
   const { action } = req.body;
-  const userId = currentUserId;
+  const userId = req.userId;
+
   if (!action) {
     return res.status(400).send({ message: 'Missing required fields' });
   }
