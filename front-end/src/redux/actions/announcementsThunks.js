@@ -50,7 +50,6 @@ export const fetchAnnouncementComments =
 
 export const addComment =
   (announcementId, comment) => async (dispatch, getState) => {
-    const userId = getState().ui.getIn(['user', 'id']) || 'testId';
     dispatch(creators.addCommentRequest());
     try {
       const data = await toast.promise(
@@ -61,7 +60,6 @@ export const addComment =
             'Authorization': `Bearer ${getToken('accessToken')}`,
           },
             body: JSON.stringify({
-            userId,
             comment,
           }),
         }).then((response) => {
@@ -88,7 +86,6 @@ export const addComment =
 export const addNewAnnouncement =
   (title, details) => async (dispatch, getState) => {
     const courseId = getState().ui.getIn(['course', 'id']) || 'testId';
-    const userId = getState().ui.getIn(['user', 'id']) || 'testId';
 
     try {
       const data = await toast.promise(
@@ -99,7 +96,6 @@ export const addNewAnnouncement =
             'Authorization': `Bearer ${getToken('accessToken')}`
           },
             body: JSON.stringify({
-            userId,
             title,
             details,
           }),

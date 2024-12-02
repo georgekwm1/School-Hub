@@ -51,9 +51,10 @@ router.get('/announcements/:id/comments', verifyToken, (req, res) => {
 // Create a comment for an announcement
 router.post('/announcements/:id/comments', verifyToken, (req, res) => {
   const announcementId = req.params.id;
-  const { userId, comment: body } = req.body;
+  const {comment: body } = req.body;
+  const userId = req.userId;
 
-  if (!userId || !body) {
+  if (!body) {
     return res.status(400).send({ message: 'Missing required fields' });
   }
   
