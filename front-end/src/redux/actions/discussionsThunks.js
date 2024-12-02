@@ -41,15 +41,14 @@ export const addLectureDiscussionEntry =
   (lectureId, title, details) => async (dispatch, getState) => {
     dispatch(discussionsActions.addDiscussionEntryRequest());
 
-    const userId = getState().ui.getIn(['user', 'id']) || 'testId';
     const promise = toast.promise(
       fetch(`${DOMAIN}/lectures/${lectureId}/discussion`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken('accessToken')}`,
         },
         body: JSON.stringify({
-          userId,
           title,
           body: details,
         }),
