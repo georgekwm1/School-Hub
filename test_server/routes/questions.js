@@ -58,8 +58,10 @@ router.get('/courses/:id/general_discussion', verifyToken,  (req, res) => {
 });
 
 // Get a lecture discussions/qustions
-router.get('/lectures/:id/discussion', (req, res) => {
+router.get('/lectures/:id/discussion', verifyToken, (req, res) => {
   const id = req.params.id;
+  const currentUserId = req.userId;
+
   const lecture = db.prepare('SELECT * FROM lectures WHERE id = ?').get(id);
   if (lecture) {
     const discussionWithLectureId = db

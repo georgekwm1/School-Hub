@@ -8,7 +8,14 @@ export const getLectureDiscussions = (lectureId) => async (dispatch) => {
   dispatch(discussionsActions.toggleDiscussionsLoading());
 
   try {
-    const response = await fetch(`${DOMAIN}/lectures/${lectureId}/discussion`);
+    const response = await fetch(
+      `${DOMAIN}/lectures/${lectureId}/discussion`,
+      {
+        headers: {
+          'Authorization': `Bearer ${getToken('accessToken')}`
+        }
+      }
+    );
     const data = await response.json();
 
     if (!response.ok) {
