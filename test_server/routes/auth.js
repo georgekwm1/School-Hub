@@ -106,7 +106,7 @@ router.post('/oauth/googleRegister', (req, res) => {
 });
 
 router.post('/register', async (req, res) => {
-  const { userData } = req.body;
+  const { userData, courseId } = req.body;
   console.log(userData);
   const {
     email,
@@ -126,45 +126,49 @@ router.post('/register', async (req, res) => {
       res.status(409).json({ message: 'Email already exists' });
       return;
     }
-
     const id = uuidv4();
     const passwordHash = await bcrypt.hash(password, 10);
-    const query = db.prepare(
-      `INSERT INTO users (
-        id, email, passwordHash, firstName, lastName, username, pictureId,
-        pictureUrl, pictureThumbnail
-      ) VALUES (
-        ?, ?, ?, ?, ?, ?, ?, ?, ?
-      )`
-    );
 
-    query.run(
-      id,
-      email,
-      passwordHash,
-      firstName,
-      lastName,
-      username,
-      pictureId,
-      pictureURL,
-      pictureThumbnail
-    );
+    db.transaction(() => {
+      const query = db.prepare(
+        `INSERT INTO users (
+          id, email, passwordHash, firstName, lastName, username, pictureId,
+          pictureUrl, pictureThumbnail
+        ) VALUES (
+          ?, ?, ?, ?, ?, ?, ?, ?, ?
+        )`
+      );
 
-    const accessToken = jwt.sign({ userId: id }, process.env.TOKEN_SECRET_KEY);
-
-    res.status(201).json({
-      accessToken,
-      user: {
+      query.run(
+        id,
         email,
+        passwordHash,
         firstName,
         lastName,
         username,
-        pictureThumbnail,
+        pictureId,
         pictureURL,
-        id,
-      },
-      message: 'User created successfully',
-    });
+        pictureThumbnail
+      );
+
+      db.prepare(`INSERT INTO courseEnrollments (userId, courseId) VALUES (?, ?)`).run(id, courseId);
+
+      const accessToken = jwt.sign({ userId: id }, process.env.TOKEN_SECRET_KEY);
+
+      res.status(201).json({
+        accessToken,
+        user: {
+          email,
+          firstName,
+          lastName,
+          username,
+          pictureThumbnail,
+          pictureURL,
+          id,
+        },
+        message: 'User created successfully',
+      });            
+    })();
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Internal server error' });
