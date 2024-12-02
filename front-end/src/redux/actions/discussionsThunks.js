@@ -152,7 +152,14 @@ export const fetchReplies = (questionId) => async (dispatch) => {
   dispatch(discussionsActions.fetchDiscussionRepliesRequest());
   dispatch(toggleLoading());
   try {
-    const response = await fetch(`${DOMAIN}/questions/${questionId}/replies`);
+    const response = await fetch(
+      `${DOMAIN}/questions/${questionId}/replies`,
+      {
+        headers: {
+          'Authorization': `Bearer ${getToken('accessToken')}`
+        }
+      }
+    );
     const data = await response.json();
 
     if (!response.ok) {
@@ -175,16 +182,15 @@ export const addDiscussionReply =
   (questionId, body) => async (dispatch, getState) => {
     dispatch(discussionsActions.addDiscussionReplyRequest());
 
-    const userId = getState().ui.getIn(['user', 'id']) || 'testId';
     try {
       const data = await toast.promise(
         fetch(`${DOMAIN}/questions/${questionId}/replies`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getToken('accessToken')}`,
           },
-          body: JSON.stringify({
-            userId,
+            body: JSON.stringify({
             body,
           }),
         }).then((response) => {
@@ -297,8 +303,9 @@ export const toggleReplyVote =
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getToken('accessToken')}`,
           },
-          body: JSON.stringify({ action }),
+            body: JSON.stringify({ action }),
         }).then((response) => {
           if (!response.ok) {
             const data = response.json();
@@ -439,6 +446,9 @@ export const deleteReply = (questionId, replyId) => async (dispatch) => {
     await toast.promise(
       fetch(`${DOMAIN}/replies/${replyId}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${getToken('accessToken')}`
+        }
       }).then((response) => {
         const data = response.json();
         if (!response.ok) {
@@ -510,6 +520,7 @@ export const editReply = (questionId, replyId, body) => async (dispatch) => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken('accessToken')}`,
         },
         body: JSON.stringify({
           body,
