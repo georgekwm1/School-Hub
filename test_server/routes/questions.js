@@ -17,11 +17,6 @@ const { verifyToken } = require('../middlewares/authMiddlewares');
 
 const router = express.Router();
 
-// Untill adding the JWT stuff to get the actually user quering this..
-// lets say..
-const currentUserId = 'admin';
-// const currentUserId = '30fd6f7e-a85b-4f2c-bee7-55b0bf542e95';
-
 
 // Get a course general forum questions
 router.get('/courses/:id/general_discussion', verifyToken,  (req, res) => {
@@ -60,7 +55,7 @@ router.get('/courses/:id/general_discussion', verifyToken,  (req, res) => {
 // Get a lecture discussions/qustions
 router.get('/lectures/:id/discussion', verifyToken, (req, res) => {
   const id = req.params.id;
-  const currentUserId = req.userId;
+  const userId = req.userId;
 
   const lecture = db.prepare('SELECT * FROM lectures WHERE id = ?').get(id);
   if (lecture) {
@@ -77,7 +72,7 @@ router.get('/lectures/:id/discussion', verifyToken, (req, res) => {
 
     const results = discussionWithLectureId.map((entry) => {
       const user = getUserData(entry.userId);
-      const upvoted = getUpvoteStatus(currentUserId, entry.id, 'question');
+      const upvoted = getUpvoteStatus(userId, entry.id, 'question');
 
       return {
         ...entry,
@@ -282,8 +277,8 @@ router.put('/questions/:id', verifyToken, (req, res) => {
 
       res.status(200).json({
         ...updatedQuestion,
-        user: getUserData(currentUserId),
-        upvoted: getUpvoteStatus(currentUserId, id, 'question'),
+        user: getUserData(userId),
+        upvoted: getUpvoteStatus(userId, id, 'question'),
       });
     })();
   } catch (error) {

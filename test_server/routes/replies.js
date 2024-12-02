@@ -16,11 +16,6 @@ const { verifyToken } = require('../middlewares/authMiddlewares');
 
 const router = express.Router();
 
-// Untill adding the JWT stuff to get the actually user quering this..
-// lets say..
-const currentUserId = 'admin';
-// const currentUserId = '30fd6f7e-a85b-4f2c-bee7-55b0bf542e95';
-
 
 function getReplyCourseId(replyId) {
   const query = db.prepare(
@@ -43,6 +38,7 @@ function getReplyCourseId(replyId) {
 // Get question replies
 router.get('/questions/:id/replies', verifyToken, (req, res) => {
   const questionId = req.params.id;
+  const userId = req.userId;
 
   const question = db
     .prepare(
@@ -58,7 +54,7 @@ router.get('/questions/:id/replies', verifyToken, (req, res) => {
   }
 
   const user = getUserData(question.userId);
-  const upvoted = getUpvoteStatus(currentUserId, question.id, 'question');
+  const upvoted = getUpvoteStatus(userId, question.id, 'question');
 
   const replies = db
     .prepare(
@@ -71,7 +67,7 @@ router.get('/questions/:id/replies', verifyToken, (req, res) => {
 
   const results = replies.map((reply) => {
     const user = getUserData(reply.userId);
-    const upvoted = getUpvoteStatus(currentUserId, reply.id, 'reply');
+    const upvoted = getUpvoteStatus(userId, reply.id, 'reply');
 
     return {
       ...reply,
