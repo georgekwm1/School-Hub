@@ -147,6 +147,10 @@ export const deleteAnnouncementEntry = (announcementId) => async (dispatch) => {
     await toast.promise(
       fetch(`${DOMAIN}/announcements/${announcementId}`, {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken('accessToken')}`,
+        },
       }).then((response) => {
         const data = response.json();
         if (!response.ok) {

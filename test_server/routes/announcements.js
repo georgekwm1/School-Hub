@@ -123,15 +123,17 @@ router.put('/announcements/:id', verifyToken, (req, res) => {
 });
 
 // Delete an announcement
-router.delete('/announcements/:id', (req, res) => {
+router.delete('/announcements/:id', verifyToken, (req, res) => {
   const announcementId = req.params.id;
   try {
     const announcement = db.prepare('SELECT * FROM announcements WHERE id = ?').get(announcementId);
-
     if (!announcement) {
       return res.status(404).send({ message: 'Announcement not found' });
     }
 
+    if (!isCourseAdmin(req.userId, announcement.courseId)) {
+      return res.status(403).send({ message: 'User is not a course admin' });
+    }
     db.prepare('DELETE FROM announcements WHERE id = ?').run(announcementId);
 
     res.status(200).json({ message: 'Announcement deleted successfully' });
