@@ -11,12 +11,14 @@ const {
   repliesList,
 } = require('../mockData');
 const db = require('../connect');
-const { getUserData } = require('../helperFunctions');
+const { getUserData, isCourseAdmin } = require('../helperFunctions');
+const { verifyToken } = require('../middlewares/authMiddlewares');
+
 
 const router = express.Router();
 
 // Get all comments for an announcement
-router.get('/announcements/:id/comments', (req, res) => {
+router.get('/announcements/:id/comments', verifyToken, (req, res) => {
   const announcementId = req.params.id;
   const announcement = db.prepare('SELECT 1 FROM announcements WHERE id = ?').get(announcementId);
 

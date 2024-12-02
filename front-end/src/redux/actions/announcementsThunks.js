@@ -30,7 +30,12 @@ export const fetchAnnouncementComments =
     dispatch(creators.fetchAnnouncementCommentsRequest(announcementId));
     try {
       const response = await fetch(
-        `${DOMAIN}/announcements/${announcementId}/comments`
+        `${DOMAIN}/announcements/${announcementId}/comments`,
+        {
+          headers: {
+            'Authorization': `Bearer ${getToken('accessToken')}`,
+          },  
+        }
       );
       const data = await response.json();
       if (!response.ok) {
