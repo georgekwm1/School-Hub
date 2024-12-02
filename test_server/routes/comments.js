@@ -49,7 +49,7 @@ router.get('/announcements/:id/comments', verifyToken, (req, res) => {
 });
 
 // Create a comment for an announcement
-router.post('/announcements/:id/comments', (req, res) => {
+router.post('/announcements/:id/comments', verifyToken, (req, res) => {
   const announcementId = req.params.id;
   const { userId, comment: body } = req.body;
 
