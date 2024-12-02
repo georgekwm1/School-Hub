@@ -71,11 +71,15 @@ router.get('/courses/:id/lectures', verifyToken, (req, res) => {
 router.get('/courses/:courseId/lectures/:lectureId', verifyToken, (req, res) => {
   const courseId = req.params.courseId;
   const lectureId = req.params.lectureId;
-  console.log(courseId, lectureId);
+  const userId = req.userId;
 
   const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(courseId);
   if (!course) {
     return res.status(404).send({ message: 'Course not found' });
+  }
+
+  if (!isUserEnroledInCourse(userId, courseId)) {
+    return res.status(403).send({ message: 'User is not enrolled in this course' });
   }
 
   const lectureFields = [
