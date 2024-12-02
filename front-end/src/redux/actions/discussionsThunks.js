@@ -152,7 +152,14 @@ export const fetchReplies = (questionId) => async (dispatch) => {
   dispatch(discussionsActions.fetchDiscussionRepliesRequest());
   dispatch(toggleLoading());
   try {
-    const response = await fetch(`${DOMAIN}/questions/${questionId}/replies`);
+    const response = await fetch(
+      `${DOMAIN}/questions/${questionId}/replies`,
+      {
+        headers: {
+          'Authorization': `Bearer ${getToken('accessToken')}`
+        }
+      }
+    );
     const data = await response.json();
 
     if (!response.ok) {

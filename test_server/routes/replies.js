@@ -12,6 +12,7 @@ const {
 } = require('../mockData');
 const db = require('../connect');
 const { getUserData, getUpvoteStatus } = require('../helperFunctions');
+const { verifyToken } = require('../middlewares/authMiddlewares');
 
 const router = express.Router();
 
@@ -22,7 +23,7 @@ const currentUserId = 'admin';
 
 
 // Get question replies
-router.get('/questions/:id/replies', (req, res) => {
+router.get('/questions/:id/replies', verifyToken, (req, res) => {
   const questionId = req.params.id;
 
   const question = db
