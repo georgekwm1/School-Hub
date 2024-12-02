@@ -22,6 +22,24 @@ const currentUserId = 'admin';
 // const currentUserId = '30fd6f7e-a85b-4f2c-bee7-55b0bf542e95';
 
 
+function getReplyCourseId(replyId) {
+  const query = db.prepare(
+    `
+    -- Oh, boy... this is crazy... 
+    SELECT 
+      q.courseId AS courseIdFromQuestion,
+      (SELECT courseId FROM lectures WHERE id = q.lectureId) AS courseIdFromLecture
+    FROM replies r
+      JOIN questions q ON r.questionId = q.id
+    WHERE r.id = ?;
+    `
+  );
+
+  const {courseIdFromQuestion, courseIdFromLecture}  = query.run(replyId);
+  return courseIdFromQuestion || courseIdFromLecture;
+} 
+
+
 // Get question replies
 router.get('/questions/:id/replies', verifyToken, (req, res) => {
   const questionId = req.params.id;
@@ -193,15 +211,18 @@ router.put('/replies/:id', verifyToken, (req, res) => {
 });
 
 // Delete a reply
-router.delete('/replies/:id', (req, res) => {
+router.delete('/replies/:id', verifyToken, (req, res) => {
   const replyId = req.params.id;
+  const userId = req.userId;
 
   try {
-    const reply = db.prepare('SELECT * FROM replies WHERE id = ?').get(replyId);
+    const reply = db.prepare('SELECT id, userId FROM replies WHERE id = ?').get(replyId);
 
     if (!reply) {
       return res.status(404).send({ message: 'Reply not found' });
     }
+    
+
 
     db.prepare('DELETE FROM replies WHERE id = ?').run(replyId);
 
