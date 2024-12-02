@@ -10,7 +10,7 @@ const {
   mockSections,
   repliesList,
 } = require('../mockData');
-const { getUserData } = require('../helperFunctions');
+const { getUserData, isCourseAdmin } = require('../helperFunctions');
 const db = require('../connect');
 const { verifyToken } = require('../middlewares/authMiddlewares');
 const { verify } = require('jsonwebtoken');
@@ -60,9 +60,8 @@ router.post('/courses/:id/announcements', verifyToken, (req, res) => {
     return res.status(400).send({ message: 'Missing required fields' });
   }
 
-  const stmt = db.prepare('SELECT 1 FROM courseAdmins WHERE courseId = ? AND userId = ?');
-  const isAdmin = stmt.get(courseId, userId);
-  if (!isAdmin) return res.status(403).send({ message: 'User is not a course admin' });
+  
+  if (!isCourseAdmin(userId, courseId)) return res.status(403).send({ message: 'User is not a course admin' });
 
   try {
     const id = uuidv4();
