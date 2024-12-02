@@ -185,7 +185,7 @@ router.post('/register', async (req, res) => {
 });
 
 router.post('/admin/login', async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, courseId } = req.body;
   const query = db.prepare('SELECT * FROM users WHERE email = ? AND role = ?');
   const user = query.get(email, 'admin');
   if (!user) {
@@ -198,6 +198,16 @@ router.post('/admin/login', async (req, res) => {
   if (!passwordMatch) {
     res.status(401).send({ message: 'Wrong password' });
     return;
+  }
+
+  const enrollment = db
+    .prepare(
+      'SELECT * FROM courseEnrollments WHERE userId = ? AND courseId = ?'
+    )
+    .get(user.id, courseId);
+
+  if (!enrollment) {
+    return res.status(403).send({ message: 'User is not a course admin' });
   }
 
   const accessToken = jwt.sign({ userId: user.id }, process.env.TOKEN_SECRET_KEY);
