@@ -124,10 +124,10 @@ export const registerSuccess = (user) => {
   };
 };
 
-export const formRegister = (userData) => {
+export const formRegister = (userData, courseId) => {
   const request = new Request(`${DOMAIN}/auth/register`, {
     method: 'POST',
-    body: JSON.stringify({userData}),
+    body: JSON.stringify({userData, courseId}),
     headers: {
       'Content-Type': 'application/json',
     },
@@ -136,10 +136,10 @@ export const formRegister = (userData) => {
   return register(request);
 }
 
-export const googleRegister = (idToken) => {
+export const googleRegister = (idToken, courseId) => {
   const request = new Request(`${DOMAIN}/auth/oauth/googleRegister`, {
     method: 'POST',
-    body: JSON.stringify({token: idToken}),
+    body: JSON.stringify({token: idToken, courseId}),
     headers: {
       'Content-Type': 'application/json',
     },
