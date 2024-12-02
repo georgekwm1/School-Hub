@@ -120,16 +120,15 @@ export const addGeneralDiscussionEntry =
   (title, details) => async (dispatch, getState) => {
     dispatch(discussionsActions.generalDiscussionEntryRequest());
 
-    const userId = getState().ui.getIn(['user', 'id']) || 'testId';
     const courseId = getState().ui.getIn(['course', 'id']) || 'testId';
     const response = await toast.promise(
       fetch(`${DOMAIN}/courses/${courseId}/general_discussion`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken('accessToken')}`,
         },
         body: JSON.stringify({
-          userId,
           title,
           body: details,
         }),

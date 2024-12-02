@@ -93,11 +93,12 @@ router.get('/lectures/:id/discussion', verifyToken, (req, res) => {
 });
 
 // Create a question in a course general forum
-router.post('/courses/:id/general_discussion', (req, res) => {
+router.post('/courses/:id/general_discussion', verifyToken, (req, res) => {
   const courseId = req.params.id;
-  const { userId, title, body } = req.body;
+  const { title, body } = req.body;
+  const userId = req.userId;
 
-  if (!userId || !title || !body) {
+  if (!title || !body) {
     return res.status(400).send({ message: 'Missing required fields' });
   }
 
