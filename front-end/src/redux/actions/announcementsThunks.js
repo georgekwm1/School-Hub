@@ -90,8 +90,9 @@ export const addNewAnnouncement =
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getToken('accessToken')}`
           },
-          body: JSON.stringify({
+            body: JSON.stringify({
             userId,
             title,
             details,

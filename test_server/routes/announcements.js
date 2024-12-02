@@ -51,13 +51,18 @@ router.get('/courses/:id/announcements', verifyToken, (req, res) => {
 });
 
 // Create a course announcement
-router.post('/courses/:id/announcements', (req, res) => {
+router.post('/courses/:id/announcements', verifyToken, (req, res) => {
   const courseId = req.params.id;
-  const { userId, title, details } = req.body;
+  const { title, details } = req.body;
+  const userId = req.userId;
 
-  if (!userId || !title || !details) {
+  if (!title || !details) {
     return res.status(400).send({ message: 'Missing required fields' });
   }
+
+  const stmt = db.prepare('SELECT 1 FROM courseAdmins WHERE courseId = ? AND userId = ?');
+  const isAdmin = stmt.get(courseId, userId);
+  if (!isAdmin) return res.status(403).send({ message: 'User is not a course admin' });
 
   try {
     const id = uuidv4();
