@@ -55,6 +55,17 @@ db.exec(
 	`
 );
 
+// Course Enrollments table
+db.exec(`
+	CREATE TABLE IF NOT EXISTS courseEnrollments (
+		courseId TEXT NOT NULL,
+		userId TEXT NOT NULL,
+		FOREIGN KEY (courseId) REFERENCES courses(id) ON DELETE CASCADE,
+		FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+		PRIMARY KEY (courseId, userId)
+	)
+	`);
+
 // Sections table
 db.exec(`
 	CREATE TABLE IF NOT EXISTS sections (

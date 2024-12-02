@@ -1,9 +1,7 @@
 import * as actions from './uiActionTypes';
-import { googleLogout } from '@react-oauth/google';
-import  toast from 'react-hot-toast';
-import { DOMAIN } from '../../utils/constants';
-import { removeToken, setToken, getToken } from '../../utils/utilFunctions';
 
+import { DOMAIN } from '../../utils/constants';
+import { setToken } from '../../utils/utilFunctions';
 
 export const toggleLoading = () => {
   return { type: actions.TOGGLE_LOADING };
@@ -27,13 +25,13 @@ export const loginFailure = (errorMessage) => (dispatch) => {
   dispatch(toggleLoading());
 };
 
-export function formLogin(email, password, isAdmin) {
+export function formLogin(email, password, courseId, isAdmin) {
   const url = isAdmin
     ? `${DOMAIN}/auth/admin/login`
     : `${DOMAIN}/auth/login`
   const request = new Request(url, {
     method: 'POST',
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, courseId }),
     headers: {
       'Content-Type': 'application/json',
     },
@@ -42,13 +40,13 @@ export function formLogin(email, password, isAdmin) {
   return login(request);
 }
 
-export function googleLogin(idToken, isAdmin) {
+export function googleLogin(idToken, courseId, isAdmin) {
   const url = isAdmin
     ? `${DOMAIN}/auth/admin/oauth/google/`
     : `${DOMAIN}/auth/oauth/google`
   const request = new Request(url, {
     method: 'POST',
-    body: JSON.stringify({ token: idToken }),
+    body: JSON.stringify({ token: idToken, courseId }),
     headers: {
       'Content-Type': 'application/json',
     },
@@ -180,32 +178,3 @@ export const register = (request) => async (dispatch) => {
     dispatch(registerFailure(error.message));    
   }
 };
-
-export const logoutThunk = () => async (dispatch) => {
-  try {
-    // I think how I'm handling the error here is questionable!
-    await toast.promise(
-      fetch(`${DOMAIN}/api/logout`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${getToken('accessToken')}`,
-        },
-      }).then((response) => {
-        if (!response.ok) {
-          throw new Error('Failed to log out');
-        }
-        return response.json();
-      }),
-      {
-        loading: 'Logging out...',
-        success: 'Logged out successfully',
-        error: 'ServerError logging you out',
-      }
-    );
-  } catch (error) {
-    console.error(error.message);
-  }
-  removeToken('accessToken');
-  googleLogout();
-  dispatch(logout());
-}
