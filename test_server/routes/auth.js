@@ -227,4 +227,9 @@ router.post('/admin/OAuth/google', (req, res) => {
     });
 });
 
+router.post('/api/logout', verifyToken, (req, res) => {
+  // Temoraily do nothing..
+  res.status(200).send({ message: 'Logged out successfully' });
+});
+
 module.exports = router;
