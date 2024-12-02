@@ -83,15 +83,20 @@ router.post('/announcements/:id/comments', verifyToken, (req, res) => {
 });
 
 // Edit an announcement
-router.put('/comments/:id', (req, res) => {
+router.put('/comments/:id', verifyToken, (req, res) => {
   const { id } = req.params;
   const { body } = req.body;
+  const userId = req.userId;
 
   try {
-    const comment = db.prepare('SELECT 1 FROM comments WHERE id = ?').get(id);
+    const comment = db.prepare('SELECT userId FROM comments WHERE id = ?').get(id);
 
     if (!comment) {
       return res.status(404).send({ message: 'Comment not found' });
+    }
+
+    if (comment.userId !== userId) {
+      return res.status(403).send({ message: 'User is not authorized to edit this comment' });
     }
 
     db.prepare('UPDATE comments SET body = ? WHERE id = ?').run(body, id);

@@ -221,6 +221,7 @@ export const editComment =
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getToken('accessToken')}`,
           },
           body: JSON.stringify({ body }),
         }).then((response) => {
