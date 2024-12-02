@@ -12,6 +12,9 @@ const {
 } = require('../mockData');
 const db = require('../connect');
 const { getUserData, getUpvoteStatus } = require('../helperFunctions');
+const { verifyToken } = require('../middlewares/authMiddlewares');
+
+
 const router = express.Router();
 
 // Untill adding the JWT stuff to get the actually user quering this..
@@ -21,7 +24,7 @@ const currentUserId = 'admin';
 
 
 // Get a course general forum questions
-router.get('/courses/:id/general_discussion', (req, res) => {
+router.get('/courses/:id/general_discussion', verifyToken,  (req, res) => {
   const id = req.params.id;
   const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(id);
   if (course) {
@@ -55,8 +58,10 @@ router.get('/courses/:id/general_discussion', (req, res) => {
 });
 
 // Get a lecture discussions/qustions
-router.get('/lectures/:id/discussion', (req, res) => {
+router.get('/lectures/:id/discussion', verifyToken, (req, res) => {
   const id = req.params.id;
+  const currentUserId = req.userId;
+
   const lecture = db.prepare('SELECT * FROM lectures WHERE id = ?').get(id);
   if (lecture) {
     const discussionWithLectureId = db
@@ -88,11 +93,12 @@ router.get('/lectures/:id/discussion', (req, res) => {
 });
 
 // Create a question in a course general forum
-router.post('/courses/:id/general_discussion', (req, res) => {
+router.post('/courses/:id/general_discussion', verifyToken, (req, res) => {
   const courseId = req.params.id;
-  const { userId, title, body } = req.body;
+  const { title, body } = req.body;
+  const userId = req.userId;
 
-  if (!userId || !title || !body) {
+  if (!title || !body) {
     return res.status(400).send({ message: 'Missing required fields' });
   }
 
@@ -133,9 +139,10 @@ router.post('/courses/:id/general_discussion', (req, res) => {
 });
 
 // Create a new question for a lecture
-router.post('/lectures/:id/discussion', (req, res) => {
+router.post('/lectures/:id/discussion', verifyToken, (req, res) => {
   const lectureId = req.params.id;
-  const { userId, title, body } = req.body;
+  const { title, body } = req.body;
+  const userId = req.userId;
 
   if (!userId || !title || !body) {
     return res.status(400).send({ message: 'Missing required fields' });
@@ -172,7 +179,7 @@ router.post('/lectures/:id/discussion', (req, res) => {
 });
 
 // Change user vote in a question?
-router.post('/questions/:id/vote', (req, res) => {
+router.post('/questions/:id/vote', verifyToken, (req, res) => {
   // I think sinse this is only toggling upvotes
   // not upvote, donwvote or nutralize.. then no action is needed
   // and it could just be done.. checking if there is a vote..
@@ -182,7 +189,7 @@ router.post('/questions/:id/vote', (req, res) => {
   // But I prefere leaving it now.. may be i need the triple case later.
   const questionId = req.params.id;
   const { action } = req.body;
-  const userId = currentUserId;
+  const userId = req.userId;
 
   if (!action || !['upvote', 'downvote'].includes(action)) {
     return res.status(400).send({ message: 'Missing or invalid action field' });
@@ -242,9 +249,10 @@ router.post('/questions/:id/vote', (req, res) => {
 });
 
 // Edit a question
-router.put('/questions/:id', (req, res) => {
+router.put('/questions/:id', verifyToken, (req, res) => {
   const { id } = req.params;
   const { title, body } = req.body;
+  const userId = req.userId;
 
   const question = db.prepare('SELECT * FROM questions WHERE id = ?').get(id);
 
@@ -252,6 +260,9 @@ router.put('/questions/:id', (req, res) => {
     return res.status(404).send({ message: 'Question not found' });
   }
 
+  if (question.userId !== userId) {
+    return res.status(403).send({ message: 'User is not authorized to edit this question' });
+  }
   try {
     db.transaction(() => {
       db.prepare(
@@ -282,14 +293,20 @@ router.put('/questions/:id', (req, res) => {
 });
 
 // delete a question
-router.delete('/questions/:id', (req, res) => {
+router.delete('/questions/:id', verifyToken, (req, res) => {
   const questionId = req.params.id;
+  const userId = req.userId;
   const question = db
     .prepare('SELECT * FROM questions WHERE id = ?')
     .get(questionId);
 
   if (!question) {
     return res.status(404).send({ message: 'Question not found' });
+  }
+
+  if (question.userId !== userId && !isAdmin(userId)) {
+    // As if this is a descriptive message now?!..
+    return res.status(403).send({ message: 'User is not authorized' });
   }
 
   try {
