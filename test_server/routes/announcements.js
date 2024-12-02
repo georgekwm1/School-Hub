@@ -10,10 +10,9 @@ const {
   mockSections,
   repliesList,
 } = require('../mockData');
-const { getUserData, isCourseAdmin } = require('../helperFunctions');
+const { getUserData, isCourseAdmin, isUserEnroledInCourse } = require('../helperFunctions');
 const db = require('../connect');
 const { verifyToken } = require('../middlewares/authMiddlewares');
-const { verify } = require('jsonwebtoken');
 
 
 const router = express.Router();
@@ -21,9 +20,14 @@ const router = express.Router();
 // Get course announcements
 router.get('/courses/:id/announcements', verifyToken, (req, res) => {
   const courseId = req.params.id;
+  const userId = req.userId;
   const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(courseId);
   if (!course) {
     return res.status(404).send({ message: 'Course not found' });
+  }
+
+  if (!isUserEnroledInCourse(userId, courseId)) {
+    return res.status(403).send({ message: 'User is not enrolled in this course' });
   }
 
   const announcements = db
