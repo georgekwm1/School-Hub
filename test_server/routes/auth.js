@@ -47,12 +47,18 @@ router.post('/login', async (req, res) => {
 
   if (!user) {
     return res.status(401).send({ message: 'Email not found' });
-  }
-
+  } 
   const passwordMatch = await bcrypt.compare(password, user.passwordHash);
-
-  if (!passwordMatch) {
-    return res.status(401).send({ message: 'Wrong password' });
+  if (!passwordMatch ) {
+    let message;
+    if (!user.passwordHash && user.googleId) {
+      message = 'Accountd registered with Google. Please use google login';
+    } else if (user.googleId) {
+      message = 'Wronge password. You can still use google login, tho.';
+    } else {
+      'Wrong passoword';
+    }
+    return res.status(401).json({ message});
   }
   
   const enrollment = db.prepare(
