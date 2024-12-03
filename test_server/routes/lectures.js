@@ -43,11 +43,11 @@ router.get('/courses/:id/lectures', verifyToken, (req, res) => {
 
   const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(courseId);
   if (!course) {
-    res.status(404).send({ message: 'Course not found' });
+    return res.status(404).send({ message: 'Course not found' });
   }
 
   if (!isUserEnroledInCourse(userId, courseId)) {
-    res.status(403).send({ message: 'User is not enrolled in this course' });
+    return res.status(403).send({ message: 'User is not enrolled in this course' });
   }
 
   const sections = db
