@@ -1,21 +1,21 @@
-SELECT * FROM lectures;
-SELECT * FROM courses;
+-- SELECT * FROM lectures;
+-- SELECT * FROM courses;
 -- SELECT * from users;
-select * from questions; 
-select * from votes; 
-select * from replies;
+-- select * from questions; 
+-- select * from votes; 
+-- select * from replies;
 
 
-SELECT
-  replies.id,
-  questions.courseId,
-	-- This is a good one.. I happy i chose to do it without ORM for the testServer.
-  (SELECT courseId FROM lectures WHERE id = questions.lectureId) as courseIdFromLecture
-FROM replies
-  JOIN questions ON replies.questionId = questions.id;
+-- SELECT
+--   replies.id,
+--   questions.courseId,
+-- 	-- This is a good one.. I happy i chose to do it without ORM for the testServer.
+--   (SELECT courseId FROM lectures WHERE id = questions.lectureId) as courseIdFromLecture
+-- FROM replies
+--   JOIN questions ON replies.questionId = questions.id;
 
 
-SELECT * FROM courseEnrollments; 
+-- SELECT * FROM courseEnrollments; 
 
 -- -- Oh, boy... this is crazy... 
 -- SELECT 
@@ -47,3 +47,7 @@ SELECT * FROM courseEnrollments;
 -- SELECT c.userId = 'admin' AS result
 -- FROM comments c
 -- WHERE c.id = '62b4a82e-0e09-4748-866e-393749c735e5';
+
+
+SELECT * FROM users;
+
