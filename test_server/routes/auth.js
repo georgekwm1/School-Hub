@@ -299,7 +299,7 @@ router.post('/admin/login', async (req, res) => {
 
   const enrollment = db
     .prepare(
-      'SELECT * FROM courseEnrollments WHERE userId = ? AND courseId = ?'
+      'SELECT * FROM courseAdmins WHERE userId = ? AND courseId = ?'
     )
     .get(user.id, courseId);
   if (!enrollment) {
