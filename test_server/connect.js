@@ -19,7 +19,7 @@ db.exec(`
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
 		updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
 		email TEXT UNIQUE NOT NULL,
-		passwordHash TEXT NOT NULL,
+		passwordHash TEXT,
 		googleId TEXT UNIQUE,
 		firstName TEXT NOT NULL,
 		lastName TEXT NOT NULL,
@@ -29,7 +29,8 @@ db.exec(`
 		pictureId TEXT,
 		pictureUrl TEXT,
 		pictureThumbnail TEXT,
-		role TEXT CHECK (role IN ('student', 'admin', 'tutor')) DEFAULT 'student'
+		role TEXT CHECK (role IN ('student', 'admin', 'tutor')) DEFAULT 'student',
+		CHECK (googleId NOT NULL OR passwordHash NOT NULL)
 	);
 	`);
 

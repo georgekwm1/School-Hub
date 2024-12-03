@@ -49,5 +49,4 @@
 -- WHERE c.id = '62b4a82e-0e09-4748-866e-393749c735e5';
 
 
-SELECT * FROM users;
-
+-- DROP TABLE IF EXISTS users;
