@@ -1,9 +1,10 @@
--- SELECT * FROM lectures;
--- SELECT * FROM courses;
--- SELECT * from users;
--- select * from questions; 
--- select * from votes; 
--- select * from replies;
+SELECT * FROM lectures;
+SELECT * FROM courses;
+SELECT * from courseAdmins;
+SELECT * from users;
+select * from questions; 
+select * from votes; 
+select * from replies;
 
 
 -- SELECT
@@ -37,8 +38,8 @@
 -- DROP TRIGGER IF EXISTS decrease_quesiton_replies_count;
 -- SELECT name FROM sqlite_master WHERE type = 'trigger';
 
--- SELECT * FROM announcements;
--- SELECT * FROM comments;
+SELECT * FROM announcements;
+SELECT * FROM comments;
 
 -- SELECT a.courseID FROM announcements a JOIN comments c
 -- 	ON c.announcementId = a.id

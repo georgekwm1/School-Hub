@@ -170,12 +170,13 @@ router.post('/oauth/googleRegister', async (req, res) => {
     }
 
     db.transaction(() => {
+      const userId = userData.sub;
       db.prepare(
         `INSERT INTO users (id, googleId, email, firstName, lastName, pictureUrl, pictureThumbnail)
         VALUES (?, ?, ?, ?, ?, ?, ?)`
       ).run(
-        userData.sub,
-        userData.sub,
+        userId,
+        userId,
         userData.email,
         userData.given_name,
         userData.family_name,

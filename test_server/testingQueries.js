@@ -46,7 +46,7 @@ async function insertTestCourseAdmin() {
 
   insertCourseAdmin.run('test-course', 'admin');
 }
-insertTestCourseAdmin();
+// insertTestCourseAdmin();
 
 async function insertTestCourse() {
   const insertCourse = db.prepare(
