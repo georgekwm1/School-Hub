@@ -26,7 +26,7 @@ router.get('/courses/:id/announcements', verifyToken, (req, res) => {
     return res.status(404).send({ message: 'Course not found' });
   }
 
-  if (!isUserEnroledInCourse(userId, courseId)) {
+  if (!isUserEnroledInCourse(userId, courseId) && !isCourseAdmin(userId, courseId)) {
     return res.status(403).send({ message: 'User is not enrolled in this course' });
   }
 

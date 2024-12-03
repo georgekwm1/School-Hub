@@ -127,7 +127,14 @@ router.delete('/comments/:commentId', verifyToken, (req, res) => {
       return res.status(404).send({ message: 'Comment not found' });
     }
 
-    if (comment.userId !== userId && !isCourseAdmin(userId, comment.announcementId)) {
+    const { courseId } = db.prepare(
+      `
+        SELECT courseId FROM announcements
+        WHERE id = ?
+      `
+    ).get(comment.announcementId);
+
+    if (comment.userId !== userId && !isCourseAdmin(userId, courseId)) {
       return res.status(403).send({ message: 'User is not a course admin' });
     }
 

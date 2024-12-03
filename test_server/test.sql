@@ -1,10 +1,14 @@
 SELECT * FROM lectures;
 SELECT * FROM courses;
+SELECT * FROM sections;
+SELECT * FROM courseEnrollments;
 SELECT * from courseAdmins;
 SELECT * from users;
 select * from questions; 
 select * from votes; 
 select * from replies;
+SELECT * FROM announcements;
+SELECT * FROM comments;
 
 
 -- SELECT
@@ -38,8 +42,7 @@ select * from replies;
 -- DROP TRIGGER IF EXISTS decrease_quesiton_replies_count;
 -- SELECT name FROM sqlite_master WHERE type = 'trigger';
 
-SELECT * FROM announcements;
-SELECT * FROM comments;
+
 
 -- SELECT a.courseID FROM announcements a JOIN comments c
 -- 	ON c.announcementId = a.id
@@ -53,4 +56,11 @@ SELECT * FROM comments;
 -- DROP TABLE IF EXISTS users;
 -- UPDATE users SET id = 'admin' WHERE email = 'admin';
 
-SELECT * FROM courseEnrollments WHERE userId = 'admin' AND courseId = 'test-course';
+SELECT 1 FROM courseAdmins WHERE courseId = 'test-course' AND userId = 'admin';
+-- Oh, boy... this is crazy... 
+    SELECT 
+      q.courseId AS courseIdFromQuestion,
+      (SELECT courseId FROM lectures WHERE id = q.lectureId) AS courseIdFromLecture
+    FROM replies r
+      JOIN questions q ON r.questionId = q.id
+    WHERE r.id = '94e8fc75-2e0d-4001-adcb-fde9d90d90d8';

@@ -46,8 +46,6 @@ export default function EditLectureForm() {
           'Authorization': `Bearer ${getToken('accessToken')}`
         }
       }
-
-
     )
       .then((response) => {
         const data = response.json();

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
-import { uploadFile } from '../../utils/utilFunctions';
+import { uploadFile, getToken } from '../../utils/utilFunctions';
 import { DOMAIN } from '../../utils/constants';
 import { selectCourseId } from '../../redux/selectors/uiSelectors';
 
@@ -54,7 +54,14 @@ export default function LectureForm({ onSubmit, lectureData = {} }) {
      * but, I'm just goign to fetch teh titles from the api and keep them in local state here
      */
     // BUG: this should be course/id/sections_titles
-    fetch(`${DOMAIN}/courses/${courseId}/sections_titles`)
+    fetch(
+      `${DOMAIN}/courses/${courseId}/sections_titles`,
+      {
+        headers: {
+          'Authorization': `Bearer ${getToken('accessToken')}`
+        }
+      }
+    )
       .then((res) => res.json())
       .then((data) => setSections(data))
       .catch((err) => {

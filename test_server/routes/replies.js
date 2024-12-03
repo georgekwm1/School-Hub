@@ -11,7 +11,7 @@ const {
   repliesList,
 } = require('../mockData');
 const db = require('../connect');
-const { getUserData, getUpvoteStatus } = require('../helperFunctions');
+const { getUserData, getUpvoteStatus, isCourseAdmin } = require('../helperFunctions');
 const { verifyToken } = require('../middlewares/authMiddlewares');
 
 const router = express.Router();
@@ -30,8 +30,8 @@ function getReplyCourseId(replyId) {
     `
   );
 
-  const {courseIdFromQuestion, courseIdFromLecture}  = query.run(replyId);
-  return courseIdFromQuestion || courseIdFromLecture;
+  const {courseIdFromQuestion, courseIdFromLecture}  = query.get(replyId);
+  return courseIdFromQuestion ? courseIdFromQuestion :  courseIdFromLecture;
 } 
 
 
