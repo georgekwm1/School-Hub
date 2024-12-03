@@ -15,6 +15,7 @@ import {
 } from '../../redux/actions/lecturesActionCreators';
 import { DOMAIN } from '../../utils/constants';
 import { editLecture } from '../../redux/actions/lecturesThunks';
+import { getToken } from '../../utils/utilFunctions'
 
 // I really need to sleep now
 // I need to sleep
@@ -38,7 +39,14 @@ export default function EditLectureForm() {
 
   useEffect(() => {
     dispatch(setLectureLoading(true));
-    fetch(`${DOMAIN}/courses/${courseId}/lectures/${lectureId}`)
+    fetch(
+      `${DOMAIN}/courses/${courseId}/lectures/${lectureId}`,
+       {
+        headers: {
+          'Authorization': `Bearer ${getToken('accessToken')}`
+        }
+      }
+    )
       .then((response) => {
         const data = response.json();
         if (!response.ok) {

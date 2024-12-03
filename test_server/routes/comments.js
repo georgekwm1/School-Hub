@@ -11,18 +11,23 @@ const {
   repliesList,
 } = require('../mockData');
 const db = require('../connect');
-const { getUserData } = require('../helperFunctions');
+const { getUserData, isCourseAdmin } = require('../helperFunctions');
+const { verifyToken } = require('../middlewares/authMiddlewares');
 
 const router = express.Router();
 
 // Get all comments for an announcement
-router.get('/announcements/:id/comments', (req, res) => {
+router.get('/announcements/:id/comments', verifyToken, (req, res) => {
   const announcementId = req.params.id;
-  const announcement = db.prepare('SELECT 1 FROM announcements WHERE id = ?').get(announcementId);
+  const announcement = db
+    .prepare('SELECT 1 FROM announcements WHERE id = ?')
+    .get(announcementId);
 
   if (!announcement) {
     return res.status(404).send({ message: 'Announcement not found' });
   }
+
+  // I'm really not sure if i have to check for user enrollment here or not
 
   const comments = db
     .prepare(
@@ -47,33 +52,28 @@ router.get('/announcements/:id/comments', (req, res) => {
 });
 
 // Create a comment for an announcement
-router.post('/announcements/:id/comments', (req, res) => {
+router.post('/announcements/:id/comments', verifyToken, (req, res) => {
   const announcementId = req.params.id;
-  const { userId, comment: body } = req.body;
+  const { comment: body } = req.body;
+  const userId = req.userId;
 
-  if (!userId || !body) {
+  if (!body) {
     return res.status(400).send({ message: 'Missing required fields' });
   }
-  
-  try {
 
+  try {
     const id = uuidv4();
     db.prepare(
       `INSERT INTO comments (id, announcementId, userId, body) VALUES (?, ?, ?, ?)`
-    ).run(
-      id,
-      announcementId,
-      userId,
-      body,
-    );
+    ).run(id, announcementId, userId, body);
 
-    const newComment = db.prepare(
-      'SELECT * FROM comments WHERE id = ?'
-    ).get(id);
+    const newComment = db
+      .prepare('SELECT * FROM comments WHERE id = ?')
+      .get(id);
     newComment.user = getUserData(userId);
     delete newComment.userId;
 
-    res.status(201).json(newComment)
+    res.status(201).json(newComment);
   } catch (err) {
     console.error(err);
     res.status(500).send({ message: 'Internal server error' });
@@ -81,20 +81,31 @@ router.post('/announcements/:id/comments', (req, res) => {
 });
 
 // Edit an announcement
-router.put('/comments/:id', (req, res) => {
+router.put('/comments/:id', verifyToken, (req, res) => {
   const { id } = req.params;
   const { body } = req.body;
+  const userId = req.userId;
 
   try {
-    const comment = db.prepare('SELECT 1 FROM comments WHERE id = ?').get(id);
+    const comment = db
+      .prepare('SELECT userId FROM comments WHERE id = ?')
+      .get(id);
 
     if (!comment) {
       return res.status(404).send({ message: 'Comment not found' });
     }
 
+    if (comment.userId !== userId) {
+      return res
+        .status(403)
+        .send({ message: 'User is not authorized to edit this comment' });
+    }
+
     db.prepare('UPDATE comments SET body = ? WHERE id = ?').run(body, id);
 
-    const updatedComment = db.prepare('SELECT * FROM comments WHERE id = ?').get(id);
+    const updatedComment = db
+      .prepare('SELECT * FROM comments WHERE id = ?')
+      .get(id);
     updatedComment.user = getUserData(updatedComment.userId);
     delete updatedComment.userId;
 
@@ -106,14 +117,29 @@ router.put('/comments/:id', (req, res) => {
 });
 
 // Delete an announcement;
-router.delete('/comments/:commentId', (req, res) => {
+router.delete('/comments/:commentId', verifyToken, (req, res) => {
   const { commentId } = req.params;
+  const userId = req.userId;
 
   try {
-    const comment = db.prepare('SELECT * FROM comments WHERE id = ?').get(commentId);
-
+    const comment = db
+      .prepare('SELECT userId, announcementId FROM comments WHERE id = ?')
+      .get(commentId);
     if (!comment) {
       return res.status(404).send({ message: 'Comment not found' });
+    }
+
+    const { courseId } = db
+      .prepare(
+        `
+        SELECT courseId FROM announcements
+        WHERE id = ?
+      `
+      )
+      .get(comment.announcementId);
+
+    if (comment.userId !== userId && !isCourseAdmin(userId, courseId)) {
+      return res.status(403).send({ message: 'User is not a course admin' });
     }
 
     db.prepare('DELETE FROM comments WHERE id = ?').run(commentId);

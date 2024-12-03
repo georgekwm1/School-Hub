@@ -1,6 +1,8 @@
 import * as actions from './uiActionTypes';
-
+import toast from 'react-hot-toast';
+import { googleLogout } from '@react-oauth/google';
 import { DOMAIN } from '../../utils/constants';
+import { setToken, getToken, removeToken } from '../../utils/utilFunctions';
 
 export const toggleLoading = () => {
   return { type: actions.TOGGLE_LOADING };
@@ -24,13 +26,13 @@ export const loginFailure = (errorMessage) => (dispatch) => {
   dispatch(toggleLoading());
 };
 
-export function formLogin(email, password, isAdmin) {
+export function formLogin(email, password, courseId, isAdmin) {
   const url = isAdmin
     ? `${DOMAIN}/auth/admin/login`
     : `${DOMAIN}/auth/login`
   const request = new Request(url, {
     method: 'POST',
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, courseId }),
     headers: {
       'Content-Type': 'application/json',
     },
@@ -39,13 +41,13 @@ export function formLogin(email, password, isAdmin) {
   return login(request);
 }
 
-export function googleLogin(idToken, isAdmin) {
+export function googleLogin(idToken, courseId, isAdmin) {
   const url = isAdmin
     ? `${DOMAIN}/auth/admin/oauth/google/`
     : `${DOMAIN}/auth/oauth/google`
   const request = new Request(url, {
     method: 'POST',
-    body: JSON.stringify({ token: idToken }),
+    body: JSON.stringify({ token: idToken, courseId }),
     headers: {
       'Content-Type': 'application/json',
     },
@@ -59,10 +61,12 @@ const login = (request) => async (dispatch) => {
 
   try {
     const response = await fetch(request);
+    const data = await response.json();
+
     if (!response.ok) {
       switch (response.status) {
         case 401: {
-          throw new Error('Please.. check again the email or the password!');
+          throw new Error(data.message);
         }
         case 404: {
           throw new Error("Oops, that's a 404!");
@@ -72,8 +76,8 @@ const login = (request) => async (dispatch) => {
         }
       }
     }
-
-    const data = await response.json();
+    
+    setToken('accessToken', data.accessToken);
     dispatch(loginSuccess(data.user));
   } catch (error) {
     dispatch(loginFailure(error.message));
@@ -120,10 +124,10 @@ export const registerSuccess = (user) => {
   };
 };
 
-export const formRegister = (userData) => {
+export const formRegister = (userData, courseId) => {
   const request = new Request(`${DOMAIN}/auth/register`, {
     method: 'POST',
-    body: JSON.stringify({userData}),
+    body: JSON.stringify({userData, courseId}),
     headers: {
       'Content-Type': 'application/json',
     },
@@ -132,10 +136,10 @@ export const formRegister = (userData) => {
   return register(request);
 }
 
-export const googleRegister = (idToken) => {
+export const googleRegister = (idToken, courseId) => {
   const request = new Request(`${DOMAIN}/auth/oauth/googleRegister`, {
     method: 'POST',
-    body: JSON.stringify({token: idToken}),
+    body: JSON.stringify({token: idToken, courseId}),
     headers: {
       'Content-Type': 'application/json',
     },
@@ -165,6 +169,9 @@ export const register = (request) => async (dispatch) => {
         }
       }
     }
+
+    setToken('accessToken', data.accessToken);
+
     dispatch(registerSuccess(data.user));
 
   } catch (error) {
@@ -172,3 +179,34 @@ export const register = (request) => async (dispatch) => {
     dispatch(registerFailure(error.message));    
   }
 };
+
+
+
+export const logoutThunk = () => async (dispatch) => {
+  try {
+    // I think how I'm handling the error here is questionable!
+    await toast.promise(
+      fetch(`${DOMAIN}/api/logout`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${getToken('accessToken')}`,
+        },
+      }).then((response) => {
+        if (!response.ok) {
+          throw new Error('Failed to log out');
+        }
+        return response.json();
+      }),
+      {
+        loading: 'Logging out...',
+        success: 'Logged out successfully',
+        error: 'ServerError logging you out',
+      }
+    );
+  } catch (error) {
+    console.error(error.message);
+  }
+  removeToken('accessToken');
+  googleLogout();
+  dispatch(logout());
+}

@@ -11,19 +11,36 @@ const {
   repliesList,
 } = require('../mockData');
 const db = require('../connect');
-const { getUserData, getUpvoteStatus } = require('../helperFunctions');
+const {
+  getUserData,
+  getUpvoteStatus,
+  isCourseAdmin,
+} = require('../helperFunctions');
+const { verifyToken } = require('../middlewares/authMiddlewares');
 
 const router = express.Router();
 
-// Untill adding the JWT stuff to get the actually user quering this..
-// lets say..
-const currentUserId = 'admin';
-// const currentUserId = '30fd6f7e-a85b-4f2c-bee7-55b0bf542e95';
+function getReplyCourseId(replyId) {
+  const query = db.prepare(
+    `
+    -- Oh, boy... this is crazy... 
+    SELECT 
+      q.courseId AS courseIdFromQuestion,
+      (SELECT courseId FROM lectures WHERE id = q.lectureId) AS courseIdFromLecture
+    FROM replies r
+      JOIN questions q ON r.questionId = q.id
+    WHERE r.id = ?;
+    `
+  );
 
+  const { courseIdFromQuestion, courseIdFromLecture } = query.get(replyId);
+  return courseIdFromQuestion ? courseIdFromQuestion : courseIdFromLecture;
+}
 
 // Get question replies
-router.get('/questions/:id/replies', (req, res) => {
+router.get('/questions/:id/replies', verifyToken, (req, res) => {
   const questionId = req.params.id;
+  const userId = req.userId;
 
   const question = db
     .prepare(
@@ -39,7 +56,7 @@ router.get('/questions/:id/replies', (req, res) => {
   }
 
   const user = getUserData(question.userId);
-  const upvoted = getUpvoteStatus(currentUserId, question.id, 'question');
+  const upvoted = getUpvoteStatus(userId, question.id, 'question');
 
   const replies = db
     .prepare(
@@ -52,7 +69,7 @@ router.get('/questions/:id/replies', (req, res) => {
 
   const results = replies.map((reply) => {
     const user = getUserData(reply.userId);
-    const upvoted = getUpvoteStatus(currentUserId, reply.id, 'reply');
+    const upvoted = getUpvoteStatus(userId, reply.id, 'reply');
 
     return {
       ...reply,
@@ -65,10 +82,11 @@ router.get('/questions/:id/replies', (req, res) => {
 });
 
 // Change user vote for a replies
-router.post('/replies/:id/vote', (req, res) => {
+router.post('/replies/:id/vote', verifyToken, (req, res) => {
   const replyId = req.params.id;
   const { action } = req.body;
-  const userId = currentUserId;
+  const userId = req.userId;
+
   if (!action) {
     return res.status(400).send({ message: 'Missing required fields' });
   }
@@ -117,9 +135,10 @@ router.post('/replies/:id/vote', (req, res) => {
 });
 
 // Create a reply for a question
-router.post('/questions/:id/replies', (req, res) => {
+router.post('/questions/:id/replies', verifyToken, (req, res) => {
   const questionId = req.params.id;
-  const { userId, body } = req.body;
+  const { body } = req.body;
+  const userId = req.userId;
 
   if (!userId || !body) {
     return res.status(400).send({ message: 'Missing required fields' });
@@ -155,15 +174,22 @@ router.post('/questions/:id/replies', (req, res) => {
 });
 
 // Edit a reply
-router.put('/replies/:id', (req, res) => {
+router.put('/replies/:id', verifyToken, (req, res) => {
   const { id } = req.params;
   const { body } = req.body;
+  const userId = req.userId;
 
   try {
     const reply = db.prepare('SELECT * FROM replies WHERE id = ?').get(id);
 
     if (!reply) {
       return res.status(404).send({ message: 'Reply not found' });
+    }
+
+    if (reply.userId !== userId) {
+      return res
+        .status(403)
+        .send({ message: 'User is not authorized to edit this reply' });
     }
 
     db.prepare('UPDATE replies SET body = ? WHERE id = ?').run(body, id);
@@ -186,14 +212,24 @@ router.put('/replies/:id', (req, res) => {
 });
 
 // Delete a reply
-router.delete('/replies/:id', (req, res) => {
+router.delete('/replies/:id', verifyToken, (req, res) => {
   const replyId = req.params.id;
+  const userId = req.userId;
 
   try {
-    const reply = db.prepare('SELECT * FROM replies WHERE id = ?').get(replyId);
+    const reply = db
+      .prepare('SELECT id, userId FROM replies WHERE id = ?')
+      .get(replyId);
 
     if (!reply) {
       return res.status(404).send({ message: 'Reply not found' });
+    }
+
+    const courseId = getReplyCourseId(replyId);
+    if (reply.userId !== userId && !isCourseAdmin(userId, courseId)) {
+      return res
+        .status(403)
+        .send({ message: 'User is not authorized to delete this reply' });
     }
 
     db.prepare('DELETE FROM replies WHERE id = ?').run(replyId);

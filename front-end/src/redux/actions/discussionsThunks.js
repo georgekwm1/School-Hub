@@ -1,12 +1,21 @@
 import toast from 'react-hot-toast';
 import * as discussionsActions from './discussionsActionCreators';
 import { toggleLoading } from './uiActionCreators';
+import { getToken } from '../../utils/utilFunctions';
 import {DOMAIN} from '../../utils/constants'
+
 export const getLectureDiscussions = (lectureId) => async (dispatch) => {
   dispatch(discussionsActions.toggleDiscussionsLoading());
 
   try {
-    const response = await fetch(`${DOMAIN}/lectures/${lectureId}/discussion`);
+    const response = await fetch(
+      `${DOMAIN}/lectures/${lectureId}/discussion`,
+      {
+        headers: {
+          'Authorization': `Bearer ${getToken('accessToken')}`
+        }
+      }
+    );
     const data = await response.json();
 
     if (!response.ok) {
@@ -32,15 +41,14 @@ export const addLectureDiscussionEntry =
   (lectureId, title, details) => async (dispatch, getState) => {
     dispatch(discussionsActions.addDiscussionEntryRequest());
 
-    const userId = getState().ui.getIn(['user', 'id']) || 'testId';
     const promise = toast.promise(
       fetch(`${DOMAIN}/lectures/${lectureId}/discussion`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken('accessToken')}`,
         },
         body: JSON.stringify({
-          userId,
           title,
           body: details,
         }),
@@ -83,7 +91,12 @@ export const getGeneralDiscussion = () => async (dispatch, getState) => {
   const courseId = getState().ui.getIn(['course', 'id']) || 'testId';
   try {
     const response = await fetch(
-      `${DOMAIN}/courses/${courseId}/general_discussion`
+      `${DOMAIN}/courses/${courseId}/general_discussion`,
+      {
+        headers: {
+          'Authorization': `Bearer ${getToken('accessToken')}`
+        },
+      }
     );
     const data = await response.json();
 
@@ -106,16 +119,15 @@ export const addGeneralDiscussionEntry =
   (title, details) => async (dispatch, getState) => {
     dispatch(discussionsActions.generalDiscussionEntryRequest());
 
-    const userId = getState().ui.getIn(['user', 'id']) || 'testId';
     const courseId = getState().ui.getIn(['course', 'id']) || 'testId';
     const response = await toast.promise(
       fetch(`${DOMAIN}/courses/${courseId}/general_discussion`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken('accessToken')}`,
         },
         body: JSON.stringify({
-          userId,
           title,
           body: details,
         }),
@@ -140,7 +152,14 @@ export const fetchReplies = (questionId) => async (dispatch) => {
   dispatch(discussionsActions.fetchDiscussionRepliesRequest());
   dispatch(toggleLoading());
   try {
-    const response = await fetch(`${DOMAIN}/questions/${questionId}/replies`);
+    const response = await fetch(
+      `${DOMAIN}/questions/${questionId}/replies`,
+      {
+        headers: {
+          'Authorization': `Bearer ${getToken('accessToken')}`
+        }
+      }
+    );
     const data = await response.json();
 
     if (!response.ok) {
@@ -163,16 +182,15 @@ export const addDiscussionReply =
   (questionId, body) => async (dispatch, getState) => {
     dispatch(discussionsActions.addDiscussionReplyRequest());
 
-    const userId = getState().ui.getIn(['user', 'id']) || 'testId';
     try {
       const data = await toast.promise(
         fetch(`${DOMAIN}/questions/${questionId}/replies`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getToken('accessToken')}`,
           },
-          body: JSON.stringify({
-            userId,
+            body: JSON.stringify({
             body,
           }),
         }).then((response) => {
@@ -243,6 +261,7 @@ export const toggleDiscussionEntryVote =
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getToken('accessToken')}`,
           },
           body: JSON.stringify({ action }),
         }).then((response) => {
@@ -284,8 +303,9 @@ export const toggleReplyVote =
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getToken('accessToken')}`,
           },
-          body: JSON.stringify({ action }),
+            body: JSON.stringify({ action }),
         }).then((response) => {
           if (!response.ok) {
             const data = response.json();
@@ -339,6 +359,7 @@ export const toggleQuestionVote =
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getToken('accessToken')}`,
           },
           body: JSON.stringify({ action }),
         }).then((response) => {
@@ -387,12 +408,14 @@ export const toggleQuestionVote =
   };
 
 export const deleteQuestion =
-  (questionId, lectureId = null) =>
-  async (dispatch) => {
+  (questionId, lectureId = null) => async (dispatch) => {
     try {
       await toast.promise(
         fetch(`${DOMAIN}/questions/${questionId}`, {
           method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${getToken('accessToken')}`,
+          }
         }).then((response) => {
           const data = response.json();
           if (!response.ok) {
@@ -423,6 +446,9 @@ export const deleteReply = (questionId, replyId) => async (dispatch) => {
     await toast.promise(
       fetch(`${DOMAIN}/replies/${replyId}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${getToken('accessToken')}`
+        }
       }).then((response) => {
         const data = response.json();
         if (!response.ok) {
@@ -455,6 +481,7 @@ export const editQuestion = (questionId, title, body) => async (dispatch) => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken('accessToken')}`,
         },
         body: JSON.stringify({
           title,
@@ -493,6 +520,7 @@ export const editReply = (questionId, replyId, body) => async (dispatch) => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken('accessToken')}`,
         },
         body: JSON.stringify({
           body,

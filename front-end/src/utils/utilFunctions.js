@@ -88,3 +88,7 @@ export async function uploadFile(file, dispatch, name = '') {
     return null;
   }
 }
+
+export const setToken = (type, token) => localStorage.setItem(type, token);
+export const getToken = (type) => localStorage.getItem(type);
+export const removeToken = (type) => localStorage.removeItem(type);

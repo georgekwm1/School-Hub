@@ -2,8 +2,8 @@ const express = require('express');
 const https = require('https');
 const fs = require('fs');
 const ImageKit = require('imagekit');
-const app = express();
 const cors = require('cors');
+const app = express();
 const db = require('./connect');
 const authRouter = require('./routes/auth');
 const lecturesRouter = require('./routes/lectures');
@@ -11,6 +11,8 @@ const questionsRouter = require('./routes/questions');
 const repliesRouter = require('./routes/replies');
 const announcementsRouter = require('./routes/announcements');
 const commentsRouter = require('./routes/comments');
+
+require('dotenv').config();
 
 app.use(express.json());
 app.use(cors({ origin: '*' }));

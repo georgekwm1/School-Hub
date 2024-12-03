@@ -19,15 +19,18 @@ db.exec(`
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
 		updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
 		email TEXT UNIQUE NOT NULL,
-		passwordHash TEXT NOT NULL,
+		passwordHash TEXT,
 		googleId TEXT UNIQUE,
 		firstName TEXT NOT NULL,
 		lastName TEXT NOT NULL,
+		-- I added and this mocking the data in teh mock vars.. but
+		-- I havn't relied on it on or havn't needed it.
 		username TEXT,
 		pictureId TEXT,
 		pictureUrl TEXT,
 		pictureThumbnail TEXT,
-		role TEXT CHECK (role IN ('student', 'admin', 'tutor')) DEFAULT 'student'
+		role TEXT CHECK (role IN ('student', 'admin', 'tutor')) DEFAULT 'student',
+		CHECK (googleId NOT NULL OR passwordHash NOT NULL)
 	);
 	`);
 
@@ -54,6 +57,17 @@ db.exec(
 	)
 	`
 );
+
+// Course Enrollments table
+db.exec(`
+	CREATE TABLE IF NOT EXISTS courseEnrollments (
+		courseId TEXT NOT NULL,
+		userId TEXT NOT NULL,
+		FOREIGN KEY (courseId) REFERENCES courses(id) ON DELETE CASCADE,
+		FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+		PRIMARY KEY (courseId, userId)
+	)
+	`);
 
 // Sections table
 db.exec(`
@@ -142,7 +156,7 @@ db.exec(`
 	`);
 
 // votes table
-// I'm not sure about my design for this table... 
+// I'm not sure about my design for this table...
 db.exec(`
 	CREATE TABLE IF NOT EXISTS votes (
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -201,7 +215,7 @@ db.exec(`
 		SET updatedAt = CURRENT_TIMESTAMP
 		WHERE id = old.id;
 	END
-`)
+`);
 
 db.exec(`
 	CREATE TRIGGER IF NOT EXISTS reply_update_time
@@ -212,7 +226,7 @@ db.exec(`
 		SET updatedAt = CURRENT_TIMESTAMP
 		WHERE id = old.id;
 	END
-`)
+`);
 
 db.exec(`
 	CREATE TRIGGER IF NOT EXISTS increase_question_replies_count
@@ -222,7 +236,7 @@ db.exec(`
 		SET repliesCount = repliesCount + 1
 		WHERE id = new.questionId;
 	END
-`)
+`);
 
 db.exec(`
 	CREATE TRIGGER IF NOT EXISTS decrease_quesiton_replies_count
@@ -232,7 +246,7 @@ db.exec(`
 		SET repliesCount = repliesCount - 1
 		WHERE id = old.questionId;
 	END	
-`)
+`);
 
 db.exec(`
 	CREATE TRIGGER IF NOT EXISTS announcement_update_time
@@ -243,7 +257,7 @@ db.exec(`
 		SET updatedAt = CURRENT_TIMESTAMP
 		WHERE id = old.id;
 	END
-`)
+`);
 
 db.exec(`
 	CREATE TRIGGER IF NOT EXISTS increase_announcement_comments_count
@@ -253,10 +267,10 @@ db.exec(`
 		SET commentsCount = commentsCount + 1
 		WHERE id = new.announcementId;
 	END
-`)
+`);
 
 db.exec(
-	`
+  `
 	CREATE TRIGGER IF NOT EXISTS change_commment_updatedAt
 	AFTER UPDATE ON COMMENTS
 	WHEN old.body != new.body
@@ -266,7 +280,7 @@ db.exec(
 		WHERE id = old.id;
 	END
 	`
-)
+);
 
 db.exec(`
 	CREATE TRIGGER IF NOT EXISTS decrease_announcement_comments_count
@@ -276,7 +290,7 @@ db.exec(`
 		SET commentsCount = commentsCount - 1
 		WHERE id = old.announcementId;
 	END	
-`)
+`);
 
 process.on('exit', () => db.close());
 process.on('SIGHUP', () => process.exit(128 + 1));
