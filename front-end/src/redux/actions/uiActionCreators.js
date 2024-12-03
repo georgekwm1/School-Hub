@@ -61,10 +61,12 @@ const login = (request) => async (dispatch) => {
 
   try {
     const response = await fetch(request);
+    const data = await response.json();
+
     if (!response.ok) {
       switch (response.status) {
         case 401: {
-          throw new Error('Please.. check again the email or the password!');
+          throw new Error(data.message);
         }
         case 404: {
           throw new Error("Oops, that's a 404!");
@@ -74,8 +76,6 @@ const login = (request) => async (dispatch) => {
         }
       }
     }
-
-    const data = await response.json();
     
     setToken('accessToken', data.accessToken);
     dispatch(loginSuccess(data.user));
