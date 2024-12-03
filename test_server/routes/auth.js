@@ -147,30 +147,63 @@ router.post('/oauth/google', async (req, res) => {
   }
 });
 
-router.post('/oauth/googleRegister', (req, res) => {
-  const idToken = req.body.token;
-  console.log(idToken);
+router.post('/oauth/googleRegister', async (req, res) => {
+  const {token: idToken, courseId} = req.body;
   const googleVerifyUrl = `https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`;
-  fetch(googleVerifyUrl)
-    .then((response) => response.json())
-    .then((data) => {
-      console.log(data);
-      if (data.email_verified) {
-        res.send({
-          message: 'Logged in successfully',
-          user: {
-            email: data.email,
-            id: data.sub,
-          },
-        });
-      } else {
-        res.status(401).send({ message: 'Email not verified' });
-      }
-    })
-    .catch((error) => {
-      console.error(error);
-      res.status(500).send({ message: 'Internal Server Error' });
-    });
+  try {
+    const response = await fetch(googleVerifyUrl);
+    const userData = await response.json();
+
+    if (!response.ok) {
+      res.status(response.status).send({ message: 'Error connecting to google' });
+    } else if (userData.error) {
+      res.status(401).send({ message: `${userData.error} => ${userData.error_description}` });
+    } else if (!userData.email_verified) {
+      res.status(401).send({ message: 'Email not verified' });
+    }
+    console.log(userData)
+    console.log(userData.email);
+
+    const existingUser = db.prepare('SELECT 1 FROM users WHERE email = ?').get(userData.email);
+    if (existingUser) {
+      return res.status(409).send({ message: 'Email already exists' });
+    }
+
+    db.transaction(() => {
+      db.prepare(
+        `INSERT INTO users (id, googleId, email, firstName, lastName, pictureUrl, pictureThumbnail)
+        VALUES (?, ?, ?, ?, ?, ?, ?)`
+      ).run(
+        userData.sub,
+        userData.sub,
+        userData.email,
+        userData.given_name,
+        userData.family_name,
+        userData.picture,
+        userData.picture,
+      );
+      db.prepare('INSERT INTO courseEnrollments (userId, courseId) VALUES (?, ?)').run(userId, courseId);
+
+      const accessToken = jwt.sign({ userId, courseId, role: 'student' }, process.env.TOKEN_SECRET_KEY);
+
+      res.status(201).json({
+        accessToken,
+        user: {
+          id: userId,
+          email: userData.email,
+          firstName: userData.firstName,
+          lastName: userData.given_name,
+          username: userData.family_name,
+          pictureThumbnail: userData.picture,
+          pictureUrl: userData.picture,
+        },
+        message: 'User registered and logged in successfully',
+      });
+    })();
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: 'Server Error while registering' });
+  }
 });
 
 router.post('/register', async (req, res) => {

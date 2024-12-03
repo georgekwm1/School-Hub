@@ -23,6 +23,8 @@ db.exec(`
 		googleId TEXT UNIQUE,
 		firstName TEXT NOT NULL,
 		lastName TEXT NOT NULL,
+		-- I added and this mocking the data in teh mock vars.. but
+		-- I havn't relied on it on or havn't needed it.
 		username TEXT,
 		pictureId TEXT,
 		pictureUrl TEXT,
