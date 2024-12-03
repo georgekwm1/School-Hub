@@ -48,17 +48,20 @@ router.post('/login', async (req, res) => {
   if (!user) {
     return res.status(401).send({ message: 'Email not found' });
   } 
+
+  if (!user.passwordHash && user.googleId) {
+    return res.status(401).json({message: 'Accountd registered with Google. Please use google login'})
+  }
+
   const passwordMatch = await bcrypt.compare(password, user.passwordHash);
   if (!passwordMatch ) {
     let message;
-    if (!user.passwordHash && user.googleId) {
-      message = 'Accountd registered with Google. Please use google login';
-    } else if (user.googleId) {
+    if (user.googleId) {
       message = 'Wronge password. You can still use google login, tho.';
     } else {
-      'Wrong passoword';
+      message = 'Wrong passoword';
     }
-    return res.status(401).json({ message});
+    return res.status(401).json({ message });
   }
   
   const enrollment = db.prepare(
@@ -299,7 +302,6 @@ router.post('/admin/login', async (req, res) => {
       'SELECT * FROM courseEnrollments WHERE userId = ? AND courseId = ?'
     )
     .get(user.id, courseId);
-
   if (!enrollment) {
     return res.status(403).send({ message: 'User is not a course admin' });
   }

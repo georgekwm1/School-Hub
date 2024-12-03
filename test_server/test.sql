@@ -51,3 +51,6 @@ SELECT * FROM comments;
 
 
 -- DROP TABLE IF EXISTS users;
+-- UPDATE users SET id = 'admin' WHERE email = 'admin';
+
+SELECT * FROM courseEnrollments WHERE userId = 'admin' AND courseId = 'test-course';
