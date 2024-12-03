@@ -156,7 +156,7 @@ db.exec(`
 	`);
 
 // votes table
-// I'm not sure about my design for this table... 
+// I'm not sure about my design for this table...
 db.exec(`
 	CREATE TABLE IF NOT EXISTS votes (
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -215,7 +215,7 @@ db.exec(`
 		SET updatedAt = CURRENT_TIMESTAMP
 		WHERE id = old.id;
 	END
-`)
+`);
 
 db.exec(`
 	CREATE TRIGGER IF NOT EXISTS reply_update_time
@@ -226,7 +226,7 @@ db.exec(`
 		SET updatedAt = CURRENT_TIMESTAMP
 		WHERE id = old.id;
 	END
-`)
+`);
 
 db.exec(`
 	CREATE TRIGGER IF NOT EXISTS increase_question_replies_count
@@ -236,7 +236,7 @@ db.exec(`
 		SET repliesCount = repliesCount + 1
 		WHERE id = new.questionId;
 	END
-`)
+`);
 
 db.exec(`
 	CREATE TRIGGER IF NOT EXISTS decrease_quesiton_replies_count
@@ -246,7 +246,7 @@ db.exec(`
 		SET repliesCount = repliesCount - 1
 		WHERE id = old.questionId;
 	END	
-`)
+`);
 
 db.exec(`
 	CREATE TRIGGER IF NOT EXISTS announcement_update_time
@@ -257,7 +257,7 @@ db.exec(`
 		SET updatedAt = CURRENT_TIMESTAMP
 		WHERE id = old.id;
 	END
-`)
+`);
 
 db.exec(`
 	CREATE TRIGGER IF NOT EXISTS increase_announcement_comments_count
@@ -267,10 +267,10 @@ db.exec(`
 		SET commentsCount = commentsCount + 1
 		WHERE id = new.announcementId;
 	END
-`)
+`);
 
 db.exec(
-	`
+  `
 	CREATE TRIGGER IF NOT EXISTS change_commment_updatedAt
 	AFTER UPDATE ON COMMENTS
 	WHEN old.body != new.body
@@ -280,7 +280,7 @@ db.exec(
 		WHERE id = old.id;
 	END
 	`
-)
+);
 
 db.exec(`
 	CREATE TRIGGER IF NOT EXISTS decrease_announcement_comments_count
@@ -290,7 +290,7 @@ db.exec(`
 		SET commentsCount = commentsCount - 1
 		WHERE id = old.announcementId;
 	END	
-`)
+`);
 
 process.on('exit', () => db.close());
 process.on('SIGHUP', () => process.exit(128 + 1));

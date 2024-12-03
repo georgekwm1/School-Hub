@@ -10,10 +10,13 @@ const {
   mockSections,
   repliesList,
 } = require('../mockData');
-const { getUserData, isCourseAdmin, isUserEnroledInCourse } = require('../helperFunctions');
+const {
+  getUserData,
+  isCourseAdmin,
+  isUserEnroledInCourse,
+} = require('../helperFunctions');
 const db = require('../connect');
 const { verifyToken } = require('../middlewares/authMiddlewares');
-
 
 const router = express.Router();
 
@@ -26,8 +29,13 @@ router.get('/courses/:id/announcements', verifyToken, (req, res) => {
     return res.status(404).send({ message: 'Course not found' });
   }
 
-  if (!isUserEnroledInCourse(userId, courseId) && !isCourseAdmin(userId, courseId)) {
-    return res.status(403).send({ message: 'User is not enrolled in this course' });
+  if (
+    !isUserEnroledInCourse(userId, courseId) &&
+    !isCourseAdmin(userId, courseId)
+  ) {
+    return res
+      .status(403)
+      .send({ message: 'User is not enrolled in this course' });
   }
 
   const announcements = db
@@ -42,7 +50,7 @@ router.get('/courses/:id/announcements', verifyToken, (req, res) => {
 
   const results = announcements.map((announcement) => {
     const user = getUserData(announcement.userId);
-    delete announcement.userId
+    delete announcement.userId;
     // I'm going to leave createdAt there.. may be will be shown
     // besides the updatedAt
     return {
@@ -64,8 +72,8 @@ router.post('/courses/:id/announcements', verifyToken, (req, res) => {
     return res.status(400).send({ message: 'Missing required fields' });
   }
 
-  
-  if (!isCourseAdmin(userId, courseId)) return res.status(403).send({ message: 'User is not a course admin' });
+  if (!isCourseAdmin(userId, courseId))
+    return res.status(403).send({ message: 'User is not a course admin' });
 
   try {
     const id = uuidv4();
@@ -73,19 +81,14 @@ router.post('/courses/:id/announcements', verifyToken, (req, res) => {
       `
       INSERT INTO announcements (id, courseId, userId, title, body)
       VALUES (?, ?, ?, ?, ?)
-    `).run(
-      id,
-      courseId,
-      userId,
-      title,
-      details,
-    );
+    `
+    ).run(id, courseId, userId, title, details);
 
     const user = getUserData(userId);
-    const newAnnouncement = db.prepare(
-      'SELECT * FROM announcements WHERE id = ?'
-    ).get(id);
-    delete newAnnouncement.userId
+    const newAnnouncement = db
+      .prepare('SELECT * FROM announcements WHERE id = ?')
+      .get(id);
+    delete newAnnouncement.userId;
 
     res.status(201).json({
       ...newAnnouncement,
@@ -104,7 +107,9 @@ router.put('/announcements/:id', verifyToken, (req, res) => {
   const userId = req.userId;
 
   try {
-    const { courseId } = db.prepare('SELECT courseId FROM announcements WHERE id = ?').get(id);
+    const { courseId } = db
+      .prepare('SELECT courseId FROM announcements WHERE id = ?')
+      .get(id);
     if (!courseId) {
       return res.status(404).send({ message: 'Announcement not found' });
     }
@@ -113,11 +118,17 @@ router.put('/announcements/:id', verifyToken, (req, res) => {
       return res.status(403).send({ message: 'User is not a course admin' });
     }
 
-    db.prepare('UPDATE announcements SET title = ?, body = ? WHERE id = ?').run(title, details, id);
+    db.prepare('UPDATE announcements SET title = ?, body = ? WHERE id = ?').run(
+      title,
+      details,
+      id
+    );
 
-    const updatedAnnouncement = db.prepare('SELECT * FROM announcements WHERE id = ?').get(id);
+    const updatedAnnouncement = db
+      .prepare('SELECT * FROM announcements WHERE id = ?')
+      .get(id);
     const user = getUserData(updatedAnnouncement.userId);
-    delete updatedAnnouncement.userId
+    delete updatedAnnouncement.userId;
     updatedAnnouncement.user = user;
     res.status(200).json(updatedAnnouncement);
   } catch (error) {
@@ -130,7 +141,9 @@ router.put('/announcements/:id', verifyToken, (req, res) => {
 router.delete('/announcements/:id', verifyToken, (req, res) => {
   const announcementId = req.params.id;
   try {
-    const announcement = db.prepare('SELECT * FROM announcements WHERE id = ?').get(announcementId);
+    const announcement = db
+      .prepare('SELECT * FROM announcements WHERE id = ?')
+      .get(announcementId);
     if (!announcement) {
       return res.status(404).send({ message: 'Announcement not found' });
     }
@@ -147,4 +160,4 @@ router.delete('/announcements/:id', verifyToken, (req, res) => {
   }
 });
 
-module.exports = router
+module.exports = router;

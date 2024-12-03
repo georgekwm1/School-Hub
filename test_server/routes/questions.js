@@ -19,7 +19,6 @@ const {
 } = require('../helperFunctions');
 const { verifyToken } = require('../middlewares/authMiddlewares');
 
-
 const router = express.Router();
 function getQuestionCourseId(questionId) {
   const query = db.prepare(
@@ -33,25 +32,23 @@ function getQuestionCourseId(questionId) {
     `
   );
 
-  const {courseIdFromQuestion, courseIdFromLecture} = query.get(questionId);
+  const { courseIdFromQuestion, courseIdFromLecture } = query.get(questionId);
   return courseIdFromQuestion || courseIdFromLecture;
 }
 
-
-
 // Get a course general forum questions
-router.get('/courses/:id/general_discussion', verifyToken,  (req, res) => {
+router.get('/courses/:id/general_discussion', verifyToken, (req, res) => {
   const id = req.params.id;
   const userId = req.userId;
   const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(id);
   if (!course) {
     res.status(404).send({ message: 'Course not found' });
-  } 
+  }
 
-  if (!isUserEnroledInCourse(userId, id)
-    && !isCourseAdmin(userId, id)
-  ) {
-    return res.status(403).send({ message: 'User is not enrolled in this course' });
+  if (!isUserEnroledInCourse(userId, id) && !isCourseAdmin(userId, id)) {
+    return res
+      .status(403)
+      .send({ message: 'User is not enrolled in this course' });
   }
 
   const questionEntries = db
@@ -64,7 +61,6 @@ router.get('/courses/:id/general_discussion', verifyToken,  (req, res) => {
     `
     )
     .all(course.id);
-
 
   // Now, here I'll get the userData + is it upvoted or not
   const results = questionEntries.map((entry) => {
@@ -285,7 +281,9 @@ router.put('/questions/:id', verifyToken, (req, res) => {
   }
 
   if (question.userId !== userId) {
-    return res.status(403).send({ message: 'User is not authorized to edit this question' });
+    return res
+      .status(403)
+      .send({ message: 'User is not authorized to edit this question' });
   }
   try {
     db.transaction(() => {
@@ -328,10 +326,9 @@ router.delete('/questions/:id', verifyToken, (req, res) => {
     return res.status(404).send({ message: 'Question not found' });
   }
 
-  const courseId = getQuestionCourseId(question.id)
-  const isAdmin = isCourseAdmin(userId, courseId)
-  if (question.userId !== userId
-    && !isAdmin) {
+  const courseId = getQuestionCourseId(question.id);
+  const isAdmin = isCourseAdmin(userId, courseId);
+  if (question.userId !== userId && !isAdmin) {
     // As if this is a descriptive message now?!..
     return res.status(403).send({ message: 'User is not authorized' });
   }

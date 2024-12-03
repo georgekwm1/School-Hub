@@ -27,18 +27,22 @@ function getUpvoteStatus(userId, resourceId, resourceType) {
 }
 
 function isCourseAdmin(userId, courseId) {
-  const stmt = db.prepare('SELECT 1 FROM courseAdmins WHERE courseId = ? AND userId = ?');
+  const stmt = db.prepare(
+    'SELECT 1 FROM courseAdmins WHERE courseId = ? AND userId = ?'
+  );
   return stmt.get(courseId, userId) !== undefined;
 }
 
 function isUserEnroledInCourse(userId, courseId) {
-  const stmt = db.prepare('SELECT 1 FROM courseEnrollments WHERE courseId = ? AND userId = ?');
+  const stmt = db.prepare(
+    'SELECT 1 FROM courseEnrollments WHERE courseId = ? AND userId = ?'
+  );
   return stmt.get(courseId, userId) !== undefined;
 }
 
 module.exports = {
-	getUserData,
-	getUpvoteStatus,
+  getUserData,
+  getUpvoteStatus,
   isCourseAdmin,
   isUserEnroledInCourse,
 };

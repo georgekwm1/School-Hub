@@ -11,11 +11,14 @@ const {
   repliesList,
 } = require('../mockData');
 const db = require('../connect');
-const { getUserData, getUpvoteStatus, isCourseAdmin } = require('../helperFunctions');
+const {
+  getUserData,
+  getUpvoteStatus,
+  isCourseAdmin,
+} = require('../helperFunctions');
 const { verifyToken } = require('../middlewares/authMiddlewares');
 
 const router = express.Router();
-
 
 function getReplyCourseId(replyId) {
   const query = db.prepare(
@@ -30,10 +33,9 @@ function getReplyCourseId(replyId) {
     `
   );
 
-  const {courseIdFromQuestion, courseIdFromLecture}  = query.get(replyId);
-  return courseIdFromQuestion ? courseIdFromQuestion :  courseIdFromLecture;
-} 
-
+  const { courseIdFromQuestion, courseIdFromLecture } = query.get(replyId);
+  return courseIdFromQuestion ? courseIdFromQuestion : courseIdFromLecture;
+}
 
 // Get question replies
 router.get('/questions/:id/replies', verifyToken, (req, res) => {
@@ -185,7 +187,9 @@ router.put('/replies/:id', verifyToken, (req, res) => {
     }
 
     if (reply.userId !== userId) {
-      return res.status(403).send({ message: 'User is not authorized to edit this reply' });
+      return res
+        .status(403)
+        .send({ message: 'User is not authorized to edit this reply' });
     }
 
     db.prepare('UPDATE replies SET body = ? WHERE id = ?').run(body, id);
@@ -213,15 +217,19 @@ router.delete('/replies/:id', verifyToken, (req, res) => {
   const userId = req.userId;
 
   try {
-    const reply = db.prepare('SELECT id, userId FROM replies WHERE id = ?').get(replyId);
+    const reply = db
+      .prepare('SELECT id, userId FROM replies WHERE id = ?')
+      .get(replyId);
 
     if (!reply) {
       return res.status(404).send({ message: 'Reply not found' });
     }
-    
+
     const courseId = getReplyCourseId(replyId);
     if (reply.userId !== userId && !isCourseAdmin(userId, courseId)) {
-      return res.status(403).send({ message: 'User is not authorized to delete this reply' });
+      return res
+        .status(403)
+        .send({ message: 'User is not authorized to delete this reply' });
     }
 
     db.prepare('DELETE FROM replies WHERE id = ?').run(replyId);
