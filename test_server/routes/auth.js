@@ -6,6 +6,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../connect');
 const { verifyToken } = require('../middlewares/authMiddlewares');
+const { isUserEnroledInCourse } = require('../helperFunctions');
 
 const imagekit = new ImageKit({
   publicKey: 'public_tTc9vCi5O7L8WVAQquK6vQWNx08=',
@@ -19,6 +20,25 @@ router.get('/imagekit', (req, res) => {
 });
 
 router.post('/login', async (req, res) => {
+  // I believe the login system is abit wiered for now.
+  // Sinse we are not making it so that.. you are making a backend
+  // for one course with admins platform
+  // But you are kinda making the backend almost ready for the bigger model/s
+  // But you are fornow.. done with the core of the paltform
+  // With can seamlisly server a course.. with it's admin and content.
+  // and if someone else wanna use the platform, you make anotehr instance
+  // of the front-end with some customizations if needed
+  // and you manually create a course entry in the db and also for the admins
+  // and then make the hardcode teh courseId in teh front-end
+  // so it logs in as one of the course in the front-end.
+  // but what is wiered for me now is.. the process of erros.. 
+  // I not sure if there is something wronge or not..
+  // Like, I'm cehcking for email.. then i'm checking for if this email in the course
+  // I think this is just becuase i'm kinda serving multible systmes
+  // but sinse thy all share the core.. the course platform.
+  // without all the overhead above this layer.. 
+  // may be this is hwat is making it abit wiered..
+  // or may be it's totally find and it's just me.
   console.log(req.body);
   const { email, password, courseId } = req.body;
 
@@ -27,14 +47,22 @@ router.post('/login', async (req, res) => {
 
   if (!user) {
     return res.status(401).send({ message: 'Email not found' });
+  } 
+
+  if (!user.passwordHash && user.googleId) {
+    return res.status(401).json({message: 'Accountd registered with Google. Please use google login'})
   }
 
   const passwordMatch = await bcrypt.compare(password, user.passwordHash);
-
-  if (!passwordMatch) {
-    return res.status(401).send({ message: 'Wrong password' });
+  if (!passwordMatch ) {
+    let message;
+    if (user.googleId) {
+      message = 'Wronge password. You can still use google login, tho.';
+    } else {
+      message = 'Wrong passoword';
+    }
+    return res.status(401).json({ message });
   }
-
   
   const enrollment = db.prepare(
     'SELECT * FROM courseEnrollments WHERE userId = ? AND courseId = ?'
@@ -62,56 +90,124 @@ router.post('/login', async (req, res) => {
 });
 
 
-router.post('/oauth/google', (req, res) => {
-  const idToken = req.body.token;
+router.post('/oauth/google', async (req, res) => {
+  const { token: idToken, courseId } = req.body;
   console.log(idToken);
   const googleVerifyUrl = `https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`;
-  fetch(googleVerifyUrl)
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.email_verified) {
-        res.send({
-          message: 'Logged in successfully',
-          user: {
-            email: data.email,
-            id: data.sub,
-            role: 'student',
-          },
-        });
-      } else {
-        res.status(401).send({ message: 'Email not verified' });
-      }
-    })
-    .catch((error) => {
-      console.error(error);
-      res.status(500).send({ message: 'Internal Server Error' });
+  try {
+    /**
+     * Get teh token and verify it.. and get it's content..
+     * then log the userIn.. check if he has a id with that naem
+     * and return his things
+     */
+    const response = await fetch(googleVerifyUrl);
+    const data = await response.json();
+    if (!data.email_verified) {
+      res.status(401).send({ message: 'Email not verified' });
+    }
+
+    const getUser = db.prepare('SELECT * FROM users WHERE email = ?');
+    const user = getUser.get(data.email);
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    } else if (!user.googleId) {
+      db.prepare(
+        `UPDATE users SET googleId = ? WHERE email = ?`
+      ).run(data.sub, data.email);
+    }
+    if (!isUserEnroledInCourse(user.id, courseId)) {
+      // Again.. on of the wierd things...
+      // Because if you a user of the model of one course one prof.. using this..
+      // for him.. the entire platform or app. is tihs course..
+      // But anyway.. sinse the front-end will have the course Id hard coded
+      // and in registration and logging in.. it's using the same thing..
+      // This the enduser will no nothing
+      // It's just we here playing smart to sever different models with one backend
+      // Sinse they all share the smae core.. the course platform.. 
+      // But genrally.. this is of course might need some consultancy from a beckend
+      // or an architect.. and how we are making things here.
+      return res.status(403).json({ message: 'User is not enrolled in this course' });
+    }
+
+    const accessToken = jwt.sign({ userId: user.id, courseId, role: user.role }, process.env.TOKEN_SECRET_KEY);
+
+    res.send({
+      message: 'Logged in successfully',
+      accessToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        pictureThumbnail: user.pictureThumbnail,
+        pictureUrl: user.pictureUrl,
+      },
     });
+  } catch (err) {
+    console.error(err); 
+    res.status(500).send({ message: 'Internal Server Error while loggin in' });
+  }
 });
 
-router.post('/oauth/googleRegister', (req, res) => {
-  const idToken = req.body.token;
-  console.log(idToken);
+router.post('/oauth/googleRegister', async (req, res) => {
+  const {token: idToken, courseId} = req.body;
   const googleVerifyUrl = `https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`;
-  fetch(googleVerifyUrl)
-    .then((response) => response.json())
-    .then((data) => {
-      console.log(data);
-      if (data.email_verified) {
-        res.send({
-          message: 'Logged in successfully',
-          user: {
-            email: data.email,
-            id: data.sub,
-          },
-        });
-      } else {
-        res.status(401).send({ message: 'Email not verified' });
-      }
-    })
-    .catch((error) => {
-      console.error(error);
-      res.status(500).send({ message: 'Internal Server Error' });
-    });
+  try {
+    const response = await fetch(googleVerifyUrl);
+    const userData = await response.json();
+
+    if (!response.ok) {
+      res.status(response.status).send({ message: 'Error connecting to google' });
+    } else if (userData.error) {
+      res.status(401).send({ message: `${userData.error} => ${userData.error_description}` });
+    } else if (!userData.email_verified) {
+      res.status(401).send({ message: 'Email not verified' });
+    }
+    console.log(userData)
+    console.log(userData.email);
+
+    const existingUser = db.prepare('SELECT 1 FROM users WHERE email = ?').get(userData.email);
+    if (existingUser) {
+      return res.status(409).send({ message: 'Email already exists' });
+    }
+
+    db.transaction(() => {
+      const userId = userData.sub;
+      db.prepare(
+        `INSERT INTO users (id, googleId, email, firstName, lastName, pictureUrl, pictureThumbnail)
+        VALUES (?, ?, ?, ?, ?, ?, ?)`
+      ).run(
+        userId,
+        userId,
+        userData.email,
+        userData.given_name,
+        userData.family_name,
+        userData.picture,
+        userData.picture,
+      );
+      db.prepare('INSERT INTO courseEnrollments (userId, courseId) VALUES (?, ?)').run(userId, courseId);
+
+      const accessToken = jwt.sign({ userId, courseId, role: 'student' }, process.env.TOKEN_SECRET_KEY);
+
+      res.status(201).json({
+        accessToken,
+        user: {
+          id: userId,
+          email: userData.email,
+          firstName: userData.firstName,
+          lastName: userData.given_name,
+          username: userData.family_name,
+          pictureThumbnail: userData.picture,
+          pictureUrl: userData.picture,
+        },
+        message: 'User registered and logged in successfully',
+      });
+    })();
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: 'Server Error while registering' });
+  }
 });
 
 router.post('/register', async (req, res) => {
@@ -203,10 +299,9 @@ router.post('/admin/login', async (req, res) => {
 
   const enrollment = db
     .prepare(
-      'SELECT * FROM courseEnrollments WHERE userId = ? AND courseId = ?'
+      'SELECT * FROM courseAdmins WHERE userId = ? AND courseId = ?'
     )
     .get(user.id, courseId);
-
   if (!enrollment) {
     return res.status(403).send({ message: 'User is not a course admin' });
   }

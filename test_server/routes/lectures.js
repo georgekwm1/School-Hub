@@ -16,7 +16,7 @@ const { verify } = require('jsonwebtoken');
 const {
   isCourseAdmin,
   isUserEnroledInCourse,
- } = require('../helperFunctions');d
+} = require('../helperFunctions');
 const router = express.Router();
 
 // Get all lectures for a course split on sections

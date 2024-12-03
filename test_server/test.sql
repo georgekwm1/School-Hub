@@ -1,21 +1,22 @@
 SELECT * FROM lectures;
 SELECT * FROM courses;
--- SELECT * from users;
+SELECT * from courseAdmins;
+SELECT * from users;
 select * from questions; 
 select * from votes; 
 select * from replies;
 
 
-SELECT
-  replies.id,
-  questions.courseId,
-	-- This is a good one.. I happy i chose to do it without ORM for the testServer.
-  (SELECT courseId FROM lectures WHERE id = questions.lectureId) as courseIdFromLecture
-FROM replies
-  JOIN questions ON replies.questionId = questions.id;
+-- SELECT
+--   replies.id,
+--   questions.courseId,
+-- 	-- This is a good one.. I happy i chose to do it without ORM for the testServer.
+--   (SELECT courseId FROM lectures WHERE id = questions.lectureId) as courseIdFromLecture
+-- FROM replies
+--   JOIN questions ON replies.questionId = questions.id;
 
 
-SELECT * FROM courseEnrollments; 
+-- SELECT * FROM courseEnrollments; 
 
 -- -- Oh, boy... this is crazy... 
 -- SELECT 
@@ -37,8 +38,8 @@ SELECT * FROM courseEnrollments;
 -- DROP TRIGGER IF EXISTS decrease_quesiton_replies_count;
 -- SELECT name FROM sqlite_master WHERE type = 'trigger';
 
--- SELECT * FROM announcements;
--- SELECT * FROM comments;
+SELECT * FROM announcements;
+SELECT * FROM comments;
 
 -- SELECT a.courseID FROM announcements a JOIN comments c
 -- 	ON c.announcementId = a.id
@@ -47,3 +48,9 @@ SELECT * FROM courseEnrollments;
 -- SELECT c.userId = 'admin' AS result
 -- FROM comments c
 -- WHERE c.id = '62b4a82e-0e09-4748-866e-393749c735e5';
+
+
+-- DROP TABLE IF EXISTS users;
+-- UPDATE users SET id = 'admin' WHERE email = 'admin';
+
+SELECT * FROM courseEnrollments WHERE userId = 'admin' AND courseId = 'test-course';
