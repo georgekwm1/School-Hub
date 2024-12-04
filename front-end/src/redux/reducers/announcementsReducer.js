@@ -6,6 +6,7 @@ export const initialState = fromJS({
   isCommentsLoading: false,
   announcementsError: null,
   announcements: [],
+  announcementsLastFetchedAt: '',
   comments: {},
 });
 
@@ -37,6 +38,7 @@ export default function announcementsReducer(
         isLoading: false,
         announcementsError: null,
         announcements: fromJS(action.payload.data),
+        announcementsLastFetchedAt: fromJS(action.payload.lastFetched),
       });
 
     case actions.FETCH_ANNOUNCEMENT_COMMENTS_REQUEST:

@@ -60,7 +60,7 @@ router.get('/courses/:id/announcements', verifyToken, (req, res) => {
   });
 
   res.json({
-    announrements: results,
+    announcements: results,
     lastFetched: new Date().toISOString()
   });
 });

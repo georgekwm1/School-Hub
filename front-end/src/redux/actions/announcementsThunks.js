@@ -17,8 +17,8 @@ export const fetchAnnouncements = () => async (dispatch, getState) => {
     if (!response.ok) {
       throw new Error(data.message);
     }
-
-    dispatch(creators.fetchAnnouncementsSuccess(data));
+    const { announcements, lastFetched } = data;
+    dispatch(creators.fetchAnnouncementsSuccess(announcements, lastFetched));
   } catch (error) {
     console.error(error.message);
     dispatch(creators.fetchAnnouncementsFailure(error.message));

@@ -22,9 +22,9 @@ export const fetchAnnouncementsFailure = (errorMessage) => ({
   payload: { errorMessage },
 });
 
-export const fetchAnnouncementsSuccess = (data) => ({
+export const fetchAnnouncementsSuccess = (data, lastFetched) => ({
   type: actions.FETCH_ANNOUNCEMENTS_SUCCESS,
-  payload: { data },
+  payload: { data, lastFetched },
 });
 
 export const fetchAnnouncementCommentsRequest = (announcementId) => ({
