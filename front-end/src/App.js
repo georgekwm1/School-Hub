@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Toaster } from 'react-hot-toast';
 import { Routes, Route, Navigate, Outlet, Link } from 'react-router-dom';
@@ -23,6 +23,8 @@ import FakeHome from './components/FakeHome/FakeHome';
 import Sidebar from './components/Sidebar/sidebar';
 import CreateNewLecture from './components/CreateLectureForm/CreateLectureForm';
 import EditLectureForm from './components/EditLectureForm/EditLectureForm';
+import { getToken } from './utils/utilFunctions';
+import { connectSocket, disconnectSocket } from './socket';
 
 
 function ProtectedLayout() {
@@ -38,7 +40,16 @@ function ProtectedLayout() {
 function App() {
   const isLoading = useSelector((state) => state.ui.get('isLoading'));
   const isLoggedIn = useSelector((state) => state.ui.get('isLoggedIn'));
+  const token = getToken('accessToken');
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (token && isLoggedIn) {
+      connectSocket(token);
+    } else {
+      disconnectSocket();
+    }
+  }, [token, isLoggedIn]);
 
   const handleLogout = () => {
     dispatch(logoutThunk());
