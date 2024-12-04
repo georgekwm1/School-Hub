@@ -59,7 +59,10 @@ router.get('/courses/:id/announcements', verifyToken, (req, res) => {
     };
   });
 
-  res.json(results);
+  res.json({
+    announrements: results,
+    lastFetched: new Date().toISOString()
+  });
 });
 
 // Create a course announcement
