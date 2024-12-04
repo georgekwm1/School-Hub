@@ -22,8 +22,9 @@ export default function Announcements() {
 
   const dispatch = useDispatch();
   useEffect(() => {
-    if (!announcements?.size) dispatch(fetchAnnouncements());
-  }, [dispatch, announcements]);
+    // if (!announcements?.size) 
+      dispatch(fetchAnnouncements());
+  }, [dispatch]);
 
   const createNewAnnouncement = (title, details) => {
     setShowAnnouncementsEditor(false);
