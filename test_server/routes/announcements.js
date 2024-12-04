@@ -14,6 +14,7 @@ const {
   getUserData,
   isCourseAdmin,
   isUserEnroledInCourse,
+  getCurrentTimeInDBFormat,
 } = require('../helperFunctions');
 const db = require('../connect');
 const { verifyToken } = require('../middlewares/authMiddlewares');
@@ -61,8 +62,8 @@ router.get('/courses/:id/announcements', verifyToken, (req, res) => {
 
   res.json({
     announcements: results,
-    lastFetched: new Date().toISOString()
-  });
+    lastFetched: getCurrentTimeInDBFormat(),
+  })
 });
 
 // Create a course announcement
