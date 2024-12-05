@@ -8,6 +8,15 @@ export const toggleLoading = () => {
   return { type: actions.TOGGLE_LOADING };
 };
 
+export const setSocketReadiness = (status) => {
+  return {
+    type: actions.SET_SOCKET_READINESS,
+    payload: {
+      status,
+    }
+  }  
+}
+
 export const loginRequest = () => {
   return { type: actions.LOGIN_REQUEST };
 };
