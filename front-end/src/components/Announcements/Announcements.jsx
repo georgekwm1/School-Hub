@@ -7,38 +7,28 @@ import {
   selectIsLoading,
   selectAnnouncements,
 } from '../../redux/selectors/announcementsSelectors';
-import { selectIsSocketReady, selectUserRole } from '../../redux/selectors/uiSelectors';
+import { selectUserRole } from '../../redux/selectors/uiSelectors';
 import {
   fetchAnnouncements,
   addNewAnnouncement,
 } from '../../redux/actions/announcementsThunks';
 import DiscussionEntryEditor from '../DiscussionEntries/DiscussionEntryEditor';
-import { getSocket } from '../../socket';
-import { addAnnouncementSuccess } from '../../redux/actions/announcementsActionCreators';
+import useAnnouncementCreated from '../../hooks/useAnnouncementCreated';
 
 export default function Announcements() {
   const [showAnnouncementsEditor, setShowAnnouncementsEditor] = useState(false);
   const isLoading = useSelector(selectIsLoading);
   const announcements = useSelector(selectAnnouncements);
   const userRole = useSelector(selectUserRole);
-  const isSocketReady = useSelector(selectIsSocketReady);
   const dispatch = useDispatch();
+  
   useEffect(() => {
     // if (!announcements?.size) 
       dispatch(fetchAnnouncements());
   }, [dispatch]);
 
-  useEffect(() => {
-    const socket = getSocket();
-    if (socket) {
-      socket.on('announcementCreated', ({ payload, lastFetched}) => {
-        dispatch(addAnnouncementSuccess(payload, lastFetched));
-      });
-      return () => {
-        socket.off('announcementCreated');
-      };      
-    }
-  }, [dispatch, getSocket, isSocketReady]);
+  useAnnouncementCreated();
+
   const createNewAnnouncement = (title, details) => {
     setShowAnnouncementsEditor(false);
     dispatch(addNewAnnouncement(title, details));
