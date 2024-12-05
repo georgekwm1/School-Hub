@@ -97,7 +97,7 @@ router.post('/courses/:id/announcements', verifyToken, (req, res) => {
     delete newAnnouncement.userId;
 
     const lastFetched = getCurrentTimeInDBFormat();
-    io.except(`user-${userId}`).emit('announcementCreated', {
+    io.to(`announcements-${courseId}`).except(`user-${userId}`).emit('announcementCreated', {
       payload: newAnnouncement,
       userId,
       lastFetched,
