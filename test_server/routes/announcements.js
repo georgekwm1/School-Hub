@@ -70,6 +70,7 @@ router.get('/courses/:id/announcements', verifyToken, (req, res) => {
 // Create a course announcement
 router.post('/courses/:id/announcements', verifyToken, (req, res) => {
   const courseId = req.params.id;
+  const io = req.app.io;
   const { title, details } = req.body;
   const userId = req.userId;
 
@@ -97,6 +98,7 @@ router.post('/courses/:id/announcements', verifyToken, (req, res) => {
 
     res.status(201).json({
       ...newAnnouncement,
+      lastFethed: getCurrentTimeInDBFormat(),
       user,
     });
   } catch (error) {
