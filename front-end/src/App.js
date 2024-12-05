@@ -19,7 +19,7 @@ import Register from './components/Register/Register';
 import Sidebar from './components/Sidebar/sidebar';
 import CreateNewLecture from './components/CreateLectureForm/CreateLectureForm';
 import EditLectureForm from './components/EditLectureForm/EditLectureForm';
-import useConnectSocket from './hooks/useConnectSocket';
+import useConnectSocket from './hooks/socketConnectionHooks';
 
 function ProtectedLayout() {
   const isLoggedIn = useSelector((state) => state.ui.get('isLoggedIn'));
