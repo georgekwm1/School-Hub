@@ -13,7 +13,7 @@ import {
   addNewAnnouncement,
 } from '../../redux/actions/announcementsThunks';
 import DiscussionEntryEditor from '../DiscussionEntries/DiscussionEntryEditor';
-import useAnnouncementCreated from '../../hooks/useAnnouncementCreated';
+import { useAnnouncementCreated } from '../../hooks/syncAnnouncementsHooks';
 
 export default function Announcements() {
   const [showAnnouncementsEditor, setShowAnnouncementsEditor] = useState(false);

@@ -4,7 +4,7 @@ import { getSocket } from '../socket';
 import { addAnnouncementSuccess } from '../redux/actions/announcementsActionCreators';
 import { selectIsSocketReady } from '../redux/selectors/uiSelectors';
 
-export default function useAnnouncementCreated () {
+export function useAnnouncementCreated () {
 	const dispatch = useDispatch();
 	const isSocketReady = useSelector(selectIsSocketReady);
 	useEffect(() => {
