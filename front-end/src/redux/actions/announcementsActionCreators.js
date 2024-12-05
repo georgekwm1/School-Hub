@@ -69,9 +69,9 @@ export const addAnnouncementFailure = (errorMessage) => ({
   payload: { errorMessage },
 });
 
-export const addAnnouncementSuccess = (newAnnouncement) => ({
+export const addAnnouncementSuccess = (newAnnouncement, lastFetched) => ({
   type: actions.ADD_ANNOUNCEMENT_SUCCESS,
-  payload: { newAnnouncement },
+  payload: { newAnnouncement, lastFetched },
 });
 
 export const deleteAnnouncementCommentRequest = () => ({
