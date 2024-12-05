@@ -103,8 +103,9 @@ export default function announcementsReducer(
     }
 
     case actions.ADD_ANNOUNCEMENT_SUCCESS: {
-      const { newAnnouncement } = action.payload;
+      const { newAnnouncement, lastFetched = null } = action.payload;
       return state
+        .update('announcementsLastFetchedAt', (currentValue) => lastFetched? lastFetched : currentValue )
         .update('announcements', (announcements) =>
           announcements.unshift(fromJS(newAnnouncement))
         )
