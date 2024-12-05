@@ -96,9 +96,16 @@ router.post('/courses/:id/announcements', verifyToken, (req, res) => {
       .get(id);
     delete newAnnouncement.userId;
 
+    const lastFetched = getCurrentTimeInDBFormat();
+    io.except(`user-${userId}`).emit('announcementCreated', {
+      payload: newAnnouncement,
+      userId,
+      lastFetched,
+    });
+
     res.status(201).json({
       ...newAnnouncement,
-      lastFethed: getCurrentTimeInDBFormat(),
+      lastFetched,
       user,
     });
   } catch (error) {
