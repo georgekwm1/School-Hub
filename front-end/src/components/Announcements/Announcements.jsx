@@ -7,7 +7,7 @@ import {
   selectIsLoading,
   selectAnnouncements,
 } from '../../redux/selectors/announcementsSelectors';
-import { selectUserRole } from '../../redux/selectors/uiSelectors';
+import { selectIsSocketReady, selectUserRole } from '../../redux/selectors/uiSelectors';
 import {
   fetchAnnouncements,
   addNewAnnouncement,
@@ -21,6 +21,7 @@ export default function Announcements() {
   const isLoading = useSelector(selectIsLoading);
   const announcements = useSelector(selectAnnouncements);
   const userRole = useSelector(selectUserRole);
+  const isSocketReady = useSelector(selectIsSocketReady);
   const dispatch = useDispatch();
   useEffect(() => {
     // if (!announcements?.size) 
@@ -29,13 +30,15 @@ export default function Announcements() {
 
   useEffect(() => {
     const socket = getSocket();
-    socket.on('announcementCreated', ({ payload, lastFetched}) => {
-      dispatch(addAnnouncementSuccess(payload, lastFetched));
-    });
-    return () => {
-      socket.off('announcementCreated');
-    };
-  })
+    if (socket) {
+      socket.on('announcementCreated', ({ payload, lastFetched}) => {
+        dispatch(addAnnouncementSuccess(payload, lastFetched));
+      });
+      return () => {
+        socket.off('announcementCreated');
+      };      
+    }
+  }, [dispatch, getSocket, isSocketReady]);
   const createNewAnnouncement = (title, details) => {
     setShowAnnouncementsEditor(false);
     dispatch(addNewAnnouncement(title, details));
