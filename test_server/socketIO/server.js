@@ -19,11 +19,13 @@ module.exports = (io) => {
 	io.use(authMiddleware);
 
 	io.on('connection', (socket) => {
-		console.log(`New socket connected ${socket.id}`);
+		console.log(`Socket connected: ${socket.id} with userId: ${socket.userId}`);
+
+		const userRoom = `user-${socket.userId}`;
+		socket.join(userRoom);
 
 		socket.on('disconnect', (reason) => {
 			console.log(`Socket ${socket.id} disconnected due to ${reason}`);
 		});
 	});
-
 } 
