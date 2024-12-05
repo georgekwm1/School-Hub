@@ -53,3 +53,4 @@ const io = new IO(httpsServer, {
   }
 })
 socketIOLogic(io);
+app.set('io', io);
