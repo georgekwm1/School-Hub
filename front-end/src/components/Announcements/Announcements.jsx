@@ -13,19 +13,29 @@ import {
   addNewAnnouncement,
 } from '../../redux/actions/announcementsThunks';
 import DiscussionEntryEditor from '../DiscussionEntries/DiscussionEntryEditor';
+import { getSocket } from '../../socket';
+import { addAnnouncementSuccess } from '../../redux/actions/announcementsActionCreators';
 
 export default function Announcements() {
   const [showAnnouncementsEditor, setShowAnnouncementsEditor] = useState(false);
   const isLoading = useSelector(selectIsLoading);
   const announcements = useSelector(selectAnnouncements);
   const userRole = useSelector(selectUserRole);
-
   const dispatch = useDispatch();
   useEffect(() => {
     // if (!announcements?.size) 
       dispatch(fetchAnnouncements());
   }, [dispatch]);
 
+  useEffect(() => {
+    const socket = getSocket();
+    socket.on('announcementCreated', ({ payload, lastFetched}) => {
+      dispatch(addAnnouncementSuccess(payload, lastFetched));
+    });
+    return () => {
+      socket.off('announcementCreated');
+    };
+  })
   const createNewAnnouncement = (title, details) => {
     setShowAnnouncementsEditor(false);
     dispatch(addNewAnnouncement(title, details));
