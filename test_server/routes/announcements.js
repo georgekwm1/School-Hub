@@ -14,6 +14,7 @@ const {
   getUserData,
   isCourseAdmin,
   isUserEnroledInCourse,
+  getCurrentTimeInDBFormat,
 } = require('../helperFunctions');
 const db = require('../connect');
 const { verifyToken } = require('../middlewares/authMiddlewares');
@@ -24,6 +25,8 @@ const router = express.Router();
 router.get('/courses/:id/announcements', verifyToken, (req, res) => {
   const courseId = req.params.id;
   const userId = req.userId;
+  const { lastFetched } = req.query;
+
   const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(courseId);
   if (!course) {
     return res.status(404).send({ message: 'Course not found' });
@@ -38,15 +41,14 @@ router.get('/courses/:id/announcements', verifyToken, (req, res) => {
       .send({ message: 'User is not enrolled in this course' });
   }
 
-  const announcements = db
-    .prepare(
-      `
+  const query = `
       SELECT * FROM announcements
-        WHERE courseId = ?
+        WHERE courseId = ? 
+        ${lastFetched ? 'AND createdAt > ?' : ''}
         ORDER BY createdAt DESC;
-      `
-    )
-    .all(courseId);
+      `;
+  const params = [courseId, ...(lastFetched ? [lastFetched] : [])];
+  const announcements = db.prepare(query).all(...params);
 
   const results = announcements.map((announcement) => {
     const user = getUserData(announcement.userId);
@@ -59,7 +61,10 @@ router.get('/courses/:id/announcements', verifyToken, (req, res) => {
     };
   });
 
-  res.json(results);
+  res.json({
+    announcements: results,
+    lastFetched: getCurrentTimeInDBFormat(),
+  })
 });
 
 // Create a course announcement

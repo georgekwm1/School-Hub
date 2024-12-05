@@ -6,9 +6,16 @@ import { getToken } from '../../utils/utilFunctions';
 
 export const fetchAnnouncements = () => async (dispatch, getState) => {
   dispatch(creators.fetchAnnouncementsRequest());
-  const courseId = getState().ui.getIn(['course', 'id']) || 'testId';
+  const state = getState();
+
+  const courseId = state.ui.getIn(['course', 'id']) || 'testId';
+  const lastFetched = state.announcements.get('announcementsLastFetchedAt')
+
+  const params = new URLSearchParams({
+    lastFetched,
+  }).toString();
   try {
-    const response = await fetch(`${DOMAIN}/courses/${courseId}/announcements`, {
+    const response = await fetch(`${DOMAIN}/courses/${courseId}/announcements?${params}`, {
       headers: {
         Authorization: `Bearer ${getToken('accessToken')}`,
       },
@@ -17,8 +24,8 @@ export const fetchAnnouncements = () => async (dispatch, getState) => {
     if (!response.ok) {
       throw new Error(data.message);
     }
-
-    dispatch(creators.fetchAnnouncementsSuccess(data));
+    const { announcements, lastFetched } = data;
+    dispatch(creators.fetchAnnouncementsSuccess(announcements, lastFetched));
   } catch (error) {
     console.error(error.message);
     dispatch(creators.fetchAnnouncementsFailure(error.message));

@@ -1,14 +1,13 @@
+SELECT * FROM users WHERE updatedAt < '2024-12-03 12:01:16';
 SELECT * FROM lectures;
 SELECT * FROM courses;
 SELECT * FROM sections;
-SELECT * FROM courseEnrollments;
-SELECT * from courseAdmins;
 SELECT * from users;
 select * from questions; 
 select * from votes; 
 select * from replies;
-SELECT * FROM announcements;
-SELECT * FROM comments;
+-- SELECT * FROM announcements;
+-- SELECT * FROM comments;
 
 
 -- SELECT

@@ -6,6 +6,7 @@ export const initialState = fromJS({
   isCommentsLoading: false,
   announcementsError: null,
   announcements: [],
+  announcementsLastFetchedAt: '',
   comments: {},
 });
 
@@ -33,11 +34,12 @@ export default function announcementsReducer(
       });
 
     case actions.FETCH_ANNOUNCEMENTS_SUCCESS:
+      const { data, lastFetched } = action.payload;
       return state.merge({
         isLoading: false,
         announcementsError: null,
-        announcements: fromJS(action.payload.data),
-      });
+        announcementsLastFetchedAt: lastFetched,
+      }).update('announcements', (announcements) => announcements.unshift(...fromJS(data)));
 
     case actions.FETCH_ANNOUNCEMENT_COMMENTS_REQUEST:
       return state.set('isComment', true);
