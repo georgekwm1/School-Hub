@@ -7,7 +7,10 @@ import {
   selectIsLoading,
   selectAnnouncements,
 } from '../../redux/selectors/announcementsSelectors';
-import { selectCourseId, selectUserRole } from '../../redux/selectors/uiSelectors';
+import {
+  selectCourseId,
+  selectUserRole,
+} from '../../redux/selectors/uiSelectors';
 import {
   fetchAnnouncements,
   addNewAnnouncement,
@@ -24,10 +27,9 @@ export default function Announcements() {
   const courseId = useSelector(selectCourseId);
   const dispatch = useDispatch();
 
-  
   useEffect(() => {
-    // if (!announcements?.size) 
-      dispatch(fetchAnnouncements());
+    // if (!announcements?.size)
+    dispatch(fetchAnnouncements());
   }, [dispatch]);
 
   useJoinRoom(`announcements-${courseId}`);

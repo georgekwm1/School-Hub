@@ -35,11 +35,15 @@ export default function announcementsReducer(
 
     case actions.FETCH_ANNOUNCEMENTS_SUCCESS:
       const { data, lastFetched } = action.payload;
-      return state.merge({
-        isLoading: false,
-        announcementsError: null,
-        announcementsLastFetchedAt: lastFetched,
-      }).update('announcements', (announcements) => announcements.unshift(...fromJS(data)));
+      return state
+        .merge({
+          isLoading: false,
+          announcementsError: null,
+          announcementsLastFetchedAt: lastFetched,
+        })
+        .update('announcements', (announcements) =>
+          announcements.unshift(...fromJS(data))
+        );
 
     case actions.FETCH_ANNOUNCEMENT_COMMENTS_REQUEST:
       return state.set('isComment', true);
@@ -105,7 +109,9 @@ export default function announcementsReducer(
     case actions.ADD_ANNOUNCEMENT_SUCCESS: {
       const { newAnnouncement, lastFetched = null } = action.payload;
       return state
-        .update('announcementsLastFetchedAt', (currentValue) => lastFetched? lastFetched : currentValue )
+        .update('announcementsLastFetchedAt', (currentValue) =>
+          lastFetched ? lastFetched : currentValue
+        )
         .update('announcements', (announcements) =>
           announcements.unshift(fromJS(newAnnouncement))
         )
@@ -231,7 +237,7 @@ export default function announcementsReducer(
           announcementsError: null,
         });
     }
-    
+
     case actions.SYNC_EXISTING_ANNOUNCEMENTS_REQUEST:
       return state.merge({
         isLoading: true,
@@ -247,12 +253,15 @@ export default function announcementsReducer(
 
     case actions.SYNC_EXISTING_ANNOUNCEMENTS_SUCCESS: {
       const { updatedAnnouncements, deletedAnnouncements } = action.payload;
-      console.log(updatedAnnouncements, deletedAnnouncements)
+      console.log(updatedAnnouncements, deletedAnnouncements);
 
       return state
-        .update('announcements', (announcements) => 
+        .update('announcements', (announcements) =>
           announcements
-            .filter((announcement) => !deletedAnnouncements.includes(announcement.get('id')))
+            .filter(
+              (announcement) =>
+                !deletedAnnouncements.includes(announcement.get('id'))
+            )
             .map((entry) => {
               console.log(entry);
               const updatedEntry = updatedAnnouncements.find(
@@ -271,7 +280,6 @@ export default function announcementsReducer(
           isLoading: false,
           announcementsError: null,
         });
-      
     }
 
     default:

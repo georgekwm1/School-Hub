@@ -64,7 +64,7 @@ router.get('/courses/:id/announcements', verifyToken, (req, res) => {
   res.json({
     announcements: results,
     lastFetched: getCurrentTimeInDBFormat(),
-  })
+  });
 });
 
 // Create a course announcement
@@ -97,11 +97,13 @@ router.post('/courses/:id/announcements', verifyToken, (req, res) => {
     delete newAnnouncement.userId;
 
     const lastFetched = getCurrentTimeInDBFormat();
-    io.to(`announcements-${courseId}`).except(`user-${userId}`).emit('announcementCreated', {
-      payload: newAnnouncement,
-      userId,
-      lastFetched,
-    });
+    io.to(`announcements-${courseId}`)
+      .except(`user-${userId}`)
+      .emit('announcementCreated', {
+        payload: newAnnouncement,
+        userId,
+        lastFetched,
+      });
 
     res.status(201).json({
       ...newAnnouncement,
@@ -146,11 +148,13 @@ router.put('/announcements/:id', verifyToken, (req, res) => {
     delete updatedAnnouncement.userId;
     updatedAnnouncement.user = user;
 
-    io.to(`announcements-${courseId}`).except(`user-${userId}`).emit('announcementUpdated', {
-      payload: {
-        updatedAnnouncement,
-      }
-    })
+    io.to(`announcements-${courseId}`)
+      .except(`user-${userId}`)
+      .emit('announcementUpdated', {
+        payload: {
+          updatedAnnouncement,
+        },
+      });
 
     res.status(200).json(updatedAnnouncement);
   } catch (error) {
@@ -173,18 +177,20 @@ router.delete('/announcements/:id', verifyToken, (req, res) => {
       return res.status(404).send({ message: 'Announcement not found' });
     }
 
-    const courseId = announcement.courseId
+    const courseId = announcement.courseId;
     if (!isCourseAdmin(userId, courseId)) {
       return res.status(403).send({ message: 'User is not a course admin' });
     }
     db.prepare('DELETE FROM announcements WHERE id = ?').run(announcementId);
 
-    io.to(`announcements-${courseId}`).except(`user-${userId}`).emit('announcementDeleted', {
-      payload: {
-        announcementId,
-      },
-      userId,
-    });
+    io.to(`announcements-${courseId}`)
+      .except(`user-${userId}`)
+      .emit('announcementDeleted', {
+        payload: {
+          announcementId,
+        },
+        userId,
+      });
     res.status(200).json({ message: 'Announcement deleted successfully' });
   } catch (error) {
     console.error(error);
@@ -192,13 +198,11 @@ router.delete('/announcements/:id', verifyToken, (req, res) => {
   }
 });
 
-
-
 /**
  * I have doubts about 2 things..
  * 1. Whether I should put that couresId there..
  * 2. That RESTful nameing in the route?
- * also.. is this 'changes' word descriptive.. 
+ * also.. is this 'changes' word descriptive..
  * Sinse i'm talking about deletion and updates..
  * Is 'diff' better?
  */
@@ -211,35 +215,42 @@ router.post('/courses/:id/announcements/diff', verifyToken, (req, res) => {
     return res.status(404).send({ message: 'Course not found' });
   }
 
-  if (!isUserEnroledInCourse(userId, courseId) && !isCourseAdmin(userId, courseId)) {
+  if (
+    !isUserEnroledInCourse(userId, courseId) &&
+    !isCourseAdmin(userId, courseId)
+  ) {
     return res
       .status(403)
       .send({ message: 'User is not enrolled in this course' });
   }
 
   // Just for ease of retrieverl.. Is this the right spelling?
-  const announcements = new Map(req.body.map(
-    // I think it's enough for now to put as value only the udpatedAt
-    // Becuse this all what i'm expecting now anyway... so i don't have to
-    // put all the object
-    entry => [entry.id, entry.updatedAt]
-  ))
+  const announcements = new Map(
+    req.body.map(
+      // I think it's enough for now to put as value only the udpatedAt
+      // Becuse this all what i'm expecting now anyway... so i don't have to
+      // put all the object
+      (entry) => [entry.id, entry.updatedAt]
+    )
+  );
 
-  const placeholders = Array.from(announcements.keys()).map(() => '?').join(', ');
-  const DBAnnouncements = db.prepare(
-    `SELECT * FROM announcements WHERE id IN (${placeholders})`
-  ).all(...Array.from(announcements.keys()));
+  const placeholders = Array.from(announcements.keys())
+    .map(() => '?')
+    .join(', ');
+  const DBAnnouncements = db
+    .prepare(`SELECT * FROM announcements WHERE id IN (${placeholders})`)
+    .all(...Array.from(announcements.keys()));
 
   const results = {
     updated: [],
     deleted: [],
-  }
+  };
 
   for (const entry of DBAnnouncements) {
     /**
      * if it's updateAt nto the same..
      * add to the update
-     * 
+     *
      * and remove teh id from the map
      */
     // Remember.. the value is teh updatedAt
@@ -252,7 +263,7 @@ router.post('/courses/:id/announcements/diff', verifyToken, (req, res) => {
   // Sinse we deleted all existing ids from the map
   // Now what are left.. are those who were not retrieved from the DB.
   // That means they were deleted
-  results.deleted = Array.from(announcements.keys()); 
+  results.deleted = Array.from(announcements.keys());
 
   res.status(200).json(results);
 });
