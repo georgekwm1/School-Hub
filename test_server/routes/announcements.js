@@ -225,9 +225,10 @@ router.post('/courses/:id/announcements/diff', verifyToken, (req, res) => {
     entry => [entry.id, entry.updatedAt]
   ))
 
+  const placeholders = Array.from(announcements.keys()).map(() => '?').join(', ');
   const DBAnnouncements = db.prepare(
-    `SELECT * FROM announcements WHERE id IN (SELECT value FROM json_data(?))`
-  ).all(announcements.keys());
+    `SELECT * FROM announcements WHERE id IN (${placeholders})`
+  ).all(...Array.from(announcements.keys()));
 
   const results = {
     updated: [],
@@ -251,7 +252,7 @@ router.post('/courses/:id/announcements/diff', verifyToken, (req, res) => {
   // Sinse we deleted all existing ids from the map
   // Now what are left.. are those who were not retrieved from the DB.
   // That means they were deleted
-  results.deleted = announcements.keys(); 
+  results.deleted = Array.from(announcements.keys()); 
 
   res.status(200).json(results);
 });
