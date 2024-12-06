@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getSocket } from '../socket';
-import { addAnnouncementSuccess, deleteAnnouncementSuccess } from '../redux/actions/announcementsActionCreators';
+import { addAnnouncementSuccess, deleteAnnouncementSuccess, editAnnouncementSuccess } from '../redux/actions/announcementsActionCreators';
 import { selectIsSocketReady } from '../redux/selectors/uiSelectors';
 
 export default function useSyncAnnouncements () {
@@ -30,9 +30,16 @@ export default function useSyncAnnouncements () {
         dispatch(deleteAnnouncementSuccess(announcementId));
       })
 
+      // Sync Editing
+      socket.on('announcementUpdated', ({payload}) => {
+        const { updatedAnnouncement } = payload;
+        dispatch(editAnnouncementSuccess(updatedAnnouncement));
+      })
+
       return () => {
         socket.off('announcementCreated');
         socket.off('announcementDeleted');
+        socket.off('announcementUpdated');
       };      
     }
   }, [dispatch, getSocket, isSocketReady]);
