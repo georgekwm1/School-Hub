@@ -9,8 +9,9 @@ export default function useSyncAnnouncements () {
 	const dispatch = useDispatch();
 	const isSocketReady = useSelector(selectIsSocketReady);
 
-  // Sync existing announcements
-  dispatch(syncExistingAnnouncements());
+  useEffect(() => {
+    dispatch(syncExistingAnnouncements())
+  }, []);
 
 	useEffect(() => {
     const socket = getSocket();
