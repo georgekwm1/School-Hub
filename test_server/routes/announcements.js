@@ -118,6 +118,7 @@ router.post('/courses/:id/announcements', verifyToken, (req, res) => {
 router.put('/announcements/:id', verifyToken, (req, res) => {
   const { id } = req.params;
   const { title, details } = req.body;
+  const io = req.app.get('io');
   const userId = req.userId;
 
   try {
@@ -144,6 +145,13 @@ router.put('/announcements/:id', verifyToken, (req, res) => {
     const user = getUserData(updatedAnnouncement.userId);
     delete updatedAnnouncement.userId;
     updatedAnnouncement.user = user;
+
+    io.to(`announcements-${courseId}`).except(`user-${userId}`).emit('announcementUpdated', {
+      payload: {
+        updatedAnnouncement,
+      }
+    })
+
     res.status(200).json(updatedAnnouncement);
   } catch (error) {
     console.error(error);
