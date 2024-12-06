@@ -46,5 +46,5 @@ export default function useSyncAnnouncements () {
         socket.off('announcementUpdated');
       };      
     }
-  }, [dispatch, getSocket, isSocketReady]);
+  }, [dispatch, isSocketReady]);
 }
