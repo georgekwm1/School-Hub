@@ -13,7 +13,7 @@ import {
   addNewAnnouncement,
 } from '../../redux/actions/announcementsThunks';
 import DiscussionEntryEditor from '../DiscussionEntries/DiscussionEntryEditor';
-import { useAnnouncementCreated } from '../../hooks/syncAnnouncementsHooks';
+import useSyncAnnouncements from '../../hooks/syncAnnouncementsHook';
 import { useJoinRoom } from '../../hooks/socketConnectionHooks';
 
 export default function Announcements() {
@@ -31,7 +31,7 @@ export default function Announcements() {
   }, [dispatch]);
 
   useJoinRoom(`announcements-${courseId}`);
-  useAnnouncementCreated();
+  useSyncAnnouncements();
 
   const createNewAnnouncement = (title, details) => {
     setShowAnnouncementsEditor(false);

@@ -4,15 +4,19 @@ import { getSocket } from '../socket';
 import { addAnnouncementSuccess } from '../redux/actions/announcementsActionCreators';
 import { selectIsSocketReady } from '../redux/selectors/uiSelectors';
 
-export function useAnnouncementCreated () {
+export default function useSyncAnnouncements () {
 	const dispatch = useDispatch();
 	const isSocketReady = useSelector(selectIsSocketReady);
+
 	useEffect(() => {
     const socket = getSocket();
+
     if (socket) {
+      // Sync Creation
       socket.on('announcementCreated', ({ payload, lastFetched}) => {
         dispatch(addAnnouncementSuccess(payload, lastFetched));
       });
+      
       return () => {
         socket.off('announcementCreated');
       };      
