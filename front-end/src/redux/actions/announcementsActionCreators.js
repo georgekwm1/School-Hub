@@ -134,3 +134,17 @@ export const editCommentSuccess = (editedComment) => ({
   type: actions.EDIT_COMMENT_SUCCESS,
   payload: { editedComment },
 });
+
+export const syncAnnouncementsRequest = () => ({
+  type: actions.SYNC_EXISTING_ANNOUNCEMENTS_REQUEST,
+});
+
+export const syncAnnouncementsFailure = (errorMessage) => ({
+  type: actions.SYNC_EXISTING_ANNOUNCEMENTS_FAILURE,
+  payload: { errorMessage },
+});
+
+export const syncAnnouncementsSuccess = (updatedAnnouncements, deletedAnnouncements) => ({
+  type: actions.SYNC_EXISTING_ANNOUNCEMENTS_SUCCESS,
+  payload: { updatedAnnouncements, deletedAnnouncements},
+});
