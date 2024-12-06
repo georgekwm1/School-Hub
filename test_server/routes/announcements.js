@@ -192,4 +192,68 @@ router.delete('/announcements/:id', verifyToken, (req, res) => {
   }
 });
 
+
+
+/**
+ * I have doubts about 2 things..
+ * 1. Whether I should put that couresId there..
+ * 2. That RESTful nameing in the route?
+ * also.. is this 'changes' word descriptive.. 
+ * Sinse i'm talking about deletion and updates..
+ * Is 'diff' better?
+ */
+router.post('/courses/:id/announcements/diff', verifyToken, (req, res) => {
+  const userId = req.userId;
+  const courseId = req.params.id;
+
+  const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(courseId);
+  if (!course) {
+    return res.status(404).send({ message: 'Course not found' });
+  }
+
+  if (!isUserEnroledInCourse(userId, courseId) && !isCourseAdmin(userId, courseId)) {
+    return res
+      .status(403)
+      .send({ message: 'User is not enrolled in this course' });
+  }
+
+  // Just for ease of retrieverl.. Is this the right spelling?
+  const announcements = new Map(req.body.map(
+    // I think it's enough for now to put as value only the udpatedAt
+    // Becuse this all what i'm expecting now anyway... so i don't have to
+    // put all the object
+    entry => [entry.id, entry.updatedAt]
+  ))
+
+  const DBAnnouncements = db.prepare(
+    `SELECT * FROM announcements WHERE id IN (SELECT value FROM json_data(?))`
+  ).all(announcements.keys());
+
+  const results = {
+    updated: [],
+    deleted: [],
+  }
+
+  for (const entry of DBAnnouncements) {
+    /**
+     * if it's updateAt nto the same..
+     * add to the update
+     * 
+     * and remove teh id from the map
+     */
+    // Remember.. the value is teh updatedAt
+    if (announcements.get(entry.id) !== entry.updatedAt) {
+      results.updated.push(entry);
+    }
+
+    announcements.delete(entry.id);
+  }
+  // Sinse we deleted all existing ids from the map
+  // Now what are left.. are those who were not retrieved from the DB.
+  // That means they were deleted
+  results.deleted = announcements.keys(); 
+
+  res.status(200).json(results);
+});
+
 module.exports = router;
