@@ -3,10 +3,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getSocket } from '../socket';
 import { addAnnouncementSuccess, deleteAnnouncementSuccess, editAnnouncementSuccess } from '../redux/actions/announcementsActionCreators';
 import { selectIsSocketReady } from '../redux/selectors/uiSelectors';
+import { syncExistingAnnouncements } from '../redux/actions/announcementsThunks';
 
 export default function useSyncAnnouncements () {
 	const dispatch = useDispatch();
 	const isSocketReady = useSelector(selectIsSocketReady);
+
+  // Sync existing announcements
+  dispatch(syncExistingAnnouncements());
 
 	useEffect(() => {
     const socket = getSocket();

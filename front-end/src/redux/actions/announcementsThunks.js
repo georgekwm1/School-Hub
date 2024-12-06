@@ -249,7 +249,6 @@ export const editComment =
     }
   };
 
-
 export const syncExistingAnnouncements = () => async (dispatch, getState) => {
   const state = getState();
   const courseId = state.ui.getIn(['course', 'id']);
