@@ -260,7 +260,7 @@ export const syncExistingAnnouncements = () => async (dispatch, getState) => {
 
   try {
     const data = await toast.promise(
-      fetch(`${DOMAIN}/course/${courseId}/announcements/diff`, {
+      fetch(`${DOMAIN}/courses/${courseId}/announcements/diff`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
