@@ -277,7 +277,6 @@ export const syncExistingAnnouncements = () => async (dispatch, getState) => {
       }),
       {
         loading: 'Syncing announcements...',
-        success: 'Announcements synced successfully',
         error: 'Failed to sync announcements',
       }
     );
@@ -285,5 +284,6 @@ export const syncExistingAnnouncements = () => async (dispatch, getState) => {
   } catch (error) {
     console.error(error.message);
     dispatch(creators.syncAnnouncementsFailure(error.message));
+    toast.error('Failed to sync announcements');
   }
 };
