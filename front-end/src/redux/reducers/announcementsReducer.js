@@ -232,6 +232,45 @@ export default function announcementsReducer(
         });
     }
     
+    case actions.SYNC_EXISTING_ANNOUNCEMENTS_REQUEST:
+      return state.merge({
+        isLoading: true,
+      });
+
+    case actions.SYNC_EXISTING_ANNOUNCEMENTS_FAILURE: {
+      const { errorMessage } = action.payload;
+      return state.merge({
+        isLoading: false,
+        announcementsError: errorMessage,
+      });
+    }
+
+    case actions.SYNC_EXISTING_ANNOUNCEMENTS_SUCCESS: {
+      const { updatedAnnouncements, deletedAnnouncements } = action.payload;
+
+      return state
+        .withMutations('announcements', (announcements) =>
+          announcements
+            .filter((announcement) => !deletedAnnouncements.includes(announcement.get('id')))
+            .map((entry) => {
+              const updatedEntry = updatedAnnouncements.find(
+                (announcement) => announcement.id === entry.get('id')
+              );
+
+              if (updatedEntry) {
+                delete updatedEntry.userId;
+                return entry.merge(updatedEntry);
+              }
+
+              return entry;
+            })
+        )
+        .merge({
+          isLoading: false,
+          announcementsError: null,
+        });
+    }
+
     default:
       return state;
   }
