@@ -247,12 +247,14 @@ export default function announcementsReducer(
 
     case actions.SYNC_EXISTING_ANNOUNCEMENTS_SUCCESS: {
       const { updatedAnnouncements, deletedAnnouncements } = action.payload;
+      console.log(updatedAnnouncements, deletedAnnouncements)
 
       return state
-        .withMutations('announcements', (announcements) =>
+        .update('announcements', (announcements) => 
           announcements
             .filter((announcement) => !deletedAnnouncements.includes(announcement.get('id')))
             .map((entry) => {
+              console.log(entry);
               const updatedEntry = updatedAnnouncements.find(
                 (announcement) => announcement.id === entry.get('id')
               );
@@ -269,6 +271,7 @@ export default function announcementsReducer(
           isLoading: false,
           announcementsError: null,
         });
+      
     }
 
     default:
