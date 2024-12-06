@@ -22,9 +22,9 @@ export const fetchAnnouncementsFailure = (errorMessage) => ({
   payload: { errorMessage },
 });
 
-export const fetchAnnouncementsSuccess = (data) => ({
+export const fetchAnnouncementsSuccess = (data, lastFetched) => ({
   type: actions.FETCH_ANNOUNCEMENTS_SUCCESS,
-  payload: { data },
+  payload: { data, lastFetched },
 });
 
 export const fetchAnnouncementCommentsRequest = (announcementId) => ({
@@ -69,9 +69,9 @@ export const addAnnouncementFailure = (errorMessage) => ({
   payload: { errorMessage },
 });
 
-export const addAnnouncementSuccess = (newAnnouncement) => ({
+export const addAnnouncementSuccess = (newAnnouncement, lastFetched) => ({
   type: actions.ADD_ANNOUNCEMENT_SUCCESS,
-  payload: { newAnnouncement },
+  payload: { newAnnouncement, lastFetched },
 });
 
 export const deleteAnnouncementCommentRequest = () => ({
@@ -133,4 +133,18 @@ export const editCommentFailure = (errorMessage) => ({
 export const editCommentSuccess = (editedComment) => ({
   type: actions.EDIT_COMMENT_SUCCESS,
   payload: { editedComment },
+});
+
+export const syncAnnouncementsRequest = () => ({
+  type: actions.SYNC_EXISTING_ANNOUNCEMENTS_REQUEST,
+});
+
+export const syncAnnouncementsFailure = (errorMessage) => ({
+  type: actions.SYNC_EXISTING_ANNOUNCEMENTS_FAILURE,
+  payload: { errorMessage },
+});
+
+export const syncAnnouncementsSuccess = (updatedAnnouncements, deletedAnnouncements) => ({
+  type: actions.SYNC_EXISTING_ANNOUNCEMENTS_SUCCESS,
+  payload: { updatedAnnouncements, deletedAnnouncements},
 });

@@ -1,17 +1,14 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Toaster } from 'react-hot-toast';
-import { Routes, Route, Navigate, Outlet, Link } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet} from 'react-router-dom';
 import './App.css';
 import './components/Login/css/util.css';
 import './components/Login/css/main.css';
 import './components/Register/css/util.css';
 import './components/Register/css/main.css';
-import { toggleName } from './redux/actions/helloActionCreators';
 import { logout, logoutThunk } from './redux/actions/uiActionCreators';
 import Spinner from './components/utilityComponents/Spinner';
-import { googleLogout } from '@react-oauth/google';
-import Authintication from './components/Authintication/Authintication';
 import Lectures from './components/Lectures/Lectures';
 import Announcements from './components/Announcements/Announcements'
 import GeneralDiscussion from './components/GeneralDiscussion/GeneralDiscussion';
@@ -19,13 +16,10 @@ import Lecture from './components/Lecture/Lecture';
 import Replies from './components/Replies/Replies';
 import Login from './components/Login/Login';
 import Register from './components/Register/Register';
-import FakeHome from './components/FakeHome/FakeHome';
 import Sidebar from './components/Sidebar/sidebar';
 import CreateNewLecture from './components/CreateLectureForm/CreateLectureForm';
 import EditLectureForm from './components/EditLectureForm/EditLectureForm';
-import { getToken } from './utils/utilFunctions';
-import { connectSocket, disconnectSocket } from './socket';
-
+import useConnectSocket from './hooks/socketConnectionHooks';
 
 function ProtectedLayout() {
   const isLoggedIn = useSelector((state) => state.ui.get('isLoggedIn'));
@@ -39,18 +33,9 @@ function ProtectedLayout() {
 
 function App() {
   const isLoading = useSelector((state) => state.ui.get('isLoading'));
-  const isLoggedIn = useSelector((state) => state.ui.get('isLoggedIn'));
-  const token = getToken('accessToken');
   const dispatch = useDispatch();
 
-  useEffect(() => {
-    if (token && isLoggedIn) {
-      connectSocket(token);
-    } else {
-      disconnectSocket();
-    }
-  }, [token, isLoggedIn]);
-
+  useConnectSocket();
   const handleLogout = () => {
     dispatch(logoutThunk());
   };

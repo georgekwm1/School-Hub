@@ -40,9 +40,14 @@ function isUserEnroledInCourse(userId, courseId) {
   return stmt.get(courseId, userId) !== undefined;
 }
 
+function getCurrentTimeInDBFormat() {
+  return new Date().toISOString().replace('T', ' ').replace('Z', '');
+}
+
 module.exports = {
   getUserData,
   getUpvoteStatus,
   isCourseAdmin,
   isUserEnroledInCourse,
+  getCurrentTimeInDBFormat,
 };

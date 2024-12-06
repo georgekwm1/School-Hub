@@ -24,6 +24,14 @@ module.exports = (io) => {
 		const userRoom = `user-${socket.userId}`;
 		socket.join(userRoom);
 
+		socket.on('joinRoom', (room) => {
+			socket.join(room);
+		})
+
+		socket.on('leaveRoom', (room) => {
+			socket.leave(room);
+		})
+		
 		socket.on('disconnect', (reason) => {
 			console.log(`Socket ${socket.id} disconnected due to ${reason}`);
 		});

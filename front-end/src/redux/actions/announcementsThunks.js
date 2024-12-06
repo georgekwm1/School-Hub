@@ -3,22 +3,31 @@ import * as creators from './announcementsActionCreators';
 import { DOMAIN } from '../../utils/constants';
 import { getToken } from '../../utils/utilFunctions';
 
-
 export const fetchAnnouncements = () => async (dispatch, getState) => {
   dispatch(creators.fetchAnnouncementsRequest());
-  const courseId = getState().ui.getIn(['course', 'id']) || 'testId';
+  const state = getState();
+
+  const courseId = state.ui.getIn(['course', 'id']) || 'testId';
+  const lastFetched = state.announcements.get('announcementsLastFetchedAt');
+
+  const params = new URLSearchParams({
+    lastFetched,
+  }).toString();
   try {
-    const response = await fetch(`${DOMAIN}/courses/${courseId}/announcements`, {
-      headers: {
-        Authorization: `Bearer ${getToken('accessToken')}`,
-      },
-    });
+    const response = await fetch(
+      `${DOMAIN}/courses/${courseId}/announcements?${params}`,
+      {
+        headers: {
+          Authorization: `Bearer ${getToken('accessToken')}`,
+        },
+      }
+    );
     const data = await response.json();
     if (!response.ok) {
       throw new Error(data.message);
     }
-
-    dispatch(creators.fetchAnnouncementsSuccess(data));
+    const { announcements, lastFetched } = data;
+    dispatch(creators.fetchAnnouncementsSuccess(announcements, lastFetched));
   } catch (error) {
     console.error(error.message);
     dispatch(creators.fetchAnnouncementsFailure(error.message));
@@ -33,8 +42,8 @@ export const fetchAnnouncementComments =
         `${DOMAIN}/announcements/${announcementId}/comments`,
         {
           headers: {
-            'Authorization': `Bearer ${getToken('accessToken')}`,
-          },  
+            Authorization: `Bearer ${getToken('accessToken')}`,
+          },
         }
       );
       const data = await response.json();
@@ -57,9 +66,9 @@ export const addComment =
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${getToken('accessToken')}`,
+            Authorization: `Bearer ${getToken('accessToken')}`,
           },
-            body: JSON.stringify({
+          body: JSON.stringify({
             comment,
           }),
         }).then((response) => {
@@ -93,9 +102,9 @@ export const addNewAnnouncement =
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${getToken('accessToken')}`
+            Authorization: `Bearer ${getToken('accessToken')}`,
           },
-            body: JSON.stringify({
+          body: JSON.stringify({
             title,
             details,
           }),
@@ -124,8 +133,8 @@ export const deleteAnnouncementComment =
       await toast.promise(
         fetch(`${DOMAIN}/comments/${commentId}`, {
           headers: {
-            'Authorization': `Bearer ${getToken('accessToken')}`,
-          },  
+            Authorization: `Bearer ${getToken('accessToken')}`,
+          },
           method: 'DELETE',
         }).then((response) => {
           if (!response.ok) {
@@ -154,7 +163,7 @@ export const deleteAnnouncementEntry = (announcementId) => async (dispatch) => {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getToken('accessToken')}`,
+          Authorization: `Bearer ${getToken('accessToken')}`,
         },
       }).then((response) => {
         const data = response.json();
@@ -186,7 +195,7 @@ export const editAnnouncement =
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${getToken('accessToken')}`,
+            Authorization: `Bearer ${getToken('accessToken')}`,
           },
           body: JSON.stringify({ title, details }),
         }).then((response) => {
@@ -209,35 +218,72 @@ export const editAnnouncement =
     }
   };
 
-export const editComment =
-  (commentId, body) => async (dispatch) => {
-    try {
-      const data = await toast.promise(
-        fetch(`${DOMAIN}/comments/${commentId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${getToken('accessToken')}`,
-          },
-          body: JSON.stringify({ body }),
-        }).then((response) => {
-          const data = response.json();
-          if (!response.ok) {
-            throw new Error(data.message);
-          }
-          return data;
-        }),
-        {
-          loading: 'Updating comment...',
-          success: 'Comment updated successfully',
-          error: 'Failed to update the comment',
+export const editComment = (commentId, body) => async (dispatch) => {
+  try {
+    const data = await toast.promise(
+      fetch(`${DOMAIN}/comments/${commentId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${getToken('accessToken')}`,
+        },
+        body: JSON.stringify({ body }),
+      }).then((response) => {
+        const data = response.json();
+        if (!response.ok) {
+          throw new Error(data.message);
         }
-      );
-      dispatch(creators.editCommentSuccess(data));
-    } catch (error) {
-      console.error(error.message);
-      dispatch(
-        creators.editCommentFailure(error.message)
-      );
-    }
-  };
+        return data;
+      }),
+      {
+        loading: 'Updating comment...',
+        success: 'Comment updated successfully',
+        error: 'Failed to update the comment',
+      }
+    );
+    dispatch(creators.editCommentSuccess(data));
+  } catch (error) {
+    console.error(error.message);
+    dispatch(creators.editCommentFailure(error.message));
+  }
+};
+
+export const syncExistingAnnouncements = () => async (dispatch, getState) => {
+  const state = getState();
+  const courseId = state.ui.getIn(['course', 'id']);
+  const allAnnouncements = state.announcements.get('announcements');
+  const body = allAnnouncements
+    .map((entry) => ({
+      id: entry.get('id'),
+      updatedAt: entry.get('updatedAt'),
+    }))
+    .toJS();
+
+  try {
+    const data = await toast.promise(
+      fetch(`${DOMAIN}/courses/${courseId}/announcements/diff`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${getToken('accessToken')}`,
+        },
+        body: JSON.stringify(body),
+      }).then((response) => {
+        const data = response.json();
+        if (!response.ok) {
+          throw new Error(data.message);
+        }
+        return data;
+      }),
+      {
+        loading: 'Syncing announcements...',
+        error: 'Failed to sync announcements',
+      }
+    );
+    dispatch(creators.syncAnnouncementsSuccess(data.updated, data.deleted));
+  } catch (error) {
+    console.error(error.message);
+    dispatch(creators.syncAnnouncementsFailure(error.message));
+    toast.error('Failed to sync announcements');
+  }
+};

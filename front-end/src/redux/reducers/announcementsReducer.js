@@ -6,6 +6,7 @@ export const initialState = fromJS({
   isCommentsLoading: false,
   announcementsError: null,
   announcements: [],
+  announcementsLastFetchedAt: '',
   comments: {},
 });
 
@@ -33,11 +34,16 @@ export default function announcementsReducer(
       });
 
     case actions.FETCH_ANNOUNCEMENTS_SUCCESS:
-      return state.merge({
-        isLoading: false,
-        announcementsError: null,
-        announcements: fromJS(action.payload.data),
-      });
+      const { data, lastFetched } = action.payload;
+      return state
+        .merge({
+          isLoading: false,
+          announcementsError: null,
+          announcementsLastFetchedAt: lastFetched,
+        })
+        .update('announcements', (announcements) =>
+          announcements.unshift(...fromJS(data))
+        );
 
     case actions.FETCH_ANNOUNCEMENT_COMMENTS_REQUEST:
       return state.set('isComment', true);
@@ -101,8 +107,11 @@ export default function announcementsReducer(
     }
 
     case actions.ADD_ANNOUNCEMENT_SUCCESS: {
-      const { newAnnouncement } = action.payload;
+      const { newAnnouncement, lastFetched = null } = action.payload;
       return state
+        .update('announcementsLastFetchedAt', (currentValue) =>
+          lastFetched ? lastFetched : currentValue
+        )
         .update('announcements', (announcements) =>
           announcements.unshift(fromJS(newAnnouncement))
         )
@@ -228,7 +237,51 @@ export default function announcementsReducer(
           announcementsError: null,
         });
     }
-    
+
+    case actions.SYNC_EXISTING_ANNOUNCEMENTS_REQUEST:
+      return state.merge({
+        isLoading: true,
+      });
+
+    case actions.SYNC_EXISTING_ANNOUNCEMENTS_FAILURE: {
+      const { errorMessage } = action.payload;
+      return state.merge({
+        isLoading: false,
+        announcementsError: errorMessage,
+      });
+    }
+
+    case actions.SYNC_EXISTING_ANNOUNCEMENTS_SUCCESS: {
+      const { updatedAnnouncements, deletedAnnouncements } = action.payload;
+      console.log(updatedAnnouncements, deletedAnnouncements);
+
+      return state
+        .update('announcements', (announcements) =>
+          announcements
+            .filter(
+              (announcement) =>
+                !deletedAnnouncements.includes(announcement.get('id'))
+            )
+            .map((entry) => {
+              console.log(entry);
+              const updatedEntry = updatedAnnouncements.find(
+                (announcement) => announcement.id === entry.get('id')
+              );
+
+              if (updatedEntry) {
+                delete updatedEntry.userId;
+                return entry.merge(updatedEntry);
+              }
+
+              return entry;
+            })
+        )
+        .merge({
+          isLoading: false,
+          announcementsError: null,
+        });
+    }
+
     default:
       return state;
   }
