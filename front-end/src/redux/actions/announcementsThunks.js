@@ -248,3 +248,42 @@ export const editComment =
       );
     }
   };
+
+
+export const syncExistingAnnouncements = () => async (dispatch, getState) => {
+  const state = getState();
+  const courseId = state.ui.getIn(['course', 'id']);
+  const allAnnouncements = state.announcements.get('announcements');
+  const body = allAnnouncements.map((entry) => ({
+    id: entry.get('id'),
+    updatedAt: entry.get('updatedAt'),
+  })).toJS();
+
+  try {
+    const data = await toast.promise(
+      fetch(`${DOMAIN}/course/${courseId}/announcements/diff`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken('accessToken')}`,
+        },
+        body: JSON.stringify(body),
+      }).then((response) => {
+        const data = response.json();
+        if (!response.ok) {
+          throw new Error(data.message);
+        }
+        return data;
+      }),
+      {
+        loading: 'Syncing announcements...',
+        success: 'Announcements synced successfully',
+        error: 'Failed to sync announcements',
+      }
+    );
+    dispatch(creators.syncAnnouncementsSuccess(data.updated, data.deleted));
+  } catch (error) {
+    console.error(error.message);
+    dispatch(creators.syncAnnouncementsFailure(error.message));
+  }
+}
