@@ -18,7 +18,7 @@ export default function useSyncGeneralDiscussion () {
 			})
 
 			return () => {
-				socket.off('generalDiscussionCreated');
+				socket.off('generalDiscussionQuestionCreated');
 			}
 		}
 	}, [dispatch, isSelectorReady])
