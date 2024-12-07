@@ -84,12 +84,13 @@ export default function discussionsReducer(state = initialState, action = {}) {
     }
 
     case actions.GENERAL_DISCUSSION_SUCCESS: {
-      const { entries } = action.payload;
+      const { entries, lastFetched } = action.payload;
       return state.withMutations((state) => {
         state
           .set('isLoading', false)
           .set('discussionsError', null)
-          .set('courseGeneralDiscussion', fromJS(entries));
+          .set('courseGeneralDiscussion', fromJS(entries))
+          .set('generalDiscussionsLastFetchedAt', lastFetched);
       });
     }
 
