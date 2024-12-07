@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectIsSelectorReady } from '../redux/selectors/uiSelectors';
 import { getSocket } from '../socket';
+import { generalDiscussionEntrySuccess } from '../redux/actions/discussionsActionCreators';
 
 export default function useSyncGeneralDiscussion () {
 	const dispatch = useDispatch();

@@ -9,11 +9,16 @@ import {
   selectCourseGeneralDiscussion,
   selectDiscussionsIsLoading,
 } from '../../redux/selectors/DiscussionsSelectors';
+import { selectCourseId } from '../../redux/selectors/uiSelectors';
+import useSyncGeneralDiscussion from '../../hooks/syncGeneralDiscussion';
+import { useJoinRoom } from '../../hooks/socketConnectionHooks';
+
 
 
 export default function LectureDiscussion() {
   const [askNewQuestion, setAskNewQuestion] = useState(false);
   const isLoading = useSelector(selectDiscussionsIsLoading);
+  const courseId = useSelector(selectCourseId);
 	const entries = useSelector(selectCourseGeneralDiscussion);
   const dispatch = useDispatch();
 
@@ -23,6 +28,9 @@ export default function LectureDiscussion() {
     // if (!entries || !entries.size) dispatch(addGeneralDiscussion);
     dispatch(getGeneralDiscussion());
   }, [dispatch]);
+
+  useJoinRoom(`generalDiscussion-${courseId}`)
+  useSyncGeneralDiscussion();
 
   const handlePublishQuestion = (title, details) => {
 		console.log(title)
