@@ -16,6 +16,7 @@ const {
   getUpvoteStatus,
   isUserEnroledInCourse,
   isCourseAdmin,
+  getCurrentTimeInDBFormat,
 } = require('../helperFunctions');
 const { verifyToken } = require('../middlewares/authMiddlewares');
 
@@ -65,9 +66,10 @@ router.get('/courses/:id/general_discussion', verifyToken, (req, res) => {
     .all(
       ...[course.id, ...(lastFetched ? [lastFetched] : [])]
     );
+  const newLastFetched = getCurrentTimeInDBFormat();
 
   // Now, here I'll get the userData + is it upvoted or not
-  const results = questionEntries.map((entry) => {
+  const questions = questionEntries.map((entry) => {
     const user = getUserData(entry.userId);
     const upvoted = getUpvoteStatus(user.id, entry.id, 'question');
 
@@ -78,7 +80,10 @@ router.get('/courses/:id/general_discussion', verifyToken, (req, res) => {
     };
   });
 
-  res.json(results);
+  res.json({
+    questions,
+    lastFetched: newLastFetched,
+  });
 });
 
 // Get a lecture discussions/qustions
