@@ -282,6 +282,7 @@ router.post('/questions/:id/vote', verifyToken, (req, res) => {
 router.put('/questions/:id', verifyToken, (req, res) => {
   const { id } = req.params;
   const { title, body } = req.body;
+  const io = req.app.get('io');
   const userId = req.userId;
 
   const question = db.prepare('SELECT * FROM questions WHERE id = ?').get(id);
