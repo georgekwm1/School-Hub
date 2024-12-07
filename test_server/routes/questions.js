@@ -117,6 +117,7 @@ router.post('/courses/:id/general_discussion', verifyToken, (req, res) => {
   const courseId = req.params.id;
   const { title, body } = req.body;
   const userId = req.userId;
+  const io = req.app.get('io');
 
   if (!title || !body) {
     return res.status(400).send({ message: 'Missing required fields' });
@@ -150,6 +151,15 @@ router.post('/courses/:id/general_discussion', verifyToken, (req, res) => {
       upvoted: false,
       repliesCount: 0,
     };
+
+    io.to(`generalDiscussion-${courseId}`).except(`user-${userId}`).emit(
+      'generalDiscussionQuestionCreated',
+      {
+        payload :{
+          newEntry
+        }
+      }
+    )
 
     res.status(201).json(newEntry);
   } catch (error) {
