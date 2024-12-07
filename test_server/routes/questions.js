@@ -261,7 +261,7 @@ router.post('/questions/:id/vote', verifyToken, (req, res) => {
       }
 
       const { courseId, lectureId } = question;
-      const sockerRoom = courseId ? `generalDiscussion-${courseID}` : `lectureDiscussion-${lectureId}`;
+      const sockerRoom = courseId ? `generalDiscussion-${courseId}` : `lectureDiscussion-${lectureId}`;
 
       io.to(sockerRoom).except(`user-${userId}`).emit(
         'generalDiscussionQuestionUpvoteToggled', {
