@@ -27,6 +27,10 @@ export default function useSyncGeneralDiscussion () {
 				dispatch(editQuestionSuccess(payload.editedQuestion));
 			})
 
+			socker.on('generalDiscussionQuestionUpvoteToggled', ({ payload }) => {
+				dispatch(generalQuestion)
+			})
+
 			return () => {
 				socket.off('generalDiscussionQuestionCreated');
 				socket.off('generalDiscussionQuestionDeleted');

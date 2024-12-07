@@ -217,6 +217,7 @@ router.post('/questions/:id/vote', verifyToken, (req, res) => {
   // and this opens the door for whenever there somehow a vote already
   // there might by an error and you return voted already or something
   // But I prefere leaving it now.. may be i need the triple case later.
+  const io = req.app.get('io');
   const questionId = req.params.id;
   const { action } = req.body;
   const userId = req.userId;
@@ -258,6 +259,19 @@ router.post('/questions/:id/vote', verifyToken, (req, res) => {
         `
         ).run(userId, questionId);
       }
+
+      const { courseId, lectureId } = question;
+      const sockerRoom = courseId ? `generalDiscussion-${courseID}` : `lectureDiscussion-${lectureId}`;
+
+      io.to(sockerRoom).except(`user-${userId}`).emit(
+        'generalDiscussionQuestionUpvoteToggled', {
+          payload: {
+            questionId,
+            upvoted: action === 'upvote',
+          },
+          userId,
+        }
+      )
 
       // I'm not sure.. should I just return success code and it's the
       // role of the syncing mechanism to update or bring new numbers..
