@@ -14,7 +14,7 @@ export default function useSyncGeneralDiscussion () {
 		if (socket) {
 			// Sync creatiion
 			socket.on('generalDiscussionQuestionCreated', ({ payload }) => {
-				dispatch(generalDiscussionEntrySuccess(payload.newEntry));
+				dispatch(generalDiscussionEntrySuccess(payload));
 			})
 
 			return () => {

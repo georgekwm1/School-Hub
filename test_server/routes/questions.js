@@ -155,9 +155,9 @@ router.post('/courses/:id/general_discussion', verifyToken, (req, res) => {
     io.to(`generalDiscussion-${courseId}`).except(`user-${userId}`).emit(
       'generalDiscussionQuestionCreated',
       {
-        payload :{
-          newEntry
-        }
+        payload: newEntry,
+        userId,
+        courseId,
       }
     )
 
