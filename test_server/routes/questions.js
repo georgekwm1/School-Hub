@@ -141,10 +141,10 @@ router.post('/courses/:id/general_discussion', verifyToken, (req, res) => {
     // connected to the next comment below
     db.prepare(
       `
-      INSERT INTO questions (id, title, body, userId, courseId, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO questions (id, title, body, userId, courseId)
+      VALUES (?, ?, ?, ?, ?)
     `
-    ).run(newEntryId, title, body, userId, courseId, createTime, createTime);
+    ).run(newEntryId, title, body, userId, courseId);
 
     // Here, i'm not 100% sure if I sould do this here..
     // or bring the data with a select query from the DB?

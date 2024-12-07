@@ -9,6 +9,9 @@ select * from replies;
 -- SELECT * FROM announcements;
 -- SELECT * FROM comments;
 
+UPDATE questions
+SET updatedAt = CURRENT_TIMESTAMP,
+    createdAt = CURRENT_TIMESTAMP;
 
 -- SELECT
 --   replies.id,
@@ -55,11 +58,11 @@ select * from replies;
 -- DROP TABLE IF EXISTS users;
 -- UPDATE users SET id = 'admin' WHERE email = 'admin';
 
-SELECT 1 FROM courseAdmins WHERE courseId = 'test-course' AND userId = 'admin';
--- Oh, boy... this is crazy... 
-    SELECT 
-      q.courseId AS courseIdFromQuestion,
-      (SELECT courseId FROM lectures WHERE id = q.lectureId) AS courseIdFromLecture
-    FROM replies r
-      JOIN questions q ON r.questionId = q.id
-    WHERE r.id = '94e8fc75-2e0d-4001-adcb-fde9d90d90d8';
+-- SELECT 1 FROM courseAdmins WHERE courseId = 'test-course' AND userId = 'admin';
+-- -- Oh, boy... this is crazy... 
+--     SELECT 
+--       q.courseId AS courseIdFromQuestion,
+--       (SELECT courseId FROM lectures WHERE id = q.lectureId) AS courseIdFromLecture
+--     FROM replies r
+--       JOIN questions q ON r.questionId = q.id
+--     WHERE r.id = '94e8fc75-2e0d-4001-adcb-fde9d90d90d8';
