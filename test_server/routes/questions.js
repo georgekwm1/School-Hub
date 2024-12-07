@@ -53,6 +53,8 @@ router.get('/courses/:id/general_discussion', verifyToken, (req, res) => {
       .send({ message: 'User is not enrolled in this course' });
   }
 
+
+  const params = [course.id, ...(lastFetched ? [lastFetched] : [])];
   const questionEntries = db
     .prepare(
       `
@@ -63,9 +65,7 @@ router.get('/courses/:id/general_discussion', verifyToken, (req, res) => {
       ORDER BY updatedAt DESC;
     `
     )
-    .all(
-      ...[course.id, ...(lastFetched ? [lastFetched] : [])]
-    );
+    .all(...params)
   const newLastFetched = getCurrentTimeInDBFormat();
 
   // Now, here I'll get the userData + is it upvoted or not

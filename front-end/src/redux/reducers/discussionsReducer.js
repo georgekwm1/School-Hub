@@ -5,7 +5,7 @@ export const initialState = fromJS({
   lecturesDiscussions: {},
   courseGeneralDiscussion: [],
   replies: {},
-  generalDiscussionsLastFetchedAt: '',
+  generalDiscussionLastFetchedAt: '',
   isLoading: false,
   discussionsError: null,
 });
@@ -89,8 +89,10 @@ export default function discussionsReducer(state = initialState, action = {}) {
         state
           .set('isLoading', false)
           .set('discussionsError', null)
-          .set('courseGeneralDiscussion', fromJS(entries))
-          .set('generalDiscussionsLastFetchedAt', lastFetched);
+          .update('courseGeneralDiscussion', questions => {
+            return questions.unshift(...fromJS(entries));
+          })
+          .set('generalDiscussionLastFetchedAt', lastFetched);
       });
     }
 

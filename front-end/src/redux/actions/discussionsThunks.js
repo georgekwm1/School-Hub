@@ -91,7 +91,6 @@ export const getGeneralDiscussion = () => async (dispatch, getState) => {
   const state = getState();
   const courseId = state.ui.getIn(['course', 'id']) || 'testId';
   const lastFetched = state.discussions.get('generalDiscussionLastFetchedAt');
-
   const params = new URLSearchParams({
     lastFetched,
   }).toString();
