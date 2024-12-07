@@ -4,9 +4,10 @@ import * as actions from '../actions/discussionsActionTypes';
 export const initialState = fromJS({
   lecturesDiscussions: {},
   courseGeneralDiscussion: [],
+  replies: {},
+  generalDiscussionsLastFetchedAt: '',
   isLoading: false,
   discussionsError: null,
-  replies: {},
 });
 
 export default function discussionsReducer(state = initialState, action = {}) {
