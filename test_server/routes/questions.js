@@ -40,6 +40,7 @@ function getQuestionCourseId(questionId) {
 router.get('/courses/:id/general_discussion', verifyToken, (req, res) => {
   const id = req.params.id;
   const userId = req.userId;
+  const { lastFetched } = req.query;
   const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(id);
   if (!course) {
     res.status(404).send({ message: 'Course not found' });
@@ -57,10 +58,13 @@ router.get('/courses/:id/general_discussion', verifyToken, (req, res) => {
     SELECT id, title, body, updatedAt, upvotes, repliesCount, userId
       FROM questions 
       WHERE courseId = ?
+      ${lastFetched ? 'AND createdAt > ?' : ''}
       ORDER BY updatedAt DESC;
     `
     )
-    .all(course.id);
+    .all(
+      ...[course.id, ...(lastFetched ? [lastFetched] : [])]
+    );
 
   // Now, here I'll get the userData + is it upvoted or not
   const results = questionEntries.map((entry) => {
