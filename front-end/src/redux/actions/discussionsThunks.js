@@ -88,10 +88,17 @@ export const addLectureDiscussionEntry =
 export const getGeneralDiscussion = () => async (dispatch, getState) => {
   dispatch(discussionsActions.generalDiscussionRequest());
 
-  const courseId = getState().ui.getIn(['course', 'id']) || 'testId';
+  const state = getState();
+  const courseId = state.ui.getIn(['course', 'id']) || 'testId';
+  const lastFetched = state.discussions.get('generalDiscussionLastFetchedAt');
+
+  const params = new URLSearchParams({
+    lastFetched,
+  }).toString();
+
   try {
     const response = await fetch(
-      `${DOMAIN}/courses/${courseId}/general_discussion`,
+      `${DOMAIN}/courses/${courseId}/general_discussion?${params}`,
       {
         headers: {
           'Authorization': `Bearer ${getToken('accessToken')}`
@@ -104,7 +111,9 @@ export const getGeneralDiscussion = () => async (dispatch, getState) => {
       throw new Error(data.message);
     }
 
-    dispatch(discussionsActions.generalDiscussionSuccess(data));
+    dispatch(discussionsActions.generalDiscussionSuccess(
+      data.questions, data.lastFetched
+    ));
   } catch (error) {
     console.error(error.message);
     dispatch(
