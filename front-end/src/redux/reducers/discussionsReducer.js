@@ -90,7 +90,7 @@ export default function discussionsReducer(state = initialState, action = {}) {
           .set('isLoading', false)
           .set('discussionsError', null)
           .update('courseGeneralDiscussion', questions => {
-            return questions.unshift(...fromJS(entries));
+            return questions.unshift(...fromJS(entries ));
           })
           .set('generalDiscussionLastFetchedAt', lastFetched);
       });
@@ -109,11 +109,12 @@ export default function discussionsReducer(state = initialState, action = {}) {
     }
 
     case actions.GENERAL_DISCUSSION_ENTRY_SUCCESS: {
-      const { entry } = action.payload;
+      const { entry, lastFetched } = action.payload;
       return state.withMutations((state) => {
         state
           .set('isLoading', false)
           .set('discussionsError', null)
+          .set('generalDiscussionLastFetchedAt', lastFetched)
           .updateIn(['courseGeneralDiscussion'], (entries) =>
             entries.unshift(fromJS(entry))
           );

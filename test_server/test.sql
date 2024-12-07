@@ -9,9 +9,9 @@ select * from replies;
 -- SELECT * FROM announcements;
 -- SELECT * FROM comments;
 
-UPDATE questions
-SET updatedAt = CURRENT_TIMESTAMP,
-    createdAt = CURRENT_TIMESTAMP;
+-- UPDATE questions
+-- SET updatedAt = CURRENT_TIMESTAMP,
+    -- createdAt = CURRENT_TIMESTAMP;
 
 -- SELECT
 --   replies.id,

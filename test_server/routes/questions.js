@@ -146,6 +146,7 @@ router.post('/courses/:id/general_discussion', verifyToken, (req, res) => {
     `
     ).run(newEntryId, title, body, userId, courseId);
 
+    const lastFetched = getCurrentTimeInDBFormat();
     // Here, i'm not 100% sure if I sould do this here..
     // or bring the data with a select query from the DB?
     // May be this is being done for sort of certainty or something..
@@ -164,13 +165,18 @@ router.post('/courses/:id/general_discussion', verifyToken, (req, res) => {
     io.to(`generalDiscussion-${courseId}`).except(`user-${userId}`).emit(
       'generalDiscussionQuestionCreated',
       {
-        payload: newEntry,
+        payload: {
+          newEntry,
+          lastFetched,
+        },
         userId,
         courseId,
       }
     )
 
-    res.status(201).json(newEntry);
+    res.status(201).json({
+      newEntry, lastFetched
+    });
   } catch (error) {
     console.error(error);
     res.status(500).send({ message: 'Internal server error' });

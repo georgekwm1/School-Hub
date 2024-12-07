@@ -152,8 +152,9 @@ export const addGeneralDiscussionEntry =
     if (!response.ok) {
       throw new Error(data.message);
     }
+    const { newEntry, lastFetched} = data;
 
-    dispatch(discussionsActions.generalDiscussionEntrySuccess(data));
+    dispatch(discussionsActions.generalDiscussionEntrySuccess(newEntry, lastFetched));
   };
 
 export const fetchReplies = (questionId) => async (dispatch) => {
