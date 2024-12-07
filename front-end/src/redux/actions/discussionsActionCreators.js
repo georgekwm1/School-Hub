@@ -64,10 +64,11 @@ export const generalDiscussionFailure = (errorMessage) => ({
   },
 });
 
-export const generalDiscussionSuccess = (entries) => ({
+export const generalDiscussionSuccess = (entries, lastFetched) => ({
   type: actions.GENERAL_DISCUSSION_SUCCESS,
   payload: {
     entries,
+    lastFetched,
   },
 });
 
