@@ -10,14 +10,17 @@ export default function useSyncGeneralDiscussion () {
 
 	useEffect(() => {
 		const socket = getSocket();
-		
-		// Sync creatiion
-		socket.on('generalDiscussionCreated', ({ payload }) => {
-			dispatch(generalDiscussionEntrySuccess(payload.newEntry));
-		})
 
-		return () => {
-			socket.off('generalDiscussionCreated');
+		if (socket) {
+			// Sync creatiion
+			socket.on('generalDiscussionCreated', ({ payload }) => {
+				dispatch(generalDiscussionEntrySuccess(payload.newEntry));
+			})
+
+
+			return () => {
+				socket.off('generalDiscussionCreated');
+			}
 		}
 	}, [dispatch, isSelectorReady])
 }
