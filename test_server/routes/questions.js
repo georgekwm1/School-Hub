@@ -319,7 +319,8 @@ router.put('/questions/:id', verifyToken, (req, res) => {
           upvoted: getUpvoteStatus(userId, id, 'question'),
         }
       
-      io.to('generalDiscussion-${courseId}').except(`user-${userId}`).emit(
+      const courseId = question.courseId;
+      io.to(`generalDiscussion-${courseId}`).except(`user-${userId}`).emit(
         `generalDiscussionQuestionEdited`,
         {
           payload: {editedQuestion}
