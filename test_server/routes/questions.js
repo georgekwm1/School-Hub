@@ -267,7 +267,7 @@ router.post('/questions/:id/vote', verifyToken, (req, res) => {
         'generalDiscussionQuestionUpvoteToggled', {
           payload: {
             questionId,
-            upvoted: action === 'upvote',
+            isUpvoted: action === 'upvote',
           },
           userId,
         }
