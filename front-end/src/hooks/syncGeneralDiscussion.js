@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectIsSocketReady } from '../redux/selectors/uiSelectors';
 import { getSocket } from '../socket';
-import { deleteQuestionSuccess, generalDiscussionEntrySuccess } from '../redux/actions/discussionsActionCreators';
+import { deleteQuestionSuccess, editQuestionSuccess, generalDiscussionEntrySuccess } from '../redux/actions/discussionsActionCreators';
 
 export default function useSyncGeneralDiscussion () {
 	const dispatch = useDispatch();
@@ -22,9 +22,15 @@ export default function useSyncGeneralDiscussion () {
 				dispatch(deleteQuestionSuccess(payload.questionId))
 			})
 
+			// Sync Editing
+			socket.on('generalDiscussionQuestionEdited', ({ payload }) => {
+				dispatch(editQuestionSuccess(payload.editedQuestion));
+			})
+
 			return () => {
 				socket.off('generalDiscussionQuestionCreated');
 				socket.off('generalDiscussionQuestionDeleted');
+				socket.off('generalDiscussionQuestionEdited');
 			}
 		}
 	}, [dispatch, isSelectorReady])
