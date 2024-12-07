@@ -312,11 +312,19 @@ router.put('/questions/:id', verifyToken, (req, res) => {
         )
         .get(id);
 
-      res.status(200).json({
-        ...updatedQuestion,
-        user: getUserData(userId),
-        upvoted: getUpvoteStatus(userId, id, 'question'),
-      });
+      const editedQuestion = {
+          ...updatedQuestion,
+          user: getUserData(userId),
+          upvoted: getUpvoteStatus(userId, id, 'question'),
+        }
+      
+      io.to('generalDiscussion-${courseId}').except(`user-${userId}`).emit(
+        `generalDiscussionQuestionEdited`,
+        {
+          payload: {editedQuestion}
+        }
+      )
+      res.status(200).json(editedQuestion);
     })();
   } catch (error) {
     console.error(error);
