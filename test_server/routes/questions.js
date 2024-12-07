@@ -193,10 +193,10 @@ router.post('/lectures/:id/discussion', verifyToken, (req, res) => {
     const createTime = new Date().toISOString();
     db.prepare(
       `
-      INSERT INTO questions (id, title, body, userId, lectureId, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO questions (id, title, body, userId, lectureId)
+      VALUES (?, ?, ?, ?, ?)
     `
-    ).run(newEntryId, title, body, userId, lectureId, createTime, createTime);
+    ).run(newEntryId, title, body, userId, lectureId);
 
     const newEntry = {
       id: newEntryId,
