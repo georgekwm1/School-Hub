@@ -328,6 +328,8 @@ router.put('/questions/:id', verifyToken, (req, res) => {
 router.delete('/questions/:id', verifyToken, (req, res) => {
   const questionId = req.params.id;
   const userId = req.userId;
+  const io = req.app.get('io');
+
   const question = db
     .prepare('SELECT * FROM questions WHERE id = ?')
     .get(questionId);
@@ -348,6 +350,16 @@ router.delete('/questions/:id', verifyToken, (req, res) => {
       db.prepare('DELETE FROM questions WHERE id = ?').run(questionId);
       // useless if the cascade works.. whey did it forget this?!
       // db.prepare('DELETE FROM replies WHERE questionId = ?').run(questionId);
+
+      io.to(`generalDiscussion-${courseId}`).except(`user-${userId}`).emit(
+        'generalDiscussionQuestionDeleted',
+        {
+          payload: {
+            questionId,
+          },
+          userId,
+        }
+      )
 
       res.status(200).json({ message: 'Question deleted successfully' });
     })();
