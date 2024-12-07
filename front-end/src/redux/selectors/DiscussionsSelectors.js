@@ -3,6 +3,10 @@ import { createSelector } from 'reselect';
 export const selectDiscussionsIsLoading = (state) =>
   state.discussions.get('isLoading');
 
+export const selectGeneralDiscussionLastFetched = state => {
+  return state.discussions.get('generalDiscussionLastFetchedAt');
+}
+
 const selectLecturesDiscussions = (state) =>
   state.discussions.get('lecturesDiscussions');
 
