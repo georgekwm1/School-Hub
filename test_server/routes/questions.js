@@ -409,7 +409,7 @@ router.delete('/questions/:id', verifyToken, (req, res) => {
 });
 
 // Sync existing questions
-router.post('courses/:id/general_discussion/diff', verifyToken, (req, res) => {
+router.post('/courses/:id/general_discussion/diff', verifyToken, (req, res) => {
   // After writing this endpoint.... 
   // I sometimes think that this is an overkill
   // and it's even better to fetch teh whole data without all these comparisons here..
@@ -439,35 +439,40 @@ router.post('courses/:id/general_discussion/diff', verifyToken, (req, res) => {
   // So.. I'm not sure what I'm doing anywa..
   // Bye.. thanks for your looking at the code whoever you are
   const userId = req.userId;
-  const { courseId } = req.params
+  const courseId  = req.params.id;
   const { entries, lastFetched } = req.body;
+  
+  const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(courseId);
+  if (!course) {
+    return res.status(404).send({ message: 'Course not found' });
+  }
+  
   // for ease or access and speed of retrieval and removal
-  const entriesUpdatedAt = new map(
+  const entriesUpdatedAt = new Map(
     entries.map(entry => [entry.id, entry.updatedAt])
   );
-
   const existingQuestions = db.prepare(
     `SELECT id, updatedAt, title, body, repliesCount, upvotes
-    FROM questions where courseId = ? AND updatedAt >= ?;`
+    FROM questions where courseId = ? AND createdAt <= ?
+    ORDER BY updatedAt DESC;
+    `
   ).all(courseId, lastFetched);
-
   const userVotes = db.prepare(`
     SELECT questionId FROM votes
     -- If you are wondering... take a look at the vots table and you will see
     -- Ther is replyId and questionId..
-    WHERE userId = ? AND questionId IS NULL
-    ORDER BY updatedAt DESC;
-    `).pluck('questionId').all(userId);
+    WHERE userId = ? AND questionId IS NULL;
+    `).pluck().all(userId);
 
   const results = {
-    existing: new Map(),
+    existing: {},
     deleted: [], 
   }
 
   for (const entry of existingQuestions) {
     const { id, updatedAt, repliesCount, upvotes } = entry;
     const questionEntry = {
-      id, repliesCount, upvotes
+      id, updatedAt, repliesCount, upvotes
     };
     if (updatedAt !== entriesUpdatedAt.get(id)) {
       questionEntry.updatedAt = updatedAt;
@@ -476,7 +481,7 @@ router.post('courses/:id/general_discussion/diff', verifyToken, (req, res) => {
     };
 
     entriesUpdatedAt.delete(id);
-    results.existing.set(id, questionEntry);
+    results.existing[id] = questionEntry;
   };
 
   existingQuestions.forEach(entry => {
@@ -484,8 +489,7 @@ router.post('courses/:id/general_discussion/diff', verifyToken, (req, res) => {
   });
 
   results.deleted = Array.from(entriesUpdatedAt.keys());
-
-  res.status(200).json({
+  res.status(201).json({
     results,
     lastSynced: getCurrentTimeInDBFormat(),
   });

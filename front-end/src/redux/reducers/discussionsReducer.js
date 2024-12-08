@@ -455,15 +455,15 @@ export default function discussionsReducer(state = initialState, action = {}) {
           .update('courseGeneralDiscussion', (questions)=> {
             return questions.filter(question => !deleted.includes(question.get('id')))
           })
-        .update('replies', (replies) => {
-          return replies.filter((reply, key) => !deleted.includes(key));
-        })
-        .update('courseGeneralDiscussion', questions => {
-          return questions.map(question => {
-            const questionId = question.get('id');
-            return question.merge(existing.get(questionId));
+          .update('replies', (replies) => {
+            return replies.filter((reply, key) => !deleted.includes(key));
+          })
+          .update('courseGeneralDiscussion', questions => {
+            return questions.map(question => {
+              const questionId = question.get('id');
+              return question.merge(existing[questionId]);
+            });
           });
-        });
       });
     }
     default: {
