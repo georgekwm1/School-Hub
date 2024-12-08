@@ -409,7 +409,7 @@ router.delete('/questions/:id', verifyToken, (req, res) => {
 });
 
 // Sync existing questions
-router.post('/questions/diff', verifyToken, (req, res) => {
+router.post('courses/:id/general_discussion/diff', verifyToken, (req, res) => {
   // After writing this endpoint.... 
   // I sometimes think that this is an overkill
   // and it's even better to fetch teh whole data without all these comparisons here..
@@ -439,7 +439,8 @@ router.post('/questions/diff', verifyToken, (req, res) => {
   // So.. I'm not sure what I'm doing anywa..
   // Bye.. thanks for your looking at the code whoever you are
   const userId = req.userId;
-  const { entries, lastFetched, courseId } = req.body;
+  const { courseId } = req.params
+  const { entries, lastFetched } = req.body;
   // for ease or access and speed of retrieval and removal
   const entriesUpdatedAt = new map(
     entries.map(entry => [entry.id, entry.updatedAt])
