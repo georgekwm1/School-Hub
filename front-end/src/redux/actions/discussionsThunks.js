@@ -562,17 +562,21 @@ export const editReply = (questionId, replyId, body) => async (dispatch) => {
 export const syncExistingGeneralQuestions = () => async (dispatch, getState) => {
   const state = getState();
   const courseId = state.ui.getIn(['course', 'id']);
-  const lastFetched = state.discussions.get('')
+  const lastFetched = state.discussions.get('generalDiscussionLastFetchedAt');
   const entries = state.discussions.get('courseGeneralDiscussion').map(
-    question => ({id: question.get('id'), updatedAt: question.get('updatedAt')})
+    question => ({
+      id: question.get('id'),
+      updatedAt: question.get('updatedAt')
+    })
   ).toJS();
 
   try {
     const data = await toast.promise(
-      fetch(`${DOMAIN}/courses/${courseId}/general_discussion`, {
+      fetch(`${DOMAIN}/courses/${courseId}/general_discussion/diff`, {
         method: 'POST',
         body: JSON.stringify({entries, lastFetched}),
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${getToken('accessToken')}`,
         },
       }).then((response) => {
