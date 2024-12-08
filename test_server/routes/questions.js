@@ -484,7 +484,10 @@ router.post('/questions/diff', verifyToken, (req, res) => {
 
   results.deleted = Array.from(entriesUpdatedAt.keys());
 
-  res.status(200).json(results);
+  res.status(200).json({
+    results,
+    lastSynced: getCurrentTimeInDBFormat(),
+  });
 })
 
 module.exports = router;
