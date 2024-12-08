@@ -215,6 +215,9 @@ router.post('/courses/:id/announcements/diff', verifyToken, (req, res) => {
     return res.status(404).send({ message: 'Course not found' });
   }
 
+  // After thinking (haven't consulted someone).. I thikn this step is useless..
+  // If the user already have the IDs and data. then he is ligid anyway.
+  // Or not?,, but it means he is already logged in and have htings in his state cached
   if (
     !isUserEnroledInCourse(userId, courseId) &&
     !isCourseAdmin(userId, courseId)
@@ -234,6 +237,8 @@ router.post('/courses/:id/announcements/diff', verifyToken, (req, res) => {
     )
   );
 
+  // This is stupid.. why looping.. '.length will do it for me.. and then double the stings
+  // Yeah.. I miss things sometimes!
   const placeholders = Array.from(announcements.keys())
     .map(() => '?')
     .join(', ');

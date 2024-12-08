@@ -408,4 +408,83 @@ router.delete('/questions/:id', verifyToken, (req, res) => {
   }
 });
 
+// Sync existing questions
+router.post('/questions/diff', verifyToken, (req, res) => {
+  // After writing this endpoint.... 
+  // I sometimes think that this is an overkill
+  // and it's even better to fetch teh whole data without all these comparisons here..
+  // And if it's about deletion .. there is no censitive data.. 
+  // so.. deletion is no big deal if it delays for some users if entries were 
+  // Still cached!;
+  // Or am i saving bandwidth for speed for what
+  // Because also in the front-ned.. there will be around up to  O(N*N) to merge changes
+  // Sinse they are in a form of list not a map.. so with each Id.. It has to find it
+  // and either delete it or update it..
+  
+  // So... Now, i'm really thining.. should I just fetch teh whole thing without these checks..
+  // But.. I don't know.. I may .. 
+  // I may just keep syncing this way.... or I dont't know if there is any better
+  // I think i'm almost confident in everything else I did till now..
+  // But syncing those existing persisted data in the state..
+  // No.. I'm not...
+
+
+
+  // After thinking again.. I'm either way fetching all questions.. But I might limit it
+  // With parametrs in this case.. and i'm also saving the getUser data fetches for each
+  // Entry.. and the comparison is nothing but updatedAt
+  // 
+  // And after all this.. I simply might be making less that smart claims here
+  // Because I havn't slept well.. and the problem was written around 1 am and now it's 5
+  // So.. I'm not sure what I'm doing anywa..
+  // Bye.. thanks for your looking at the code whoever you are
+  const userId = req.userId;
+  const { entries, lastFetched, courseId } = req.body;
+  // for ease or access and speed of retrieval and removal
+  const entriesUpdatedAt = new map(
+    entries.map(entry => [entry.id, entry.updatedAt])
+  );
+
+  const existingQuestions = db.prepare(
+    `SELECT id, updatedAt, title, body, repliesCount, upvotes
+    FROM questions where courseId = ? AND updatedAt >= ?;`
+  ).all(courseId, lastFetched);
+
+  const userVotes = db.prepare(`
+    SELECT questionId FROM votes
+    -- If you are wondering... take a look at the vots table and you will see
+    -- Ther is replyId and questionId..
+    WHERE userId = ? AND questionId IS NULL
+    ORDER BY updatedAt DESC;
+    `).pluck('questionId').all(userId);
+
+  const results = {
+    existing: [],
+    deleted: [], 
+  }
+
+  for (const entry of existingQuestions) {
+    const { id, updatedAt, repliesCount, upvotes } = entry;
+    const questionEntry = {
+      id, repliesCount, upvotes
+    };
+    if (updatedAt !== entriesUpdatedAt.get(id)) {
+      questionEntry.updatedAt = updatedAt;
+      questionEntry.title = entry.title;
+      questionEntry.body = entry.body;
+    };
+
+    entriesUpdatedAt.delete(id);
+    results.existing.push(questionEntry);
+  };
+
+  existingQuestions.forEach(entry => {
+    entry.upvoted = userVotes.includes(entry.id);
+  });
+
+  results.deleted = Array.from(entriesUpdatedAt.keys());
+
+  res.status(200).json(results);
+})
+
 module.exports = router;
