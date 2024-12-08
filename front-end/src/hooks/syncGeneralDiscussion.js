@@ -3,11 +3,15 @@ import { useDispatch, useSelector } from 'react-redux';
 import { selectIsSocketReady } from '../redux/selectors/uiSelectors';
 import { getSocket } from '../socket';
 import { deleteQuestionSuccess, editQuestionSuccess, generalDiscussionEntrySuccess, toggleGeneralQuestionUpvoteSuccess } from '../redux/actions/discussionsActionCreators';
+import { syncExistingGeneralQuestions } from '../redux/actions/discussionsThunks';
 
 export default function useSyncGeneralDiscussion () {
 	const dispatch = useDispatch();
 	const isSelectorReady = useSelector(selectIsSocketReady);
 
+	useEffect(() => {
+		dispatch(syncExistingGeneralQuestions());
+	}, [dispatch])
 	useEffect(() => {
 		const socket = getSocket();
 
