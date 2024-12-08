@@ -459,7 +459,7 @@ router.post('/questions/diff', verifyToken, (req, res) => {
     `).pluck('questionId').all(userId);
 
   const results = {
-    existing: [],
+    existing: new Map(),
     deleted: [], 
   }
 
@@ -475,7 +475,7 @@ router.post('/questions/diff', verifyToken, (req, res) => {
     };
 
     entriesUpdatedAt.delete(id);
-    results.existing.push(questionEntry);
+    results.existing.set(id, questionEntry);
   };
 
   existingQuestions.forEach(entry => {
