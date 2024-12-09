@@ -39,12 +39,14 @@ export default function discussionsReducer(state = initialState, action = {}) {
 
     case actions.LECTURE_DISCUSSION_SUCCESS: {
       const { entries, lectureId, lastFetched } = action.payload;
-
+      
       return state.withMutations((state) => {
         state
           .set('discussionsError', null)
           .set('isLoading', false)
-          .setIn(['lecturesDiscussions', lectureId], fromJS(entries))
+          .updateIn(['lecturesDiscussions', lectureId], questions => {
+            return questions.unshift(...fromJS(entries))
+          })
           .setIn(['lectureDiscussionsLastFetchedAt', lectureId], lastFetched);
       });
     }
