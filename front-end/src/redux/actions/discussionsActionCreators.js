@@ -46,11 +46,12 @@ export const addDiscussionEntryFailure = (errorMessage) => ({
   },
 });
 
-export const addDiscussionEntrySuccess = ({ lectureId, entry }) => ({
+export const addDiscussionEntrySuccess = ({ lectureId, entry, lastFetched }) => ({
   type: actions.ADD_DISCUSSION_ENTRY_SUCCESS,
   payload: {
     lectureId,
     entry,
+    lastFetched,
   },
 });
 

@@ -82,10 +82,12 @@ export const addLectureDiscussionEntry =
     try {
       const data = await promise;
 
+      const { newEntry, lastFetched } = data;
       dispatch(
         discussionsActions.addDiscussionEntrySuccess({
           lectureId,
-          entry: data,
+          entry: newEntry,
+          lastFetched,
         })
       );
     } catch (error) {
@@ -135,6 +137,7 @@ export const getGeneralDiscussion = () => async (dispatch, getState) => {
     );
   }
 };
+
 
 export const addGeneralDiscussionEntry =
   (title, details) => async (dispatch, getState) => {
