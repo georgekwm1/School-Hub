@@ -45,7 +45,11 @@ export default function discussionsReducer(state = initialState, action = {}) {
           .set('discussionsError', null)
           .set('isLoading', false)
           .updateIn(['lecturesDiscussions', lectureId], questions => {
-            return questions.unshift(...fromJS(entries))
+            if (questions) {
+              return questions.unshift(...fromJS(entries));
+            } else {
+              return fromJS(entries);
+            }
           })
           .setIn(['lectureDiscussionsLastFetchedAt', lectureId], lastFetched);
       });
