@@ -13,12 +13,17 @@ import {
   selectDiscussionsIsLoading,
   makeLectureDiscussionsSelector,
 } from '../../redux/selectors/DiscussionsSelectors';
+import useSyncLectureDiscussions from '../../hooks/syncLecturesDiscussionsHook';
+import { useJoinRoom } from '../../hooks/socketConnectionHooks';
 
 export default function LectureDiscussion({ lectureId = '' }) {
   const [askNewQuestion, setAskNewQuestion] = useState(false);
   const dispatch = useDispatch();
   const isLoading = useSelector(selectDiscussionsIsLoading);
   const entries = useSelector(makeLectureDiscussionsSelector(lectureId));
+
+  useJoinRoom(`lectureDiscussion-${lectureId}`);
+  useSyncLectureDiscussions();
 
   useEffect(() => {
     // This is not completely right. as still the logic to force reload or by real time pinging

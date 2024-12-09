@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectIsSocketReady } from '../redux/selectors/uiSelectors';
 import { getSocket } from '../socket';
+import { addDiscussionEntrySuccess } from '../redux/actions/discussionsActionCreators';
 
 
 export default function useSyncLectureDiscussions() {
@@ -27,5 +28,5 @@ export default function useSyncLectureDiscussions() {
 			}
 		}
 
-	}, [getSocket, isSocketReady])
+	}, [dispatch, isSocketReady])
 }
