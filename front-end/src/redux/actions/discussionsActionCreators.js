@@ -302,7 +302,7 @@ export const syncExistingGeneralQuestionsSuccess = (questions, lastSynced) => ({
 });
 
 export const syncGeneralQuestionVote = (questionId, isUpvoted) => ({
-  type: actions.SYNC_GENRAL_QUESTION_UPVOTE,
+  type: actions.SYNC_GENRAL_QUESTION_VOTE,
   payload: {
     questionId,
     isUpvoted,
