@@ -192,6 +192,7 @@ router.post('/lectures/:id/discussion', verifyToken, (req, res) => {
   const lectureId = req.params.id;
   const { title, body } = req.body;
   const userId = req.userId;
+  const io = req.app.get('io');
 
   if (!userId || !title || !body) {
     return res.status(400).send({ message: 'Missing required fields' });
@@ -226,6 +227,16 @@ router.post('/lectures/:id/discussion', verifyToken, (req, res) => {
       newEntry,
       lastFetched,
     });
+
+    // This is after the request is sent to make the response for user faster
+    io.to(`lectureDiscussion-${lectureId}`).except(`user-${userId}`).emit(
+      'lectureQuestionCreated',
+      {
+        payload: { question: newEntry, lectureId, lastFetched },
+        userId,
+      }
+    )
+
   } catch (error) {
     console.error(error);
     res.status(500).send({ message: 'Internal server error' });
