@@ -479,8 +479,11 @@ export default function discussionsReducer(state = initialState, action = {}) {
     case actions.SYNC_QUESTION_VOTE: {
       const { questionId, isUpvoted, lectureId } = action.payload;
 
+      const path = lectureId
+        ? ['lecturesDiscussions', lectureId]
+        : ['courseGeneralDiscussion'];
       return state
-        .updateIn(['courseGeneralDiscussion'], (questions) => {
+        .updateIn(path, (questions) => {
           const index = questions.findIndex(
             (question) => question.get('id') === questionId
           );
