@@ -407,20 +407,26 @@ router.delete('/questions/:id', verifyToken, (req, res) => {
   try {
     db.transaction(() => {
       db.prepare('DELETE FROM questions WHERE id = ?').run(questionId);
-      // useless if the cascade works.. whey did it forget this?!
+      // useless if the cascade works.. whey did i forget this?!
       // db.prepare('DELETE FROM replies WHERE questionId = ?').run(questionId);
 
-      io.to(`generalDiscussion-${courseId}`).except(`user-${userId}`).emit(
-        'generalDiscussionQuestionDeleted',
+
+      res.status(200).json({ message: 'Question deleted successfully' });
+      // I think i have to let the user see the response first then let teh delay happen for others
+      // Won't make difference for them. 
+      const lectureId = question.lectureId;
+      const room = lectureId ? `lectureDiscussion-${lectureId}` : `generalDiscussion-${courseId}`;
+      const event = lectureId ? 'lectureQuestionDeleted' : 'generalDiscussionQuestionDeleted';
+      io.to(room).except(`user-${userId}`).emit(
+        event,
         {
           payload: {
             questionId,
+            lectureId,
           },
           userId,
         }
       )
-
-      res.status(200).json({ message: 'Question deleted successfully' });
     })();
   } catch (error) {
     console.error(error);
