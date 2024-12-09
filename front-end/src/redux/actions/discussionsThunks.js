@@ -8,11 +8,12 @@ export const getLectureDiscussions = (lectureId) => async (dispatch, getState) =
   dispatch(discussionsActions.toggleDiscussionsLoading());
 
   const state = getState();
-  const lastFetched = state.discussions.getIn(['lectureDiscussionsLastFetchedAt', lectureId]);
-
+  const currentLastFetched = state.discussions.getIn(['lectureDiscussionsLastFetchedAt', lectureId]);
+  console.log(currentLastFetched);
+  
   try {
     const params = new URLSearchParams({
-      lastFetched
+      lastFetched: currentLastFetched,
     })
     const response = await fetch(
       `${DOMAIN}/lectures/${lectureId}/discussion?${params}`,
