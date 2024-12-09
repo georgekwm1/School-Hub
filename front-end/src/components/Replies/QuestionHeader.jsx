@@ -76,7 +76,7 @@ export default function QuestionHeader({ question, isLecture }) {
       dispatch(
         deleteQuestion(
           question.get('id'),
-          isLecture ? question.get('lectureId') : ''
+          question.get('lectureId') || null
         )
       );
     }

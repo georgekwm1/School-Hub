@@ -25,10 +25,7 @@ export default function useSyncLectureDiscussions() {
 			// Sync deletion
 			socket.on('lectureQuestionDeleted', ({ payload }) => {
 				const { questionId, lectureId } = payload;
-				dispatch(deleteQuestionSuccess({
-					questionId,
-					lectureId,
-				}))
+				dispatch(deleteQuestionSuccess(questionId, lectureId));
 			})
 
 			return () => {
