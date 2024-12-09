@@ -4,12 +4,18 @@ import { toggleLoading } from './uiActionCreators';
 import { getToken } from '../../utils/utilFunctions';
 import {DOMAIN} from '../../utils/constants'
 
-export const getLectureDiscussions = (lectureId) => async (dispatch) => {
+export const getLectureDiscussions = (lectureId) => async (dispatch, getState) => {
   dispatch(discussionsActions.toggleDiscussionsLoading());
 
+  const state = getState();
+  const lastFetched = state.discussions.getIn(['lectureDiscussionsLastFetchedAt', lectureId]);
+
   try {
+    const params = new URLSearchParams({
+      lastFetched
+    })
     const response = await fetch(
-      `${DOMAIN}/lectures/${lectureId}/discussion`,
+      `${DOMAIN}/lectures/${lectureId}/discussion?${params}`,
       {
         headers: {
           'Authorization': `Bearer ${getToken('accessToken')}`
