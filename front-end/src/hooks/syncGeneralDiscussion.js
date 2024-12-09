@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectIsSocketReady } from '../redux/selectors/uiSelectors';
 import { getSocket } from '../socket';
-import { deleteQuestionSuccess, editQuestionSuccess, generalDiscussionEntrySuccess, syncGeneralQuestionVote } from '../redux/actions/discussionsActionCreators';
+import { deleteQuestionSuccess, editQuestionSuccess, generalDiscussionEntrySuccess, syncQuestionVote } from '../redux/actions/discussionsActionCreators';
 import { syncExistingGeneralQuestions } from '../redux/actions/discussionsThunks';
 
 export default function useSyncGeneralDiscussion () {
@@ -32,14 +32,14 @@ export default function useSyncGeneralDiscussion () {
 			})
 
 			socket.on('questionUpvoteToggled', ({ payload }) => {
-				dispatch(syncGeneralQuestionVote(payload.questionId, payload.isUpvoted))
+				dispatch(syncQuestionVote(payload.questionId, payload.isUpvoted))
 			})
 
 			return () => {
 				socket.off('generalDiscussionQuestionCreated');
 				socket.off('generalDiscussionQuestionDeleted');
 				socket.off('generalDiscussionQuestionEdited');
-				socket.off('generalDiscussionQuestionUpvoteToggled');
+				socket.off('questionUpvoteToggled');
 			}
 		}
 	}, [dispatch, isSelectorReady])

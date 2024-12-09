@@ -476,8 +476,8 @@ export default function discussionsReducer(state = initialState, action = {}) {
       });
     }
 
-    case actions.SYNC_GENRAL_QUESTION_VOTE: {
-      const { questionId, isUpvoted } = action.payload;
+    case actions.SYNC_QUESTION_VOTE: {
+      const { questionId, isUpvoted, lectureId } = action.payload;
 
       return state
         .updateIn(['courseGeneralDiscussion'], (questions) => {
