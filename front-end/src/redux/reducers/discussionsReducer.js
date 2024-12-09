@@ -466,6 +466,22 @@ export default function discussionsReducer(state = initialState, action = {}) {
           });
       });
     }
+
+    case actions.SYNC_GENRAL_QUESTION_UPVOTE: {
+      const { questionId, isUpvoted } = action.payload;
+
+      return state
+        .updateIn(['courseGeneralDiscussion'], (questions) => {
+          const index = questions.findIndex(
+            (question) => question.get('id') === questionId
+          );
+
+          return questions.updateIn([index, 'upvotes'], (upvotes) => {
+            return upvotes + (isUpvoted ? 1 : -1);
+          });
+        })
+    }
+
     default: {
       return state;
     }
