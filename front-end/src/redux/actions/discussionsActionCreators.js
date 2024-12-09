@@ -31,6 +31,7 @@ export const lectureDiscussionSuccess = (response) => ({
   payload: {
     entries: response.entries,
     lectureId: response.lectureId,
+    lastFetchd: response.lastFetched,
   },
 });
 
