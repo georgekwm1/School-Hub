@@ -90,6 +90,7 @@ router.get('/courses/:id/general_discussion', verifyToken, (req, res) => {
 router.get('/lectures/:id/discussion', verifyToken, (req, res) => {
   const id = req.params.id;
   const userId = req.userId;
+  const { lastFetched } = req.query;
 
   const lecture = db.prepare('SELECT * FROM lectures WHERE id = ?').get(id);
   if (lecture) {
@@ -99,10 +100,13 @@ router.get('/lectures/:id/discussion', verifyToken, (req, res) => {
       SELECT id, title, body, userId, upvotes, repliesCount, lectureId, updatedAt
         FROM questions 
         WHERE lectureId = ?
+        ${lastFetched ? 'AND createdAt > ?' : ''}
         ORDER BY updatedAt DESC;
-      `
-      )
-      .all(id);
+      `).all(
+        ...[id].concat(lastFetched ? [lastFetched] : [])
+      );
+
+    const newLastFetchedTime = getCurrentTimeInDBFormat();
 
     const results = discussionWithLectureId.map((entry) => {
       const user = getUserData(entry.userId);
@@ -114,8 +118,8 @@ router.get('/lectures/:id/discussion', verifyToken, (req, res) => {
         upvoted,
       };
     });
-
-    res.json(results);
+    
+    res.json({results, lastFetched: newLastFetchedTime});
   } else {
     res.status(404).send({ message: 'Lecture not found' });
   }
