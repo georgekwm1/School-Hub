@@ -300,3 +300,11 @@ export const syncExistingGeneralQuestionsSuccess = (questions, lastSynced) => ({
     lastSynced,
   },
 });
+
+export const syncGeneralQuestionVote = (questionId, isUpvoted) => ({
+  type: actions.SYNC_GENRAL_QUESTION_UPVOTE,
+  payload: {
+    questionId,
+    isUpvoted,
+  },
+});
