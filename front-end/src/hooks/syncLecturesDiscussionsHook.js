@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectIsSocketReady } from '../redux/selectors/uiSelectors';
 import { getSocket } from '../socket';
-import { addDiscussionEntrySuccess, deleteQuestionSuccess, editQuestionSuccess } from '../redux/actions/discussionsActionCreators';
+import { addDiscussionEntrySuccess, deleteQuestionSuccess, editQuestionSuccess, syncQuestionVote } from '../redux/actions/discussionsActionCreators';
 
 
 export default function useSyncLectureDiscussions() {
@@ -33,11 +33,17 @@ export default function useSyncLectureDiscussions() {
 				dispatch(editQuestionSuccess(payload.editedQuestion));
 			})
 
+			// SYnc Voting
+			socket.on('questionUpvoteToggled', ({ payload }) => {
+				const { questionId, isUpvoted, lectureId } = payload;
+				dispatch(syncQuestionVote(questionId, isUpvoted, lectureId));
+			})
 
 			return () => {
 				socket.off('lectureQuestionCreated');
 				socket.off('lectureQuestionDeleted');
 				socket.off('lectureQuestionEdited');
+				socket.off('questionUpvoteToggled');
 			}
 		}
 
