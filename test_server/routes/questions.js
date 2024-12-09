@@ -367,15 +367,19 @@ router.put('/questions/:id', verifyToken, (req, res) => {
           user: getUserData(userId),
           upvoted: getUpvoteStatus(userId, id, 'question'),
         }
-      
+
+      res.status(200).json(editedQuestion);
+
       const courseId = question.courseId;
-      io.to(`generalDiscussion-${courseId}`).except(`user-${userId}`).emit(
-        `generalDiscussionQuestionEdited`,
+      const lectureId = question.lectureId;
+      const room = lectureId ? `lectureDiscussion-${lectureId}` : `generalDiscussion-${courseId}`;
+      const event = lectureId ? 'lectureQuestionEdited' : 'generalDiscussionQuestionEdited';
+      io.to(room).except(`user-${userId}`).emit(
+        event,
         {
           payload: {editedQuestion}
         }
       )
-      res.status(200).json(editedQuestion);
     })();
   } catch (error) {
     console.error(error);
