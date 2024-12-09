@@ -31,7 +31,7 @@ export default function useSyncGeneralDiscussion () {
 				dispatch(editQuestionSuccess(payload.editedQuestion));
 			})
 
-			socket.on('generalDiscussionQuestionUpvoteToggled', ({ payload }) => {
+			socket.on('questionUpvoteToggled', ({ payload }) => {
 				dispatch(syncGeneralQuestionVote(payload.questionId, payload.isUpvoted))
 			})
 
