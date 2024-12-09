@@ -6,6 +6,7 @@ export const initialState = fromJS({
   courseGeneralDiscussion: [],
   replies: {},
   generalDiscussionLastFetchedAt: '',
+  lectureDiscussionsLastFetchedAt: {},
   isLoading: false,
   discussionsError: null,
 });
@@ -37,13 +38,14 @@ export default function discussionsReducer(state = initialState, action = {}) {
     }
 
     case actions.LECTURE_DISCUSSION_SUCCESS: {
-      const { entries, lectureId } = action.payload;
+      const { entries, lectureId, lastFetched } = action.payload;
 
       return state.withMutations((state) => {
         state
           .set('discussionsError', null)
           .set('isLoading', false)
-          .setIn(['lecturesDiscussions', lectureId], fromJS(entries));
+          .setIn(['lecturesDiscussions', lectureId], fromJS(entries))
+          .setIn(['lectureDiscussionsLastFetchedAt', lectureId], lastFetched);
       });
     }
 
