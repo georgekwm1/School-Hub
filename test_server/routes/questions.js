@@ -303,6 +303,7 @@ router.post('/questions/:id/vote', verifyToken, (req, res) => {
           payload: {
             questionId,
             isUpvoted: action === 'upvote',
+            lectureId,
           },
           userId,
         }
