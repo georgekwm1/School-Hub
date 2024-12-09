@@ -208,6 +208,8 @@ router.post('/lectures/:id/discussion', verifyToken, (req, res) => {
     `
     ).run(newEntryId, title, body, userId, lectureId);
 
+    const lastFetched = getCurrentTimeInDBFormat();
+
     const newEntry = {
       id: newEntryId,
       title,
@@ -220,7 +222,10 @@ router.post('/lectures/:id/discussion', verifyToken, (req, res) => {
       lectureId,
     };
 
-    res.status(201).json(newEntry);
+    res.status(201).json({
+      newEntry,
+      lastFetched,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).send({ message: 'Internal server error' });
