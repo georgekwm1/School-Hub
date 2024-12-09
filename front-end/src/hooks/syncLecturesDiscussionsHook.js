@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectIsSocketReady } from '../redux/selectors/uiSelectors';
 import { getSocket } from '../socket';
-import { addDiscussionEntrySuccess } from '../redux/actions/discussionsActionCreators';
+import { addDiscussionEntrySuccess, deleteQuestionSuccess } from '../redux/actions/discussionsActionCreators';
 
 
 export default function useSyncLectureDiscussions() {
@@ -12,9 +12,9 @@ export default function useSyncLectureDiscussions() {
 	useEffect(() => {
 		const socket = getSocket();
 		if (socket) {
+			// Sync creation 
 			socket.on('lectureQuestionCreated', ({ payload }) => {
 				const { lectureId, question, lastFetched } = payload;
-
 				dispatch(addDiscussionEntrySuccess({
           lectureId,
           entry: question,
@@ -22,9 +22,18 @@ export default function useSyncLectureDiscussions() {
         }))
 			})
 
+			// Sync deletion
+			socket.on('lectureQuestionDeleted', ({ payload }) => {
+				const { questionId, lectureId } = payload;
+				dispatch(deleteQuestionSuccess({
+					questionId,
+					lectureId,
+				}))
+			})
 
 			return () => {
 				socket.off('lectureQuestionCreated');
+				socket.off('lectureQuestionDeleted');
 			}
 		}
 
