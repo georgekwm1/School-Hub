@@ -8,13 +8,16 @@ export const getLectureDiscussions = (lectureId) => async (dispatch, getState) =
   dispatch(discussionsActions.toggleDiscussionsLoading());
 
   const state = getState();
-  const currentLastFetched = state.discussions.getIn(['lectureDiscussionsLastFetchedAt', lectureId]);
-  console.log(currentLastFetched);
+  const currentLastFetched = state.discussions.getIn(
+    ['lectureDiscussionsLastFetchedAt', lectureId]
+  // Somehow and till now couln't tell why.. if this is undefined.. 
+  // the server on the otherside sees it as 'undefined'.. like a string?!!?!?!?!?!?!
+  ) || '';
   
   try {
     const params = new URLSearchParams({
       lastFetched: currentLastFetched,
-    })
+    }).toString();
     const response = await fetch(
       `${DOMAIN}/lectures/${lectureId}/discussion?${params}`,
       {
