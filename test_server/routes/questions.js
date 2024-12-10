@@ -440,7 +440,7 @@ router.delete('/questions/:id', verifyToken, (req, res) => {
 });
 
 // Sync existing questions
-router.post('/courses/:id/general_discussion/diff', verifyToken, (req, res) => {
+router.post('/questions/diff', verifyToken, (req, res) => {
   // After writing this endpoint.... 
   // I sometimes think that this is an overkill
   // and it's even better to fetch teh whole data without all these comparisons here..
@@ -470,24 +470,40 @@ router.post('/courses/:id/general_discussion/diff', verifyToken, (req, res) => {
   // So.. I'm not sure what I'm doing anywa..
   // Bye.. thanks for your looking at the code whoever you are
   const userId = req.userId;
-  const courseId  = req.params.id;
-  const { entries, lastFetched } = req.body;
+  const { entries, lastFetched, courseId, lectureId } = req.body;
   
-  const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(courseId);
-  if (!course) {
-    return res.status(404).send({ message: 'Course not found' });
+  if (courseId && lectureId) {
+    return res.status(401).json({ message: 'courseId and lectureId are both defined?!.. which category are the questions?' });
+  } else if (courseId) {
+    const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(courseId);
+    if (!course) {
+      return res.status(404).send({ message: 'Course not found' });
+    }
+  } else if (lectureId) {
+    const lecture = db.prepare('SELECT * FROM lectures WHERE id = ?').get(lectureId);
+    if (!lecture) {
+      return res.status(404).send({ message: 'Lecture not found' });
+    }
+  } else {
+    // I don't konw why here i'm using .json and above .send?!  .. .... anyways.. 
+    return res.status(401).json({ message: 'Missing course or lecture id' });
   }
-  
+
   // for ease or access and speed of retrieval and removal
   const entriesUpdatedAt = new Map(
     entries.map(entry => [entry.id, entry.updatedAt])
   );
   const existingQuestions = db.prepare(
     `SELECT id, updatedAt, title, body, repliesCount, upvotes
-    FROM questions where courseId = ? AND createdAt <= ?
+      FROM questions
+    WHERE ${courseId ? 'courseId' : 'lectureId'} = ?
+      AND createdAt <= ?
     ORDER BY updatedAt DESC;
     `
-  ).all(courseId, lastFetched);
+  ).all(
+    courseId ? courseId : lectureId,
+    lastFetched,
+  );
   const userVotes = db.prepare(`
     SELECT questionId FROM votes
     -- If you are wondering... take a look at the vots table and you will see
