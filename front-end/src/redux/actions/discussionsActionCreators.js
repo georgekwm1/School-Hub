@@ -106,10 +106,10 @@ export const fetchDiscussionRepliesFailure = (errorMessage) => ({
   },
 });
 
-export const fetchDiscussionRepliesSuccess = (data) => ({
+export const fetchDiscussionRepliesSuccess = (question, repliesList, lastFetched) => ({
   type: actions.FETCH_DISCUSSION_REPLIES_SUCCESS,
   payload: {
-    data,
+    question, repliesList, lastFetched,
   },
 });
 
