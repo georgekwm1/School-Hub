@@ -14,7 +14,7 @@ import './css/discussionentry.css';
  * @return {React.ReactElement}
  */
 export default function DiscussionEntries({ entries, chunkSize, isLecture }) {
-	const [limit, setLimit] = useState(chunkSize);
+  const [limit, setLimit] = useState(chunkSize);
 
   return (
     <>
@@ -26,18 +26,30 @@ export default function DiscussionEntries({ entries, chunkSize, isLecture }) {
       ) : (
         <div className="discussion-list">
           {entries.slice(0, limit).map((entry, index) => (
-            <DiscussionEntry key={index} content={entry} isLecture={isLecture} />
+            <DiscussionEntry
+              key={index}
+              content={entry}
+              isLecture={isLecture}
+            />
           ))}
-          
-          {/* Pagination Controls */}      
+
+          {/* Pagination Controls */}
           {limit > chunkSize && (
-            <button className="pagination-button p-2" type="button" onClick={() => setLimit(limit - chunkSize)}>
+            <button
+              className="pagination-button p-2"
+              type="button"
+              onClick={() => setLimit(limit - chunkSize)}
+            >
               See Less
             </button>
           )}
 
           {limit < entries.size && (
-            <button className="pagination-button p-2 mx-3" type="button" onClick={() => setLimit(limit + chunkSize)}>
+            <button
+              className="pagination-button p-2 mx-3"
+              type="button"
+              onClick={() => setLimit(limit + chunkSize)}
+            >
               See More
             </button>
           )}

@@ -4,9 +4,13 @@ import * as actions from '../actions/discussionsActionTypes';
 export const initialState = fromJS({
   lecturesDiscussions: {},
   courseGeneralDiscussion: [],
+  replies: {},
+  generalDiscussionLastFetchedAt: '',
+  lectureDiscussionsLastFetchedAt: {},
+  generalDiscussionLastSyncedAt: '',
+  lecturesDiscussionsLastSyncedAt: {},
   isLoading: false,
   discussionsError: null,
-  replies: {},
 });
 
 export default function discussionsReducer(state = initialState, action = {}) {
@@ -36,13 +40,20 @@ export default function discussionsReducer(state = initialState, action = {}) {
     }
 
     case actions.LECTURE_DISCUSSION_SUCCESS: {
-      const { entries, lectureId } = action.payload;
+      const { entries, lectureId, lastFetched } = action.payload;
 
       return state.withMutations((state) => {
         state
           .set('discussionsError', null)
           .set('isLoading', false)
-          .setIn(['lecturesDiscussions', lectureId], fromJS(entries));
+          .updateIn(['lecturesDiscussions', lectureId], (questions) => {
+            if (questions) {
+              return questions.unshift(...fromJS(entries));
+            } else {
+              return fromJS(entries);
+            }
+          })
+          .setIn(['lectureDiscussionsLastFetchedAt', lectureId], lastFetched);
       });
     }
 
@@ -59,14 +70,15 @@ export default function discussionsReducer(state = initialState, action = {}) {
     }
 
     case actions.ADD_DISCUSSION_ENTRY_SUCCESS: {
-      const { entry } = action.payload;
+      const { entry, lastFetched, lectureId } = action.payload;
       return state.withMutations((state) => {
         state
           .set('isEntryBeingSent', false)
           .set('discussionsError', null)
           .updateIn(['lecturesDiscussions', entry.lectureId], (entries) =>
             entries.unshift(fromJS(entry))
-          );
+          )
+          .setIn(['lectureDiscussionsLastFetchedAt', lectureId], lastFetched);
       });
     }
 
@@ -83,12 +95,15 @@ export default function discussionsReducer(state = initialState, action = {}) {
     }
 
     case actions.GENERAL_DISCUSSION_SUCCESS: {
-      const { entries } = action.payload;
+      const { entries, lastFetched } = action.payload;
       return state.withMutations((state) => {
         state
           .set('isLoading', false)
           .set('discussionsError', null)
-          .set('courseGeneralDiscussion', fromJS(entries));
+          .update('courseGeneralDiscussion', (questions) => {
+            return questions.unshift(...fromJS(entries));
+          })
+          .set('generalDiscussionLastFetchedAt', lastFetched);
       });
     }
 
@@ -105,11 +120,12 @@ export default function discussionsReducer(state = initialState, action = {}) {
     }
 
     case actions.GENERAL_DISCUSSION_ENTRY_SUCCESS: {
-      const { entry } = action.payload;
+      const { entry, lastFetched } = action.payload;
       return state.withMutations((state) => {
         state
           .set('isLoading', false)
           .set('discussionsError', null)
+          .set('generalDiscussionLastFetchedAt', lastFetched)
           .updateIn(['courseGeneralDiscussion'], (entries) =>
             entries.unshift(fromJS(entry))
           );
@@ -419,10 +435,74 @@ export default function discussionsReducer(state = initialState, action = {}) {
           .set('isLoading', false)
           .set('discussionsError', null)
           .updateIn(['replies', questionId, 'repliesList'], (replies) => {
-            const index = replies.findIndex(reply => reply.get('id') === replyId);
+            const index = replies.findIndex(
+              (reply) => reply.get('id') === replyId
+            );
 
-            return replies.set(index, fromJS(editedReply))
+            return replies.set(index, fromJS(editedReply));
+          });
+      });
+    }
+
+    case actions.SYNC_EXISTING_QUESTIONS_REQUEST: {
+      return state.set('isLoading', true);
+    }
+
+    case actions.SYNC_EXISTING_QUESTIONS_FAILURE: {
+      return state.withMutations((state) => {
+        state
+          .set('isLoading', false)
+          .set('discussionsError', action.payload.errorMessage);
+      });
+    }
+
+    case actions.SYNC_EXISTING_QUESTIONS_SUCCESS: {
+      const { questions, lastSynced, lectureId } = action.payload;
+      const { deleted, existing } = questions;
+
+      const entriesPath = lectureId
+        ? ['lecturesDiscussions', lectureId]
+        : ['courseGeneralDiscussion'];
+
+      const lastSyncedPath = lectureId
+        ? ['lecturesDiscussionsLastSyncedAt', lectureId]
+        : ['generalDiscussionLastSyncedAt'];
+      return state.withMutations((state) => {
+        return state
+          .set('isLoading', false)
+          .set('discussionsError', null)
+          .setIn(lastSyncedPath, lastSynced)
+          .updateIn(entriesPath, (questions) => {
+            return questions.filter(
+              (question) => !deleted.includes(question.get('id'))
+            );
           })
+          .update('replies', (replies) => {
+            return replies.filter((reply, key) => !deleted.includes(key));
+          })
+          .updateIn(entriesPath, (questions) => {
+            return questions.map((question) => {
+              const questionId = question.get('id');
+              return question.merge(existing[questionId]);
+            });
+          });
+      });
+    }
+
+    case actions.SYNC_QUESTION_VOTE: {
+      const { questionId, isUpvoted, lectureId } = action.payload;
+
+      const path = lectureId
+        ? ['lecturesDiscussions', lectureId]
+        : ['courseGeneralDiscussion'];
+      return state.updateIn(path, (questions) => {
+        const index = questions.findIndex(
+          (question) => question.get('id') === questionId
+        );
+
+        return questions.updateIn([index, 'upvotes'], (upvotes) => {
+          return upvotes + (isUpvoted ? 1 : -1);
+        });
       });
     }
 

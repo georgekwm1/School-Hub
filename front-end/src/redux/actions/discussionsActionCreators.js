@@ -31,6 +31,7 @@ export const lectureDiscussionSuccess = (response) => ({
   payload: {
     entries: response.entries,
     lectureId: response.lectureId,
+    lastFetched: response.lastFetched,
   },
 });
 
@@ -45,11 +46,16 @@ export const addDiscussionEntryFailure = (errorMessage) => ({
   },
 });
 
-export const addDiscussionEntrySuccess = ({ lectureId, entry }) => ({
+export const addDiscussionEntrySuccess = ({
+  lectureId,
+  entry,
+  lastFetched,
+}) => ({
   type: actions.ADD_DISCUSSION_ENTRY_SUCCESS,
   payload: {
     lectureId,
     entry,
+    lastFetched,
   },
 });
 
@@ -64,10 +70,11 @@ export const generalDiscussionFailure = (errorMessage) => ({
   },
 });
 
-export const generalDiscussionSuccess = (entries) => ({
+export const generalDiscussionSuccess = (entries, lastFetched) => ({
   type: actions.GENERAL_DISCUSSION_SUCCESS,
   payload: {
     entries,
+    lastFetched,
   },
 });
 
@@ -80,10 +87,11 @@ export const generalDiscussionEntryFailure = (errorMessage) => ({
   payload: { errorMessage },
 });
 
-export const generalDiscussionEntrySuccess = (entry) => ({
+export const generalDiscussionEntrySuccess = (entry, lastFetched) => ({
   type: actions.GENERAL_DISCUSSION_ENTRY_SUCCESS,
   payload: {
     entry,
+    lastFetched,
   },
 });
 
@@ -277,5 +285,38 @@ export const editReplySuccess = (questionId, editedReply) => ({
   payload: {
     questionId,
     editedReply,
+  },
+});
+
+export const syncExistingQuestionsRequest = () => ({
+  type: actions.SYNC_EXISTING_QUESTIONS_REQUEST,
+});
+
+export const syncExistingQuestionsFailure = (errorMessage) => ({
+  type: actions.SYNC_EXISTING_QUESTIONS_FAILURE,
+  payload: {
+    errorMessage,
+  },
+});
+
+export const syncExistingQuestionsSuccess = (
+  questions,
+  lastSynced,
+  lectureId
+) => ({
+  type: actions.SYNC_EXISTING_QUESTIONS_SUCCESS,
+  payload: {
+    questions,
+    lastSynced,
+    lectureId,
+  },
+});
+
+export const syncQuestionVote = (questionId, isUpvoted, lectureId = null) => ({
+  type: actions.SYNC_QUESTION_VOTE,
+  payload: {
+    questionId,
+    isUpvoted,
+    lectureId,
   },
 });

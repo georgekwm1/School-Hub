@@ -172,7 +172,7 @@ db.exec(`
 	);
 	`);
 
-// Announcements table
+	// Announcements table
 db.exec(`
 	CREATE TABLE IF NOT EXISTS announcements (
 		id TEXT PRIMARY KEY,
