@@ -7,6 +7,8 @@ export const initialState = fromJS({
   replies: {},
   generalDiscussionLastFetchedAt: '',
   lectureDiscussionsLastFetchedAt: {},
+  generalDiscussionLastSyncedAt: '',
+  lecturesDiscussionsLastSyncedAt: {},
   isLoading: false,
   discussionsError: null,
 });
