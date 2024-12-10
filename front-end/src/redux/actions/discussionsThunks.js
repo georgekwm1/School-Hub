@@ -179,11 +179,19 @@ export const addGeneralDiscussionEntry =
     );
   };
 
-export const fetchReplies = (questionId) => async (dispatch) => {
+export const fetchReplies = (questionId) => async (dispatch, getState) => {
   dispatch(discussionsActions.fetchDiscussionRepliesRequest());
   dispatch(toggleLoading());
+  const state = getState();
+  const lastFetched = state.discussions.getIn(
+    ['repliesLastFetched', questionId]
+  ) || '';
+
+  const params = new URLSearchParams({
+    lastFetched,
+  }).toString();
   try {
-    const response = await fetch(`${DOMAIN}/questions/${questionId}/replies`, {
+    const response = await fetch(`${DOMAIN}/questions/${questionId}/replies?${params}`, {
       headers: {
         Authorization: `Bearer ${getToken('accessToken')}`,
       },
@@ -193,7 +201,15 @@ export const fetchReplies = (questionId) => async (dispatch) => {
     if (!response.ok) {
       throw new Error(data.message);
     }
-    dispatch(discussionsActions.fetchDiscussionRepliesSuccess(data));
+
+    const { question, repliesList, lastFetched } = data;
+    dispatch(
+      discussionsActions.fetchDiscussionRepliesSuccess(
+        question,
+        repliesList,
+        lastFetched,
+      )
+    );
   } catch (error) {
     console.error(error.message);
     dispatch(
