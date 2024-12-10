@@ -453,21 +453,28 @@ export default function discussionsReducer(state = initialState, action = {}) {
     }
 
     case actions.SYNC_EXISTING_QUESTIONS_SUCCESS: {
-      const { questions, lastSynced } = action.payload;
+      const { questions, lastSynced, lectureId } = action.payload;
       const {deleted, existing } = questions;
+      
+      const entriesPath = lectureId 
+        ? ['lecturesDiscussions', lectureId]
+        : ['courseGeneralDiscussion']
 
+        const lastSyncedPath = lectureId
+          ? ['lecturesDiscussionsLastSyncedAt', lectureId]
+          : ['generalDiscussionLastSyncedAt']
       return state.withMutations((state) => {
         return state
           .set('isLoading', false)
           .set('discussionsError', null)
-          .set('generalDiscussionLastSyncedAt', lastSynced)
-          .update('courseGeneralDiscussion', (questions)=> {
+          .setIn(lastSyncedPath, lastSynced)
+          .updateIn(entriesPath, (questions)=> {
             return questions.filter(question => !deleted.includes(question.get('id')))
           })
           .update('replies', (replies) => {
             return replies.filter((reply, key) => !deleted.includes(key));
           })
-          .update('courseGeneralDiscussion', questions => {
+          .updateIn(entriesPath, questions => {
             return questions.map(question => {
               const questionId = question.get('id');
               return question.merge(existing[questionId]);
