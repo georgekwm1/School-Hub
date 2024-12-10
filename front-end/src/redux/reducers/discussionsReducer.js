@@ -9,6 +9,7 @@ export const initialState = fromJS({
   lectureDiscussionsLastFetchedAt: {},
   generalDiscussionLastSyncedAt: '',
   lecturesDiscussionsLastSyncedAt: {},
+  repliesLastFetchedAt: {},
   isLoading: false,
   discussionsError: null,
 });
@@ -145,12 +146,13 @@ export default function discussionsReducer(state = initialState, action = {}) {
     }
 
     case actions.FETCH_DISCUSSION_REPLIES_SUCCESS: {
-      const { data } = action.payload;
+      const { question, repliesList, lastFetched } = action.payload;
       return state.withMutations((state) => {
         state
           .set('isLoading', false)
           .set('discussionsError', null)
-          .setIn(['replies', data.question.id], fromJS(data));
+          .setIn(['replies', question.id], fromJS({question, repliesList}))
+          .setIn(['repliesLastFetchedAt', question.id], lastFetched);
       });
     }
     case actions.ADD_DISCUSSION_REPLY_REQUEST: {
