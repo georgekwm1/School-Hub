@@ -295,11 +295,12 @@ export const syncExistingQuestionsFailure = (errorMessage) => ({
   },
 });
 
-export const syncExistingQuestionsSuccess = (questions, lastSynced) => ({
+export const syncExistingQuestionsSuccess = (questions, lastSynced, lectureId) => ({
   type: actions.SYNC_EXISTING_QUESTIONS_SUCCESS,
   payload: {
     questions,
     lastSynced,
+    lectureId,
   },
 });
 

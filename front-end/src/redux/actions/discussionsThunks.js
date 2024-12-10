@@ -624,7 +624,7 @@ export const syncExistingQuestions = ( lectureId = null ) => async (dispatch, ge
     );
 
     dispatch(discussionsActions.syncExistingQuestionsSuccess(
-      data.results, data.lastSynced
+      data.results, data.lastSynced, lectureId
     ));
   } catch (error) {
     console.error(error);
