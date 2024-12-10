@@ -590,12 +590,15 @@ export const syncExistingQuestions = ( lectureId = null ) => async (dispatch, ge
   const entriesPath = lectureId
     ? ['lectureDiscussions', lectureId]
     : ['courseGeneralDiscussion']
-  const entries = state.discussions.getIn(entriesPath).map(
+  const entries = state.discussions.getIn(entriesPath)?.map(
     question => ({
       id: question.get('id'),
       updatedAt: question.get('updatedAt')
     })
   ).toJS();
+  // There is not entries existing to sync it
+  if (!entries) return;
+
 
   try {
     const data = await toast.promise(
