@@ -184,7 +184,7 @@ export const fetchReplies = (questionId) => async (dispatch, getState) => {
   dispatch(toggleLoading());
   const state = getState();
   const lastFetched = state.discussions.getIn(
-    ['repliesLastFetched', questionId]
+    ['repliesLastFetchedAt', questionId]
   ) || '';
 
   const params = new URLSearchParams({
