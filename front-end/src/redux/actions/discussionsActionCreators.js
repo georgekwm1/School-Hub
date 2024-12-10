@@ -46,7 +46,11 @@ export const addDiscussionEntryFailure = (errorMessage) => ({
   },
 });
 
-export const addDiscussionEntrySuccess = ({ lectureId, entry, lastFetched }) => ({
+export const addDiscussionEntrySuccess = ({
+  lectureId,
+  entry,
+  lastFetched,
+}) => ({
   type: actions.ADD_DISCUSSION_ENTRY_SUCCESS,
   payload: {
     lectureId,
@@ -295,7 +299,11 @@ export const syncExistingQuestionsFailure = (errorMessage) => ({
   },
 });
 
-export const syncExistingQuestionsSuccess = (questions, lastSynced, lectureId) => ({
+export const syncExistingQuestionsSuccess = (
+  questions,
+  lastSynced,
+  lectureId
+) => ({
   type: actions.SYNC_EXISTING_QUESTIONS_SUCCESS,
   payload: {
     questions,
@@ -309,6 +317,6 @@ export const syncQuestionVote = (questionId, isUpvoted, lectureId = null) => ({
   payload: {
     questionId,
     isUpvoted,
-    lectureId
+    lectureId,
   },
 });

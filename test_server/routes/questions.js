@@ -53,7 +53,6 @@ router.get('/courses/:id/general_discussion', verifyToken, (req, res) => {
       .send({ message: 'User is not enrolled in this course' });
   }
 
-
   const params = [course.id, ...(lastFetched ? [lastFetched] : [])];
   const questionEntries = db
     .prepare(
@@ -65,7 +64,7 @@ router.get('/courses/:id/general_discussion', verifyToken, (req, res) => {
       ORDER BY updatedAt DESC;
     `
     )
-    .all(...params)
+    .all(...params);
   const newLastFetched = getCurrentTimeInDBFormat();
 
   // Now, here I'll get the userData + is it upvoted or not
@@ -102,9 +101,9 @@ router.get('/lectures/:id/discussion', verifyToken, (req, res) => {
         WHERE lectureId = ?
         ${lastFetched ? 'AND createdAt > ?' : ''}
         ORDER BY updatedAt DESC;
-      `).all(
-        ...[id].concat(lastFetched ? [lastFetched] : [])
-      );
+      `
+      )
+      .all(...[id].concat(lastFetched ? [lastFetched] : []));
 
     const newLastFetchedTime = getCurrentTimeInDBFormat();
 
@@ -118,8 +117,8 @@ router.get('/lectures/:id/discussion', verifyToken, (req, res) => {
         upvoted,
       };
     });
-    
-    res.json({results, lastFetched: newLastFetchedTime});
+
+    res.json({ results, lastFetched: newLastFetchedTime });
   } else {
     res.status(404).send({ message: 'Lecture not found' });
   }
@@ -166,20 +165,20 @@ router.post('/courses/:id/general_discussion', verifyToken, (req, res) => {
       repliesCount: 0,
     };
 
-    io.to(`generalDiscussion-${courseId}`).except(`user-${userId}`).emit(
-      'generalDiscussionQuestionCreated',
-      {
+    io.to(`generalDiscussion-${courseId}`)
+      .except(`user-${userId}`)
+      .emit('generalDiscussionQuestionCreated', {
         payload: {
           newEntry,
           lastFetched,
         },
         userId,
         courseId,
-      }
-    )
+      });
 
     res.status(201).json({
-      newEntry, lastFetched
+      newEntry,
+      lastFetched,
     });
   } catch (error) {
     console.error(error);
@@ -229,14 +228,12 @@ router.post('/lectures/:id/discussion', verifyToken, (req, res) => {
     });
 
     // This is after the request is sent to make the response for user faster
-    io.to(`lectureDiscussion-${lectureId}`).except(`user-${userId}`).emit(
-      'lectureQuestionCreated',
-      {
+    io.to(`lectureDiscussion-${lectureId}`)
+      .except(`user-${userId}`)
+      .emit('lectureQuestionCreated', {
         payload: { question: newEntry, lectureId, lastFetched },
         userId,
-      }
-    )
-
+      });
   } catch (error) {
     console.error(error);
     res.status(500).send({ message: 'Internal server error' });
@@ -296,18 +293,20 @@ router.post('/questions/:id/vote', verifyToken, (req, res) => {
       }
 
       const { courseId, lectureId } = question;
-      const sockerRoom = courseId ? `generalDiscussion-${courseId}` : `lectureDiscussion-${lectureId}`;
+      const sockerRoom = courseId
+        ? `generalDiscussion-${courseId}`
+        : `lectureDiscussion-${lectureId}`;
 
-      io.to(sockerRoom).except(`user-${userId}`).emit(
-        'questionUpvoteToggled', {
+      io.to(sockerRoom)
+        .except(`user-${userId}`)
+        .emit('questionUpvoteToggled', {
           payload: {
             questionId,
             isUpvoted: action === 'upvote',
             lectureId,
           },
           userId,
-        }
-      )
+        });
 
       // I'm not sure.. should I just return success code and it's the
       // role of the syncing mechanism to update or bring new numbers..
@@ -364,23 +363,24 @@ router.put('/questions/:id', verifyToken, (req, res) => {
         .get(id);
 
       const editedQuestion = {
-          ...updatedQuestion,
-          user: getUserData(userId),
-          upvoted: getUpvoteStatus(userId, id, 'question'),
-        }
+        ...updatedQuestion,
+        user: getUserData(userId),
+        upvoted: getUpvoteStatus(userId, id, 'question'),
+      };
 
       res.status(200).json(editedQuestion);
 
       const courseId = question.courseId;
       const lectureId = question.lectureId;
-      const room = lectureId ? `lectureDiscussion-${lectureId}` : `generalDiscussion-${courseId}`;
-      const event = lectureId ? 'lectureQuestionEdited' : 'generalDiscussionQuestionEdited';
-      io.to(room).except(`user-${userId}`).emit(
-        event,
-        {
-          payload: {editedQuestion}
-        }
-      )
+      const room = lectureId
+        ? `lectureDiscussion-${lectureId}`
+        : `generalDiscussion-${courseId}`;
+      const event = lectureId
+        ? 'lectureQuestionEdited'
+        : 'generalDiscussionQuestionEdited';
+      io.to(room).except(`user-${userId}`).emit(event, {
+        payload: { editedQuestion },
+      });
     })();
   } catch (error) {
     console.error(error);
@@ -415,23 +415,23 @@ router.delete('/questions/:id', verifyToken, (req, res) => {
       // useless if the cascade works.. whey did i forget this?!
       // db.prepare('DELETE FROM replies WHERE questionId = ?').run(questionId);
 
-
       res.status(200).json({ message: 'Question deleted successfully' });
       // I think i have to let the user see the response first then let teh delay happen for others
-      // Won't make difference for them. 
+      // Won't make difference for them.
       const lectureId = question.lectureId;
-      const room = lectureId ? `lectureDiscussion-${lectureId}` : `generalDiscussion-${courseId}`;
-      const event = lectureId ? 'lectureQuestionDeleted' : 'generalDiscussionQuestionDeleted';
-      io.to(room).except(`user-${userId}`).emit(
-        event,
-        {
-          payload: {
-            questionId,
-            lectureId,
-          },
-          userId,
-        }
-      )
+      const room = lectureId
+        ? `lectureDiscussion-${lectureId}`
+        : `generalDiscussion-${courseId}`;
+      const event = lectureId
+        ? 'lectureQuestionDeleted'
+        : 'generalDiscussionQuestionDeleted';
+      io.to(room).except(`user-${userId}`).emit(event, {
+        payload: {
+          questionId,
+          lectureId,
+        },
+        userId,
+      });
     })();
   } catch (error) {
     console.error(error);
@@ -441,97 +441,109 @@ router.delete('/questions/:id', verifyToken, (req, res) => {
 
 // Sync existing questions
 router.post('/questions/diff', verifyToken, (req, res) => {
-  // After writing this endpoint.... 
+  // After writing this endpoint....
   // I sometimes think that this is an overkill
   // and it's even better to fetch teh whole data without all these comparisons here..
-  // And if it's about deletion .. there is no censitive data.. 
-  // so.. deletion is no big deal if it delays for some users if entries were 
+  // And if it's about deletion .. there is no censitive data..
+  // so.. deletion is no big deal if it delays for some users if entries were
   // Still cached!;
   // Or am i saving bandwidth for speed for what
   // Because also in the front-ned.. there will be around up to  O(N*N) to merge changes
   // Sinse they are in a form of list not a map.. so with each Id.. It has to find it
   // and either delete it or update it..
-  
+
   // So... Now, i'm really thining.. should I just fetch teh whole thing without these checks..
-  // But.. I don't know.. I may .. 
+  // But.. I don't know.. I may ..
   // I may just keep syncing this way.... or I dont't know if there is any better
   // I think i'm almost confident in everything else I did till now..
   // But syncing those existing persisted data in the state..
   // No.. I'm not...
 
-
-
   // After thinking again.. I'm either way fetching all questions.. But I might limit it
   // With parametrs in this case.. and i'm also saving the getUser data fetches for each
   // Entry.. and the comparison is nothing but updatedAt
-  // 
+  //
   // And after all this.. I simply might be making less that smart claims here
   // Because I havn't slept well.. and the problem was written around 1 am and now it's 5
   // So.. I'm not sure what I'm doing anywa..
   // Bye.. thanks for your looking at the code whoever you are
   const userId = req.userId;
   const { entries, lastFetched, courseId, lectureId } = req.body;
-  
+
   if (courseId && lectureId) {
-    return res.status(401).json({ message: 'courseId and lectureId are both defined?!.. which category are the questions?' });
+    return res.status(401).json({
+      message:
+        'courseId and lectureId are both defined?!.. which category are the questions?',
+    });
   } else if (courseId) {
-    const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(courseId);
+    const course = db
+      .prepare('SELECT * FROM courses WHERE id = ?')
+      .get(courseId);
     if (!course) {
       return res.status(404).send({ message: 'Course not found' });
     }
   } else if (lectureId) {
-    const lecture = db.prepare('SELECT * FROM lectures WHERE id = ?').get(lectureId);
+    const lecture = db
+      .prepare('SELECT * FROM lectures WHERE id = ?')
+      .get(lectureId);
     if (!lecture) {
       return res.status(404).send({ message: 'Lecture not found' });
     }
   } else {
-    // I don't konw why here i'm using .json and above .send?!  .. .... anyways.. 
+    // I don't konw why here i'm using .json and above .send?!  .. .... anyways..
     return res.status(401).json({ message: 'Missing course or lecture id' });
   }
 
   // for ease or access and speed of retrieval and removal
   const entriesUpdatedAt = new Map(
-    entries.map(entry => [entry.id, entry.updatedAt])
+    entries.map((entry) => [entry.id, entry.updatedAt])
   );
-  const existingQuestions = db.prepare(
-    `SELECT id, updatedAt, title, body, repliesCount, upvotes
+  const existingQuestions = db
+    .prepare(
+      `SELECT id, updatedAt, title, body, repliesCount, upvotes
       FROM questions
     WHERE ${courseId ? 'courseId' : 'lectureId'} = ?
       AND createdAt <= ?
     ORDER BY updatedAt DESC;
     `
-  ).all(
-    courseId ? courseId : lectureId,
-    lastFetched,
-  );
-  const userVotes = db.prepare(`
+    )
+    .all(courseId ? courseId : lectureId, lastFetched);
+  const userVotes = db
+    .prepare(
+      `
     SELECT questionId FROM votes
     -- If you are wondering... take a look at the vots table and you will see
     -- Ther is replyId and questionId..
     WHERE userId = ? AND questionId IS NULL;
-    `).pluck().all(userId);
+    `
+    )
+    .pluck()
+    .all(userId);
 
   const results = {
     existing: {},
-    deleted: [], 
-  }
+    deleted: [],
+  };
 
   for (const entry of existingQuestions) {
     const { id, updatedAt, repliesCount, upvotes } = entry;
     const questionEntry = {
-      id, updatedAt, repliesCount, upvotes
+      id,
+      updatedAt,
+      repliesCount,
+      upvotes,
     };
     if (updatedAt !== entriesUpdatedAt.get(id)) {
       questionEntry.updatedAt = updatedAt;
       questionEntry.title = entry.title;
       questionEntry.body = entry.body;
-    };
+    }
 
     entriesUpdatedAt.delete(id);
     results.existing[id] = questionEntry;
-  };
+  }
 
-  existingQuestions.forEach(entry => {
+  existingQuestions.forEach((entry) => {
     entry.upvoted = userVotes.includes(entry.id);
   });
 
@@ -540,6 +552,6 @@ router.post('/questions/diff', verifyToken, (req, res) => {
     results,
     lastSynced: getCurrentTimeInDBFormat(),
   });
-})
+});
 
 module.exports = router;

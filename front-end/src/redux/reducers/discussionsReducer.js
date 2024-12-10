@@ -41,12 +41,12 @@ export default function discussionsReducer(state = initialState, action = {}) {
 
     case actions.LECTURE_DISCUSSION_SUCCESS: {
       const { entries, lectureId, lastFetched } = action.payload;
-      
+
       return state.withMutations((state) => {
         state
           .set('discussionsError', null)
           .set('isLoading', false)
-          .updateIn(['lecturesDiscussions', lectureId], questions => {
+          .updateIn(['lecturesDiscussions', lectureId], (questions) => {
             if (questions) {
               return questions.unshift(...fromJS(entries));
             } else {
@@ -78,7 +78,7 @@ export default function discussionsReducer(state = initialState, action = {}) {
           .updateIn(['lecturesDiscussions', entry.lectureId], (entries) =>
             entries.unshift(fromJS(entry))
           )
-          .setIn(['lectureDiscussionsLastFetchedAt', lectureId], lastFetched)
+          .setIn(['lectureDiscussionsLastFetchedAt', lectureId], lastFetched);
       });
     }
 
@@ -100,8 +100,8 @@ export default function discussionsReducer(state = initialState, action = {}) {
         state
           .set('isLoading', false)
           .set('discussionsError', null)
-          .update('courseGeneralDiscussion', questions => {
-            return questions.unshift(...fromJS(entries ));
+          .update('courseGeneralDiscussion', (questions) => {
+            return questions.unshift(...fromJS(entries));
           })
           .set('generalDiscussionLastFetchedAt', lastFetched);
       });
@@ -435,10 +435,12 @@ export default function discussionsReducer(state = initialState, action = {}) {
           .set('isLoading', false)
           .set('discussionsError', null)
           .updateIn(['replies', questionId, 'repliesList'], (replies) => {
-            const index = replies.findIndex(reply => reply.get('id') === replyId);
+            const index = replies.findIndex(
+              (reply) => reply.get('id') === replyId
+            );
 
-            return replies.set(index, fromJS(editedReply))
-          })
+            return replies.set(index, fromJS(editedReply));
+          });
       });
     }
 
@@ -456,28 +458,30 @@ export default function discussionsReducer(state = initialState, action = {}) {
 
     case actions.SYNC_EXISTING_QUESTIONS_SUCCESS: {
       const { questions, lastSynced, lectureId } = action.payload;
-      const {deleted, existing } = questions;
-      
-      const entriesPath = lectureId 
-        ? ['lecturesDiscussions', lectureId]
-        : ['courseGeneralDiscussion']
+      const { deleted, existing } = questions;
 
-        const lastSyncedPath = lectureId
-          ? ['lecturesDiscussionsLastSyncedAt', lectureId]
-          : ['generalDiscussionLastSyncedAt']
+      const entriesPath = lectureId
+        ? ['lecturesDiscussions', lectureId]
+        : ['courseGeneralDiscussion'];
+
+      const lastSyncedPath = lectureId
+        ? ['lecturesDiscussionsLastSyncedAt', lectureId]
+        : ['generalDiscussionLastSyncedAt'];
       return state.withMutations((state) => {
         return state
           .set('isLoading', false)
           .set('discussionsError', null)
           .setIn(lastSyncedPath, lastSynced)
-          .updateIn(entriesPath, (questions)=> {
-            return questions.filter(question => !deleted.includes(question.get('id')))
+          .updateIn(entriesPath, (questions) => {
+            return questions.filter(
+              (question) => !deleted.includes(question.get('id'))
+            );
           })
           .update('replies', (replies) => {
             return replies.filter((reply, key) => !deleted.includes(key));
           })
-          .updateIn(entriesPath, questions => {
-            return questions.map(question => {
+          .updateIn(entriesPath, (questions) => {
+            return questions.map((question) => {
               const questionId = question.get('id');
               return question.merge(existing[questionId]);
             });
@@ -491,16 +495,15 @@ export default function discussionsReducer(state = initialState, action = {}) {
       const path = lectureId
         ? ['lecturesDiscussions', lectureId]
         : ['courseGeneralDiscussion'];
-      return state
-        .updateIn(path, (questions) => {
-          const index = questions.findIndex(
-            (question) => question.get('id') === questionId
-          );
+      return state.updateIn(path, (questions) => {
+        const index = questions.findIndex(
+          (question) => question.get('id') === questionId
+        );
 
-          return questions.updateIn([index, 'upvotes'], (upvotes) => {
-            return upvotes + (isUpvoted ? 1 : -1);
-          });
-        })
+        return questions.updateIn([index, 'upvotes'], (upvotes) => {
+          return upvotes + (isUpvoted ? 1 : -1);
+        });
+      });
     }
 
     default: {
