@@ -575,11 +575,22 @@ export const editReply = (questionId, replyId, body) => async (dispatch) => {
   }
 };
 
-export const syncExistingGeneralQuestions = () => async (dispatch, getState) => {
+export const syncExistingQuestions = ( lectureId = null ) => async (dispatch, getState) => {
   const state = getState();
-  const courseId = state.ui.getIn(['course', 'id']);
-  const lastFetched = state.discussions.get('generalDiscussionLastFetchedAt');
-  const entries = state.discussions.get('courseGeneralDiscussion').map(
+
+  let courseId = '';
+  if (!lectureId) {
+    courseId = state.ui.getIn(['course', 'id']);
+  }
+  const lastFetched = state.discussions.getIn(
+    lectureId
+    ? ['lectureDiscussionsLastFetchedAt', lectureId]
+    : ['generalDiscussionLastFetchedAt']
+  );
+  const entriesPath = lectureId
+    ? ['lectureDiscussions', lectureId]
+    : ['courseGeneralDiscussion']
+  const entries = state.discussions.getIn(entriesPath).map(
     question => ({
       id: question.get('id'),
       updatedAt: question.get('updatedAt')
@@ -588,9 +599,9 @@ export const syncExistingGeneralQuestions = () => async (dispatch, getState) => 
 
   try {
     const data = await toast.promise(
-      fetch(`${DOMAIN}/courses/${courseId}/general_discussion/diff`, {
+      fetch(`${DOMAIN}/questions/diff`, {
         method: 'POST',
-        body: JSON.stringify({entries, lastFetched}),
+        body: JSON.stringify({entries, lastFetched, courseId, lectureId}),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${getToken('accessToken')}`,
