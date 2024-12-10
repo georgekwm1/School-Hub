@@ -15,6 +15,7 @@ const {
   getUserData,
   getUpvoteStatus,
   isCourseAdmin,
+  getCurrentTimeInDBFormat,
 } = require('../helperFunctions');
 const { verifyToken } = require('../middlewares/authMiddlewares');
 
@@ -41,6 +42,7 @@ function getReplyCourseId(replyId) {
 router.get('/questions/:id/replies', verifyToken, (req, res) => {
   const questionId = req.params.id;
   const userId = req.userId;
+  const { lastFetched } = req.query;
 
   const question = db
     .prepare(
@@ -58,15 +60,17 @@ router.get('/questions/:id/replies', verifyToken, (req, res) => {
   const user = getUserData(question.userId);
   const upvoted = getUpvoteStatus(userId, question.id, 'question');
 
+  const params = [questionId].concat(lastFetched ? [lastFetched] : []);
   const replies = db
     .prepare(
       `SELECT id, body, userId, updatedAt, upvotes
     FROM replies
     WHERE questionId = ?
+      ${lastFetched ? 'AND createdAt > ?' : ''}
     ORDER BY updatedAt DESC`
-    )
-    .all(questionId);
+    ).all(...params);
 
+  const newLastFetched = getCurrentTimeInDBFormat();
   const results = replies.map((reply) => {
     const user = getUserData(reply.userId);
     const upvoted = getUpvoteStatus(userId, reply.id, 'reply');
@@ -78,7 +82,11 @@ router.get('/questions/:id/replies', verifyToken, (req, res) => {
     };
   });
 
-  res.json({ question: { ...question, user, upvoted }, repliesList: results });
+  res.json({
+    question: { ...question, user, upvoted },
+    repliesList: results,
+    lastFetched: newLastFetched,
+  });
 });
 
 // Change user vote for a replies
