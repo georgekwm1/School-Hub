@@ -284,19 +284,19 @@ export const editReplySuccess = (questionId, editedReply) => ({
   },
 });
 
-export const syncExistingGeneralQuestionsRequest = () => ({
-  type: actions.SYNC_EXISTING_GENERAL_QUESTIONS_REQUEST,
+export const syncExistingQuestionsRequest = () => ({
+  type: actions.SYNC_EXISTING_QUESTIONS_REQUEST,
 });
 
-export const syncExistingGeneralQuestionsFailure = (errorMessage) => ({
-  type: actions.SYNC_EXISTING_GENERAL_QUESTIONS_FAILURE,
+export const syncExistingQuestionsFailure = (errorMessage) => ({
+  type: actions.SYNC_EXISTING_QUESTIONS_FAILURE,
   payload: {
     errorMessage,
   },
 });
 
-export const syncExistingGeneralQuestionsSuccess = (questions, lastSynced) => ({
-  type: actions.SYNC_EXISTING_GENERAL_QUESTIONS_SUCCESS,
+export const syncExistingQuestionsSuccess = (questions, lastSynced) => ({
+  type: actions.SYNC_EXISTING_QUESTIONS_SUCCESS,
   payload: {
     questions,
     lastSynced,

@@ -588,7 +588,7 @@ export const syncExistingQuestions = ( lectureId = null ) => async (dispatch, ge
     : ['generalDiscussionLastFetchedAt']
   );
   const entriesPath = lectureId
-    ? ['lectureDiscussions', lectureId]
+    ? ['lecturesDiscussions', lectureId]
     : ['courseGeneralDiscussion']
   const entries = state.discussions.getIn(entriesPath)?.map(
     question => ({
@@ -596,6 +596,8 @@ export const syncExistingQuestions = ( lectureId = null ) => async (dispatch, ge
       updatedAt: question.get('updatedAt')
     })
   ).toJS();
+  console.log(entries, lectureId, lastFetched);
+  
   // There is not entries existing to sync it
   if (!entries) return;
 
@@ -621,14 +623,14 @@ export const syncExistingQuestions = ( lectureId = null ) => async (dispatch, ge
       }
     );
 
-    dispatch(discussionsActions.syncExistingGeneralQuestionsSuccess(
+    dispatch(discussionsActions.syncExistingQuestionsSuccess(
       data.results, data.lastSynced
     ));
   } catch (error) {
     console.error(error);
     toast.error('Error syncing existing questions');
     dispatch(
-      discussionsActions.syncExistingGeneralQuestionsFailure(
+      discussionsActions.syncExistingQuestionsFailure(
         `Error syncing the existing questions: ${error.message}`
       )
     );

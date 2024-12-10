@@ -440,11 +440,11 @@ export default function discussionsReducer(state = initialState, action = {}) {
       });
     }
 
-    case actions.SYNC_EXISTING_GENERAL_QUESTIONS_REQUEST: {
+    case actions.SYNC_EXISTING_QUESTIONS_REQUEST: {
       return state.set('isLoading', true);
     }
 
-    case actions.SYNC_EXISTING_GENERAL_QUESTIONS_FAILURE: {
+    case actions.SYNC_EXISTING_QUESTIONS_FAILURE: {
       return state.withMutations((state) => {
         state
           .set('isLoading', false)
@@ -452,7 +452,7 @@ export default function discussionsReducer(state = initialState, action = {}) {
       });
     }
 
-    case actions.SYNC_EXISTING_GENERAL_QUESTIONS_SUCCESS: {
+    case actions.SYNC_EXISTING_QUESTIONS_SUCCESS: {
       const { questions, lastSynced } = action.payload;
       const {deleted, existing } = questions;
 
