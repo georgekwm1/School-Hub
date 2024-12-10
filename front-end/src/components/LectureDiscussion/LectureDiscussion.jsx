@@ -23,7 +23,7 @@ export default function LectureDiscussion({ lectureId = '' }) {
   const entries = useSelector(makeLectureDiscussionsSelector(lectureId));
 
   useJoinRoom(`lectureDiscussion-${lectureId}`);
-  useSyncLectureDiscussions();
+  useSyncLectureDiscussions(lectureId);
 
   useEffect(() => {
     // This is not completely right. as still the logic to force reload or by real time pinging

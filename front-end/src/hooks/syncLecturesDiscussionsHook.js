@@ -3,11 +3,16 @@ import { useSelector, useDispatch } from 'react-redux';
 import { selectIsSocketReady } from '../redux/selectors/uiSelectors';
 import { getSocket } from '../socket';
 import { addDiscussionEntrySuccess, deleteQuestionSuccess, editQuestionSuccess, syncQuestionVote } from '../redux/actions/discussionsActionCreators';
+import { syncExistingQuestions } from '../redux/actions/discussionsThunks';
 
 
-export default function useSyncLectureDiscussions() {
+export default function useSyncLectureDiscussions(lectureId) {
 	const dispatch = useDispatch();
 	const isSocketReady = useSelector(selectIsSocketReady);
+
+	useEffect(() => {
+		dispatch(syncExistingQuestions(lectureId));
+	}, [dispatch, lectureId]);
 
 	useEffect(() => {
 		const socket = getSocket();
