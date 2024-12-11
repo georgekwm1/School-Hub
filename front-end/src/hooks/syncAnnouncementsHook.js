@@ -15,10 +15,10 @@ export default function useSyncAnnouncements() {
 
   useEffect(() => {
     dispatch(syncExistingAnnouncements());
-  }, []);
+  }, [dispatch]);
 
+  const socket = getSocket();
   useEffect(() => {
-    const socket = getSocket();
 
     if (socket) {
       // Sync Creation
@@ -51,5 +51,5 @@ export default function useSyncAnnouncements() {
         socket.off('announcementUpdated');
       };
     }
-  }, [dispatch, isSocketReady]);
+  }, [dispatch, socket, isSocketReady]);
 }
