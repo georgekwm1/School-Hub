@@ -514,7 +514,7 @@ router.post('/questions/diff', verifyToken, (req, res) => {
     SELECT questionId FROM votes
     -- If you are wondering... take a look at the vots table and you will see
     -- Ther is replyId and questionId..
-    WHERE userId = ? AND questionId IS NULL;
+    WHERE userId = ? AND questionId IS NOT NULL;
     `
     )
     .pluck()
