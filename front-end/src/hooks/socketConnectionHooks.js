@@ -11,10 +11,15 @@ export default function useConnectSocket() {
   const token = getToken('accessToken');
   const dispatch = useDispatch();
 
-  useEffect(() => {
+  useEffect(async () => {
     if (token && isLoggedIn) {
-      connectSocket(token);
-			dispatch(setSocketReadiness(true));
+      try {
+        await connectSocket(token);
+        dispatch(setSocketReadiness(true));
+      } catch (error) {
+        console.error('Error connecting the socket ' + error);
+        dispatch(setSocketReadiness(false));
+      }
     } else {
 			disconnectSocket();
 			dispatch(setSocketReadiness(false));
