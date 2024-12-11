@@ -321,3 +321,12 @@ export const syncQuestionVote = (questionId, isUpvoted, lectureId = null) => ({
     lectureId,
   },
 });
+
+export const syncReplyVote = (questionId, replyId, isUpvoted) => ({
+  type: actions.SYNC_REPLY_VOTE,
+  payload: {
+    questionId,
+    replyId,
+    isUpvoted,
+  },
+})
