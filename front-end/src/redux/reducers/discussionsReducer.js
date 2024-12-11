@@ -532,6 +532,18 @@ export default function discussionsReducer(state = initialState, action = {}) {
       });
     }
 
+    case actions.SYNC_REPLY_VOTE: {
+      const { questionId, replyId, isUpvoted } = action.payload;
+
+      return state.updateIn(['replies', questionId, 'repliesList'], (replies) => {
+        const index = replies.findIndex((reply) => reply.get('id') === replyId);
+
+        return replies.updateIn([index, 'upvotes'], (upvotes) => {
+          return upvotes + (isUpvoted ? 1 : -1);
+        });
+      });
+    }
+
     default: {
       return state;
     }
