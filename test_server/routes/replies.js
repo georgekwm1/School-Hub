@@ -209,6 +209,7 @@ router.post('/questions/:id/replies', verifyToken, (req, res) => {
 // Edit a reply
 router.put('/replies/:id', verifyToken, (req, res) => {
   const { id } = req.params;
+  const io = req.app.get('io');
   const { body } = req.body;
   const userId = req.userId;
 
@@ -231,6 +232,11 @@ router.put('/replies/:id', verifyToken, (req, res) => {
       .get(id);
 
     res.status(200).json(updatedReply);
+
+    io.to(`question-${updatedReply.questionId}`).except(`user-${userId}`).emit('replyUpdated', {
+      payload: {updatedReply},
+      userId,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).send({ message: 'Error updating reply' });
