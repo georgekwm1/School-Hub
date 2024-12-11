@@ -10,6 +10,7 @@ export const initialState = fromJS({
   generalDiscussionLastSyncedAt: '',
   lecturesDiscussionsLastSyncedAt: {},
   repliesLastFetchedAt: {},
+  repliesLastSyncedAt: {},
   isLoading: false,
   discussionsError: null,
 });
@@ -541,6 +542,33 @@ export default function discussionsReducer(state = initialState, action = {}) {
         return replies.updateIn([index, 'upvotes'], (upvotes) => {
           return upvotes + (isUpvoted ? 1 : -1);
         });
+      });
+    }
+
+    case actions.SYNC_EXISTING_REPLIES_REQUEST:
+      return state.set('isLoading', true);
+
+    case actions.SYNC_EXISTING_REPLIES_FAILURE: {
+      return state.set('discussionsError', action.payload.error)
+              .set('isLoading', false);
+    }
+    case actions.SYNC_EXISTING_REPLIES_SUCCESS: {
+      const { lastSynced, results, questionId } = action.payload;
+      const { existing, deleted } = results;
+      const repliesListPath = ['replies', questionId, 'repliesList'];
+
+      return state.withMutations((state) => {
+        return state
+          .setIn(['replies', questionId, 'lastSyncedAt'], lastSynced)
+          .updateIn(repliesListPath, (replies) => {
+            return replies.filter((reply) => !deleted.includes(reply.get('id')));
+          })
+          .updateIn(repliesListPath, (replies) => {
+            return replies.map((reply) => {
+              const replyId = reply.get('id');
+              return reply.merge(existing[replyId]);
+            });
+          });
       });
     }
 
