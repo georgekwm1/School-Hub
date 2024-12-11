@@ -10,7 +10,7 @@ import {
 import { getSocket } from '../socket';
 
 
-export default function useSyncReplies() {
+export default function useSyncReplies(questionId) {
 	const dispatch = useDispatch();
 	const isSocketReady = useSelector(selectIsSocketReady);
 	const socket = getSocket();
