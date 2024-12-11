@@ -160,6 +160,7 @@ router.post('/replies/:id/vote', verifyToken, (req, res) => {
 // Create a reply for a question
 router.post('/questions/:id/replies', verifyToken, (req, res) => {
   const questionId = req.params.id;
+  const io = req.app.get('io');
   const { body } = req.body;
   const userId = req.userId;
 
@@ -185,10 +186,17 @@ router.post('/questions/:id/replies', verifyToken, (req, res) => {
     const user = getUserData(newReply.userId);
 
     delete newReply.userId;
-    res.status(201).json({
+    const response = {
       ...newReply,
       user,
       upvoted: false,
+    }
+
+    res.status(201).json(response);
+
+    io.to(`question-${questionId}`).except(`user-${userId}`).emit('replyCreated', {
+      payload: { newReply: response },
+      userId,
     });
   } catch (error) {
     console.error(error);
