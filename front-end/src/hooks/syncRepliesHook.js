@@ -1,7 +1,10 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectIsSocketReady } from '../redux/selectors/uiSelectors';
-import { addDiscussionReplySuccess } from '../redux/actions/discussionsActionCreators';
+import {
+	deleteReplySuccess,
+	addDiscussionReplySuccess,
+} from '../redux/actions/discussionsActionCreators';
 import { getSocket } from '../socket';
 
 
