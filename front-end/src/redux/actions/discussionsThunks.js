@@ -663,3 +663,54 @@ export const syncExistingQuestions =
       );
     }
   };
+
+export const syncExistingReplies = (questionId) => async (dispatch, getState) => {
+  const state = getState();
+
+  const lastFetched = state.discussions.getIn(['repliesLastFetchedAt', questionId]);
+  const entries = state.discussions.getIn(
+    ['replies', questionId, 'repliesList']
+  ).map(
+    reply => ({id: reply.id, updatedAt: reply.updatedAt})
+  ).toJS();
+  
+  if (!entries) return;
+
+  try {
+    const data = await toast.promise(
+      fetch(`${DOMAIN}/questions/${questionId}/replies/diff`, {
+        method: 'POST',
+        body: JSON.stringify({ entries, lastFetched }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${getToken('accessToken')}`,
+        },
+      }).then((response) => {
+        if (!response.ok) {
+          throw new Error(response.statusText);
+        }
+        return response.json();
+      }),
+      {
+        success: 'Saved replies synced successfully',
+        loading: 'Syncing existing replies',
+        error: 'Error syncing replies',
+      }
+    );
+
+    dispatch(
+      discussionsActions.syncExistingRepliesSuccess(
+        data.results,
+        data.lastSynced,
+        questionId
+      )
+    );
+  } catch (error) {
+    console.error(error);
+    dispatch(
+      discussionsActions.syncExistingRepliesFailure(
+        `Error syncing the existing replies: ${error.message}`
+      )
+    );
+  }
+}
