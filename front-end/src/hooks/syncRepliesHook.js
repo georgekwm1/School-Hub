@@ -5,7 +5,7 @@ import { addDiscussionReplySuccess } from '../redux/actions/discussionsActionCre
 import { getSocket } from '../socket';
 
 
-export default function useSyncReplies(questionId) {
+export default function useSyncReplies() {
 	const dispatch = useDispatch();
 	const isSocketReady = useSelector(selectIsSocketReady);
 
@@ -20,7 +20,7 @@ export default function useSyncReplies(questionId) {
 
 			// Sync deletion
 			socket.on('replyDeleted', ({payload}) => {
-				const {replyId} = payload;
+				const {replyId, questionId} = payload;
 				dispatch(deleteReplySuccess(replyId, questionId))
 			})
 

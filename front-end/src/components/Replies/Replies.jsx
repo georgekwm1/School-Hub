@@ -42,7 +42,7 @@ export default function Replies() {
   }, [dispatch, questionId]);
 
   useJoinRoom(`question-${questionId}`);
-  useSyncReplies(questionId);
+  useSyncReplies();
 
   const handleSubmission = async () => {
     try {

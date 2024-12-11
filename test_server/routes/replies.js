@@ -271,7 +271,7 @@ router.delete('/replies/:id', verifyToken, (req, res) => {
     res.status(200).json({ message: 'Reply deleted successfully' });
 
     io.to(`question-${reply.questionId}`).except(`user-${userId}`).emit('replyDeleted', {
-      payload: {replyId},
+      payload: {replyId, questionId: reply.questionId},
       userId
     });
   } catch (error) {
