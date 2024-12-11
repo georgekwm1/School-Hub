@@ -35,14 +35,14 @@ export default function Replies() {
     state.ui.getIn(['user', 'picture'])
   );
 
-  useJoinRoom(`question-${questionId}`);
-  useSyncReplies();
-
   useEffect(() => {
     // again... pass the logic of offline experience and also
     // real time pinging if new reply addid
       dispatch(fetchReplies(questionId));
   }, [dispatch, questionId]);
+
+  useJoinRoom(`question-${questionId}`);
+  useSyncReplies();
 
   const handleSubmission = async () => {
     try {
