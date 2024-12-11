@@ -213,8 +213,7 @@ router.put('/replies/:id', verifyToken, (req, res) => {
   const userId = req.userId;
 
   try {
-    const reply = db.prepare('SELECT * FROM replies WHERE id = ?').get(id);
-
+    const reply = db.prepare('SELECT id, userId FROM replies WHERE id = ?').get(id);
     if (!reply) {
       return res.status(404).send({ message: 'Reply not found' });
     }
@@ -228,16 +227,10 @@ router.put('/replies/:id', verifyToken, (req, res) => {
     db.prepare('UPDATE replies SET body = ? WHERE id = ?').run(body, id);
 
     const updatedReply = db
-      .prepare('SELECT * FROM replies WHERE id = ?')
+      .prepare('SELECT id, questionId, body, updatedAt FROM replies WHERE id = ?')
       .get(id);
-    const user = getUserData(updatedReply.userId);
 
-    delete updatedReply.userId;
-    res.status(200).json({
-      ...updatedReply,
-      user,
-      upvoted: false, // Assuming upvote status is false by default
-    });
+    res.status(200).json(updatedReply);
   } catch (error) {
     console.error(error);
     res.status(500).send({ message: 'Error updating reply' });
