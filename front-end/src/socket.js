@@ -12,7 +12,22 @@ export const connectSocket = (token) => {
 		});
 	}
 
-	return socket;
+	return new Promise((resolve, reject) => {
+		let onError;
+		let onConnect;
+    onError = (error) => {
+      socket.off('connect', onConnect);
+      reject(error);
+    };
+
+    onConnect = () => {
+      socket.off('connect_error', onError);
+      resolve(socket);
+    };
+
+    socket.once('connect', onConnect);
+    socket.once('connect_error', onError);
+  });
 }
 
 export const disconnectSocket = () => {

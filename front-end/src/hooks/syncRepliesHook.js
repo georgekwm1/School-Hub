@@ -13,9 +13,8 @@ import { getSocket } from '../socket';
 export default function useSyncReplies() {
 	const dispatch = useDispatch();
 	const isSocketReady = useSelector(selectIsSocketReady);
-
+	const socket = getSocket();
 	useEffect(() => {
-		const socket = getSocket();
 		if (socket) {
 			// Sync creatron 
 			socket.on('replyCreated', ({payload}) => {
@@ -51,5 +50,5 @@ export default function useSyncReplies() {
 				socket.off('replyUpvoteToggled');
 			}
 		}
-	}, [dispatch, isSocketReady]);
+	}, [dispatch, socket, isSocketReady]);
 }
