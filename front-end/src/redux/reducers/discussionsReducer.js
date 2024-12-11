@@ -465,7 +465,7 @@ export default function discussionsReducer(state = initialState, action = {}) {
               (reply) => reply.get('id') === replyId
             );
 
-            return replies.set(index, fromJS(editedReply));
+            return replies.update(index, reply => reply.merge(editedReply));
           });
       });
     }
