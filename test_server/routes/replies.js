@@ -290,4 +290,55 @@ router.delete('/replies/:id', verifyToken, (req, res) => {
   }
 });
 
+// Sync existing replies
+router.post('/questions/:questionId/replies/diff', verifyToken, (req, res) => {
+  const {questionId} = req.params;
+  const userId = req.userId;
+  const { entries, lastFetched } = req.body;
+
+  const entriesMap = new Map(entries.map(
+    reply => [reply.id, reply.updatedAt]
+  ));
+
+  const dbEntries = db.prepare(
+    `SELECT id, updatedAt, body, upvotes FROM replies 
+      WHERE questionId = ? AND createdAt <= ?;`
+  ).all(questionId, lastFetched);
+  const userVotes = db.prepare(
+    `SELECT replyId, userId FROM votes WHERE userId = ? ;`
+  ).pluck().all(userId);
+
+  const results = {
+    existing: {},
+    deleted: [],
+  };
+
+  for (const entry of dbEntries) {
+    const { id, updatedAt, body, upvotes } = entry;
+    const replyEntry = {
+      id,
+      upvotes,
+    };
+    if (updatedAt !== entriesMap.get(id)) {
+      Object.assign(replyEntry, {
+        body,
+        updatedAt
+      });
+    }
+
+    if (userVotes.includes(id)) {
+      replyEntry.upvoted = true;
+    }
+
+    results.existing[id] = replyEntry;
+    entriesMap.delete(id);
+  }
+
+  results.deleted = Array.from(entriesMap.keys());
+
+  res.status(200).json({
+    results,
+    lastSynced: getCurrentTimeInDBFormat(),
+  });
+})
 module.exports = router;
