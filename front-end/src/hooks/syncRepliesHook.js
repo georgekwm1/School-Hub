@@ -5,6 +5,7 @@ import {
 	deleteReplySuccess,
 	addDiscussionReplySuccess,
 	editReplySuccess,
+	syncReplyVote,
 } from '../redux/actions/discussionsActionCreators';
 import { getSocket } from '../socket';
 
@@ -35,10 +36,19 @@ export default function useSyncReplies() {
 
 				dispatch(editReplySuccess(questionId, updatedReply));
 			})
+
+			// Sync up/down voting
+			socket.on('replyUpvoteToggled', ({payload}) => {
+				const { replyId, questionId, isUpvoted } = payload;
+				dispatch(syncReplyVote(questionId, replyId, isUpvoted));
+			})
+
+
 			return () => {
 				socket.off('replyCreated');
 				socket.off('replyDeleted');
 				socket.off('replyUpdated');
+				socket.off('replyUpvoteToggled');
 			}
 		}
 	}, [dispatch, isSocketReady]);
