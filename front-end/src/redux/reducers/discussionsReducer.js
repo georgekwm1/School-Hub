@@ -185,7 +185,8 @@ export default function discussionsReducer(state = initialState, action = {}) {
           .set('discussionsError', null)
           .updateIn(['replies', entry.questionId, 'repliesList'], (replies) =>
             replies.unshift(fromJS(entry))
-          );
+          )
+
       });
     }
 

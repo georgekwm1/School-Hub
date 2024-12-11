@@ -250,7 +250,9 @@ export const addDiscussionReply =
         }
       );
 
-      dispatch(discussionsActions.addDiscussionReplySuccess(data));
+      const { newReply, lastFetched } = data;
+
+      dispatch(discussionsActions.addDiscussionReplySuccess(newReply, lastFetched));
     } catch (error) {
       console.error(error.message);
       dispatch(
