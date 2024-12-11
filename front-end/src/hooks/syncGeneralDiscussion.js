@@ -17,9 +17,9 @@ export default function useSyncGeneralDiscussion() {
   useEffect(() => {
     dispatch(syncExistingQuestions());
   }, [dispatch]);
-  useEffect(() => {
-    const socket = getSocket();
 
+  const socket = getSocket();
+  useEffect(() => {
     if (socket) {
       // Sync creatiion
       socket.on('generalDiscussionQuestionCreated', ({ payload }) => {
@@ -49,5 +49,5 @@ export default function useSyncGeneralDiscussion() {
         socket.off('questionUpvoteToggled');
       };
     }
-  }, [dispatch, isSelectorReady]);
+  }, [dispatch, socket, isSelectorReady]);
 }
