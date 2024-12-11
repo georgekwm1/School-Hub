@@ -4,6 +4,7 @@ import { selectIsSocketReady } from '../redux/selectors/uiSelectors';
 import {
 	deleteReplySuccess,
 	addDiscussionReplySuccess,
+	editReplySuccess,
 } from '../redux/actions/discussionsActionCreators';
 import { getSocket } from '../socket';
 
@@ -27,10 +28,17 @@ export default function useSyncReplies() {
 				dispatch(deleteReplySuccess(questionId, replyId))
 			})
 
+			// Sync updating
+			socket.on('replyUpdated', ({payload}) => {
+				const { updatedReply } = payload;
+				const { questionId } = updatedReply;
 
+				dispatch(editReplySuccess(questionId, updatedReply));
+			})
 			return () => {
 				socket.off('replyCreated');
 				socket.off('replyDeleted');
+				socket.off('replyUpdated');
 			}
 		}
 	}, [dispatch, isSocketReady]);
