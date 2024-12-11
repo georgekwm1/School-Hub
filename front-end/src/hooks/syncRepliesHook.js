@@ -7,6 +7,7 @@ import {
 	editReplySuccess,
 	syncReplyVote,
 } from '../redux/actions/discussionsActionCreators';
+import { syncExistingReplies } from '../redux/actions/discussionsThunks';
 import { getSocket } from '../socket';
 
 
@@ -14,6 +15,11 @@ export default function useSyncReplies(questionId) {
 	const dispatch = useDispatch();
 	const isSocketReady = useSelector(selectIsSocketReady);
 	const socket = getSocket();
+
+	useEffect(() => {
+		dispatch(syncExistingReplies(questionId));
+	}, [dispatch])
+
 	useEffect(() => {
 		if (socket) {
 			// Sync creatron 
