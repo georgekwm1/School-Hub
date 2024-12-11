@@ -107,6 +107,7 @@ router.get('/questions/:id/replies', verifyToken, (req, res) => {
 // Change user vote for a replies
 router.post('/replies/:id/vote', verifyToken, (req, res) => {
   const replyId = req.params.id;
+  const io = req.app.get('io');
   const { action } = req.body;
   const userId = req.userId;
 
@@ -115,10 +116,10 @@ router.post('/replies/:id/vote', verifyToken, (req, res) => {
   }
 
   // Is this a better way? I don't know.
-  const replyExists =
-    db.prepare(`SELECT 1 FROM replies WHERE id = ?`).get(replyId) !== undefined;
+  const reply =
+    db.prepare(`SELECT id, questionId FROM replies WHERE id = ?`).get(replyId) !== undefined;
 
-  if (!replyExists) {
+  if (!reply) {
     return res.status(404).send({ message: 'Reply not found' });
   }
 
@@ -137,10 +138,10 @@ router.post('/replies/:id/vote', verifyToken, (req, res) => {
       }
       db.prepare(
         `
-    UPDATE replies
-    SET upvotes = upvotes + ${action == 'upvote' ? 1 : -1}
-    WHERE id = ?
-    `
+        UPDATE replies
+        SET upvotes = upvotes + ${action == 'upvote' ? 1 : -1}
+        WHERE id = ?
+        `
       ).run(replyId);
 
       let message;
@@ -150,6 +151,16 @@ router.post('/replies/:id/vote', verifyToken, (req, res) => {
         message = 'Vote deleted successfully';
       }
       res.status(200).json({ message });
+
+      const { questionId } = reply;
+      io.to(`question-${questionId}`).except(`user-${userId}`).emit('replyUpvoteToggled', {
+        payLoad: {
+          replyId,
+          questionId,
+          isUpvoted: action === 'upvote',
+        },
+        userId,
+      })
     })();
   } catch (err) {
     console.error(err);
