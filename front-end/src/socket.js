@@ -13,19 +13,21 @@ export const connectSocket = (token) => {
 	}
 
 	return new Promise((resolve, reject) => {
-		const onConnect = () => {
-			socket.off('connect_error', onError);
-			resolve(socket);
-		};
+		let onError;
+		let onConnect;
+    onError = (error) => {
+      socket.off('connect', onConnect);
+      reject(error);
+    };
 
-		const onError = (error) => {
-			socket.off('connect', onConnect);
-			reject(error);
-		};
+    onConnect = () => {
+      socket.off('connect_error', onError);
+      resolve(socket);
+    };
 
-		socket.once('connect', onConnect);
-		socket.once('connect_error', onError);
-	});
+    socket.once('connect', onConnect);
+    socket.once('connect_error', onError);
+  });
 }
 
 export const disconnectSocket = () => {
