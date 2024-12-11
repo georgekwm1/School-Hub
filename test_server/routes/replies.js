@@ -192,10 +192,10 @@ router.post('/questions/:id/replies', verifyToken, (req, res) => {
       upvoted: false,
     }
 
-    res.status(201).json(response);
+    res.status(201).json({newReply: response, lastFetched});
 
     io.to(`question-${questionId}`).except(`user-${userId}`).emit('replyCreated', {
-      payload: { newReply: response },
+      payload: { newReply: response, lastFetched },
       userId,
     });
   } catch (error) {
