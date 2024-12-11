@@ -151,10 +151,18 @@ export default function discussionsReducer(state = initialState, action = {}) {
         state
           .set('isLoading', false)
           .set('discussionsError', null)
-          .setIn(['replies', question.id], fromJS({question, repliesList}))
+          .updateIn(['replies', question.id], (entry) =>
+            entry
+              ? entry
+                  .set('question', fromJS(question))
+                  .update('repliesList', (replies) =>
+                    replies.concat(fromJS(repliesList))
+                  )
+              : fromJS({ question, repliesList }))
           .setIn(['repliesLastFetchedAt', question.id], lastFetched);
       });
     }
+
     case actions.ADD_DISCUSSION_REPLY_REQUEST: {
       return state.set('isLoading', true);
     }
