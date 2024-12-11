@@ -330,3 +330,23 @@ export const syncReplyVote = (questionId, replyId, isUpvoted) => ({
     isUpvoted,
   },
 })
+
+export const syncExistingRepliesFailure = (errorMessage) => ({
+  type: actions.SYNC_EXISTING_REPLIES_FAILURE,
+  payload: {
+    errorMessage,
+  },
+});
+
+export const syncExistingRepliesRequest = () => ({
+  type: actions.SYNC_EXISTING_REPLIES_REQUEST,
+});
+
+export const syncExistingRepliesSuccess = (replies, lastSynced, questionId) => ({
+  type: actions.SYNC_EXISTING_REPLIES_SUCCESS,
+  payload: {
+    replies,
+    lastSynced,
+    questionId,
+  },
+});
