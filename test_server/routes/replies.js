@@ -339,6 +339,7 @@ router.post('/questions/:questionId/replies/diff', verifyToken, (req, res) => {
   res.status(200).json({
     results,
     lastSynced: getCurrentTimeInDBFormat(),
+    questionId,
   });
 })
 module.exports = router;
