@@ -176,17 +176,32 @@ export default function discussionsReducer(state = initialState, action = {}) {
     }
 
     case actions.ADD_DISCUSSION_REPLY_SUCCESS: {
-      const { entry } = action.payload;
+      const { entry, lastFetched } = action.payload;
       console.log(entry);
+      // Get the question to incremet it's repliesCount
+      const question = state.getIn(['replies', entry.questionId, 'question']);
+      const lectureId = question.get('lectureId');
+      const questionsListPath = lectureId 
+        ? ['lecturesDiscussions', lectureId]
+        : ['courseGeneralDiscussion'];
+      const index = state.getIn(questionsListPath).findIndex((q) => {
+          return q.questionId === entry.questionId
+        });
+
+      const repliesListPath = ['replies', entry.questionId, 'repliesList'];
+      const repliesLastFetchedAt = ['repliesLastFetchedAt', entry.questionId];
+      const questionRepliesCountPath = [...questionsListPath, index, 'repliesCount'];
+
       return state.withMutations((state) => {
         console.log(state.toJS());
         return state
           .set('isLoading', false)
           .set('discussionsError', null)
-          .updateIn(['replies', entry.questionId, 'repliesList'], (replies) =>
+          .updateIn(repliesListPath, (replies) =>
             replies.unshift(fromJS(entry))
           )
-
+          .setIn(repliesLastFetchedAt, lastFetched)
+          .updateIn(questionRepliesCountPath, count => count + 1);
       });
     }
 
