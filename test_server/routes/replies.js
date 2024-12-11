@@ -47,18 +47,32 @@ router.get('/questions/:id/replies', verifyToken, (req, res) => {
   const question = db
     .prepare(
       // Assuming it's a lecture question this won't the lecturId won't be null.
-      `SELECT id, title, body, updatedAt, upvotes, repliesCount, userId, lectureId
+      `SELECT id, title, body, updatedAt, upvotes, repliesCount, userId, lectureId, (updatedAt >= ?) AS isNew
     FROM questions
     WHERE id = ?`
     )
-    .get(questionId);
+    .get(lastFetched, questionId);
 
   if (!question) {
     return res.status(404).send({ message: 'Question not found' });
   }
 
-  const user = getUserData(question.userId);
-  const upvoted = getUpvoteStatus(userId, question.id, 'question');
+  question.upvoted = getUpvoteStatus(userId, question.id, 'question');
+  // Save some bandwidth
+  let questionResponse = question;
+  if (!question.isNew) {
+    questionResponse = {
+      id: question.id,
+      repliesCount: question.repliesCount,
+      upvoted: question.upvoted,
+      upvotes: question.upvotes,
+      updatedAt: question.updatedAt,
+    }
+  } else {
+    questionResponse.user = getUserData(question.userId);
+    delete questionResponse.userId;
+    delete questionResponse.isNew;
+  }
 
   const params = [questionId].concat(lastFetched ? [lastFetched] : []);
   const replies = db
@@ -71,7 +85,7 @@ router.get('/questions/:id/replies', verifyToken, (req, res) => {
     ).all(...params);
 
   const newLastFetched = getCurrentTimeInDBFormat();
-  const results = replies.map((reply) => {
+  const repliesList = replies.map((reply) => {
     const user = getUserData(reply.userId);
     const upvoted = getUpvoteStatus(userId, reply.id, 'reply');
 
@@ -82,9 +96,10 @@ router.get('/questions/:id/replies', verifyToken, (req, res) => {
     };
   });
 
+
   res.json({
-    question: { ...question, user, upvoted },
-    repliesList: results,
+    question: questionResponse,
+    repliesList,
     lastFetched: newLastFetched,
   });
 });

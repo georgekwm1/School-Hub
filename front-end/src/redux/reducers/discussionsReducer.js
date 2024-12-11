@@ -154,7 +154,7 @@ export default function discussionsReducer(state = initialState, action = {}) {
           .updateIn(['replies', question.id], (entry) =>
             entry
               ? entry
-                  .set('question', fromJS(question))
+                  .update('question', q => q.merge(question))
                   .update('repliesList', (replies) =>
                     replies.concat(fromJS(repliesList))
                   )
