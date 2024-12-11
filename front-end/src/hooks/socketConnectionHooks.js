@@ -23,7 +23,7 @@ export default function useConnectSocket() {
 			disconnectSocket();
 			dispatch(setSocketReadiness(false));
     }
-  }, [token, isLoggedIn]);
+  }, [dispatch, token, isLoggedIn]);
 }
 
 export function useJoinRoom(room) {
