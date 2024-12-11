@@ -247,7 +247,7 @@ router.put('/replies/:id', verifyToken, (req, res) => {
 // Delete a reply
 router.delete('/replies/:id', verifyToken, (req, res) => {
   const replyId = req.params.id;
-  const i = req.app.get('io');
+  const io = req.app.get('io');
   const userId = req.userId;
 
   try {

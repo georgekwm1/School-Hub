@@ -24,7 +24,7 @@ export default function useSyncReplies() {
 			// Sync deletion
 			socket.on('replyDeleted', ({payload}) => {
 				const {replyId, questionId} = payload;
-				dispatch(deleteReplySuccess(replyId, questionId))
+				dispatch(deleteReplySuccess(questionId, replyId))
 			})
 
 
