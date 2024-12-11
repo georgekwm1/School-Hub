@@ -124,10 +124,11 @@ export const addDiscussionReplyFailure = (errorMessage) => ({
   },
 });
 
-export const addDiscussionReplySuccess = (entry) => ({
+export const addDiscussionReplySuccess = (entry, lastFetched) => ({
   type: actions.ADD_DISCUSSION_REPLY_SUCCESS,
   payload: {
     entry,
+    lastFetched,
   },
 });
 
