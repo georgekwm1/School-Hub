@@ -247,11 +247,12 @@ router.put('/replies/:id', verifyToken, (req, res) => {
 // Delete a reply
 router.delete('/replies/:id', verifyToken, (req, res) => {
   const replyId = req.params.id;
+  const i = req.app.get('io');
   const userId = req.userId;
 
   try {
     const reply = db
-      .prepare('SELECT id, userId FROM replies WHERE id = ?')
+      .prepare('SELECT id, userId, questionId FROM replies WHERE id = ?')
       .get(replyId);
 
     if (!reply) {
@@ -268,6 +269,11 @@ router.delete('/replies/:id', verifyToken, (req, res) => {
     db.prepare('DELETE FROM replies WHERE id = ?').run(replyId);
 
     res.status(200).json({ message: 'Reply deleted successfully' });
+
+    io.to(`question-${reply.questionId}`).except(`user-${userId}`).emit('replyDeleted', {
+      payload: {replyId},
+      userId
+    });
   } catch (error) {
     console.error(error);
     res.status(500).send({ message: 'Error deleting reply' });
