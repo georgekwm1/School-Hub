@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
-import { useDi, useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectIsSocketReady } from '../redux/selectors/uiSelectors';
 import { addDiscussionReplySuccess } from '../redux/actions/discussionsActionCreators';
+import { getSocket } from '../socket';
 
 
 export default function useSyncReplies() {

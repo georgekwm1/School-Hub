@@ -12,6 +12,10 @@ import {
 import QuestionHeader from './QuestionHeader';
 import RepliesList from './RepliesList';
 import { Link, useParams, useLocation } from 'react-router-dom';
+import { useJoinRoom } from '../../hooks/socketConnectionHooks';
+import useSyncReplies from '../../hooks/syncRepliesHook';
+
+
 export default function Replies() {
   const { questionId } = useParams();
   const location = useLocation();
@@ -22,6 +26,7 @@ export default function Replies() {
   const [showReplyEditor, setShowReplyEditor] = useState(false);
   const [reply, setReply] = useState('');
   const [replyFiles, setReplyFiles] = useState([]);
+
   const repliesIsLoading = useSelector(selectDiscussionsIsLoading);
   const repliesSelector = makeRepliesSelector(questionId);
   const replies = useSelector(repliesSelector);
@@ -29,6 +34,9 @@ export default function Replies() {
   const userPicture = useSelector((state) =>
     state.ui.getIn(['user', 'picture'])
   );
+
+  useJoinRoom(`question-${questionId}`);
+  useSyncReplies();
 
   useEffect(() => {
     // again... pass the logic of offline experience and also
