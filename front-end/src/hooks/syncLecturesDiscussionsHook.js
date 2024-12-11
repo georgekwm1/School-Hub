@@ -18,8 +18,8 @@ export default function useSyncLectureDiscussions(lectureId) {
     dispatch(syncExistingQuestions(lectureId));
   }, [dispatch, lectureId]);
 
+  const socket = getSocket();
   useEffect(() => {
-    const socket = getSocket();
     if (socket) {
       // Sync creation
       socket.on('lectureQuestionCreated', ({ payload }) => {
@@ -57,5 +57,5 @@ export default function useSyncLectureDiscussions(lectureId) {
         socket.off('questionUpvoteToggled');
       };
     }
-  }, [dispatch, isSocketReady]);
+  }, [dispatch, socket, isSocketReady]);
 }
