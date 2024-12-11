@@ -117,7 +117,7 @@ router.post('/replies/:id/vote', verifyToken, (req, res) => {
 
   // Is this a better way? I don't know.
   const reply =
-    db.prepare(`SELECT id, questionId FROM replies WHERE id = ?`).get(replyId) !== undefined;
+    db.prepare(`SELECT id, questionId FROM replies WHERE id = ?`).get(replyId);
 
   if (!reply) {
     return res.status(404).send({ message: 'Reply not found' });
@@ -154,7 +154,7 @@ router.post('/replies/:id/vote', verifyToken, (req, res) => {
 
       const { questionId } = reply;
       io.to(`question-${questionId}`).except(`user-${userId}`).emit('replyUpvoteToggled', {
-        payLoad: {
+        payload: {
           replyId,
           questionId,
           isUpvoted: action === 'upvote',
