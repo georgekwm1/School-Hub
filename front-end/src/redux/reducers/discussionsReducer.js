@@ -426,6 +426,7 @@ export default function discussionsReducer(state = initialState, action = {}) {
           .set('discussionsError', null)
           .setIn(['replies', questionId, 'question'], fromJS(editedQuestion))
           .update((state) => {
+            // why did i use let here?!. really.. why?!
             let path = editedQuestion.lectureId
               ? ['lecturesDiscussions', editedQuestion.lectureId]
               : ['courseGeneralDiscussion'];
