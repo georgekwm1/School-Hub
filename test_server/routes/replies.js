@@ -38,6 +38,24 @@ function getReplyCourseId(replyId) {
   return courseIdFromQuestion ? courseIdFromQuestion : courseIdFromLecture;
 }
 
+/**
+ * Returns the parent of a question, either the courseId or lectureId,
+ * depending on the question type.
+ * @param {string} questionId - The id of the question
+ * @returns {{courseId: string, lectureId: string} | null}
+ */
+function getQuestionParentId(questionId) {
+  const query = db.prepare(
+    `
+    SELECT 
+      courseId, lectureId 
+    FROM questions
+    WHERE id = ?;
+    `);
+
+  return query.get(questionId);Create 
+}
+
 // Get question replies
 router.get('/questions/:id/replies', verifyToken, (req, res) => {
   const questionId = req.params.id;
@@ -211,6 +229,8 @@ router.post('/questions/:id/replies', verifyToken, (req, res) => {
       payload: { newReply: response, lastFetched },
       userId,
     });
+
+
   } catch (error) {
     console.error(error);
     res.status(500).send({ message: 'Internal server error' });
