@@ -573,6 +573,28 @@ export default function discussionsReducer(state = initialState, action = {}) {
       });
     }
 
+    case actions.UPDATE_QUESTION_REPLIES_COUNT: {
+      const { questionId, lectureId, action } = action.payload;
+      const questionsListPath = lectureId
+        ? ['lecturesDiscussions', lectureId]
+        : ['courseGeneralDiscussion'];
+      return state.updateIn(questionsListPath, (questions) =>{
+        const index = questions.findIndex(
+          (question) => question.get('id') === questionId
+        );
+
+        if (index === -1) {
+          console.error(
+            `Question with id ${questionId} not found in ${questionsListPath}`)
+          return questions;
+        }
+        return questions.updateIn([index, 'repliesCount'], (count) => {
+          return count + (action === 'increment' ? 1 : -1);
+        });
+      });
+    }
+    
+
     default: {
       return state;
     }
