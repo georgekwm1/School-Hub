@@ -350,3 +350,10 @@ export const syncExistingRepliesSuccess = (replies, lastSynced, questionId) => (
     questionId,
   },
 });
+
+export const updateQuestionRepliesCount = (action, questionId, lectureId = null) => ({
+  type: actions.UPDATE_QUESTION_REPLIES_COUNT,
+  payload: {
+    action, questionId, lectureId
+  }
+})
