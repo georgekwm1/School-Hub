@@ -671,7 +671,7 @@ export const syncExistingReplies = (questionId) => async (dispatch, getState) =>
   const entries = state.discussions.getIn(
     ['replies', questionId, 'repliesList']
   )?.map(
-    reply => ({id: reply.id, updatedAt: reply.updatedAt})
+    reply => ({id: reply.get('id'), updatedAt: reply.get('updatedAt')})
   ).toJS();
   
   if (!entries) return;
