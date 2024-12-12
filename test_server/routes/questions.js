@@ -439,6 +439,14 @@ router.delete('/questions/:id', verifyToken, (req, res) => {
         },
         userId,
       });
+      io.to(`question-${questionId}`).except(`user-${userId}`).emit('questionDeleted', {
+        payload: {
+          questionId,
+          lectureId,
+        },
+        userId,
+      });
+      
     })();
   } catch (error) {
     console.error(error);
