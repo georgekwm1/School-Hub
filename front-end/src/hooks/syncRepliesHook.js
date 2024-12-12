@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import toast from 'react-hot-toast';
 import { selectIsSocketReady } from '../redux/selectors/uiSelectors';
 import {
 	deleteReplySuccess,
@@ -7,6 +8,7 @@ import {
 	editReplySuccess,
 	syncReplyVote,
 	editQuestionSuccess,
+	deleteQuestionSuccess,
 } from '../redux/actions/discussionsActionCreators';
 import { syncExistingReplies } from '../redux/actions/discussionsThunks';
 import { getSocket } from '../socket';
@@ -56,6 +58,11 @@ export default function useSyncReplies(questionId) {
 				dispatch(editQuestionSuccess(payload.editedQuestion))
 			})
 
+			socket.on('questionDeleted', ({ payload }) => {
+				const { questionId, lectureId } = payload;
+				dispatch(deleteQuestionSuccess(questionId, lectureId));
+				toast('Question deleted Remotely');
+			})
 
 			return () => {
 				socket.off('replyCreated');
@@ -63,6 +70,7 @@ export default function useSyncReplies(questionId) {
 				socket.off('replyUpdated');
 				socket.off('replyUpvoteToggled');
 				socket.off('questionEdited');
+				socket.off('questionDeleted');
 			}
 		}
 	}, [dispatch, socket, isSocketReady]);
