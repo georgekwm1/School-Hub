@@ -232,7 +232,7 @@ router.post('/questions/:id/replies', verifyToken, (req, res) => {
 
     const { lectureId, courseId } = getQuestionParentId(newReply.questionId);
     const room = lectureId ? `lectureDiscussion-${lectureId}` : `generalDiscussion-${courseId}`;
-    io.to(room).emit('newReply', {
+    io.to(room).emit('replyCreated', {
       payload: {questionId: newReply.questionId, lectureId, courseId },
       userId,
     });
