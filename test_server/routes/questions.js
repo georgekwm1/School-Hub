@@ -362,6 +362,8 @@ router.put('/questions/:id', verifyToken, (req, res) => {
         )
         .get(id);
 
+      // What a consitency here!
+      // God.. what was I thinking.!
       const editedQuestion = {
         ...updatedQuestion,
         user: getUserData(userId),
@@ -381,8 +383,7 @@ router.put('/questions/:id', verifyToken, (req, res) => {
       io.to(room).except(`user-${userId}`).emit(event, {
         payload: { editedQuestion },
       });
-
-      io.to(`question-${questionId}`).except(`user-${userId}`).emit('questionEdited', {
+      io.to(`question-${id}`).except(`user-${userId}`).emit('questionEdited', {
         payload: { editedQuestion },
         userId,
       });
