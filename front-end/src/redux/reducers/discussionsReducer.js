@@ -574,7 +574,7 @@ export default function discussionsReducer(state = initialState, action = {}) {
     }
 
     case actions.UPDATE_QUESTION_REPLIES_COUNT: {
-      const { questionId, lectureId, action } = action.payload;
+      const { questionId, lectureId, action:  countAction } = action.payload;
       const questionsListPath = lectureId
         ? ['lecturesDiscussions', lectureId]
         : ['courseGeneralDiscussion'];
@@ -589,7 +589,7 @@ export default function discussionsReducer(state = initialState, action = {}) {
           return questions;
         }
         return questions.updateIn([index, 'repliesCount'], (count) => {
-          return count + (action === 'increment' ? 1 : -1);
+          return count + (countAction === 'increment' ? 1 : -1);
         });
       });
     }
