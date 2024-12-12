@@ -230,6 +230,12 @@ router.post('/questions/:id/replies', verifyToken, (req, res) => {
       userId,
     });
 
+    const { lectureId, courseId } = getQuestionParentId(newReply.questionId);
+    const room = lectureId ? `lectureDiscussion-${lectureId}` : `generalDiscussion-${courseId}`;
+    io.to(room).emit('newReply', {
+      payload: {questionId: newReply.questionId, lectureId, courseId },
+      userId,
+    });
 
   } catch (error) {
     console.error(error);
