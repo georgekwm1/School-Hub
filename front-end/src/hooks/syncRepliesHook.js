@@ -49,6 +49,10 @@ export default function useSyncReplies(questionId) {
 			})
 
 
+			// Well... This is not really replies.. it's the question those replies are related to
+			// Which is show in the same page with the repleis
+
+			socket.on('questionUpdatedp')
 			return () => {
 				socket.off('replyCreated');
 				socket.off('replyDeleted');

@@ -381,6 +381,12 @@ router.put('/questions/:id', verifyToken, (req, res) => {
       io.to(room).except(`user-${userId}`).emit(event, {
         payload: { editedQuestion },
       });
+
+      io.to(`question-${questionId}`).except(`user-${userId}`).emit('questionEdited', {
+        payload: { editedQuestion },
+        userId,
+      });
+
     })();
   } catch (error) {
     console.error(error);
