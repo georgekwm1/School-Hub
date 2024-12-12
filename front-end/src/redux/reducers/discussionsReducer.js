@@ -553,8 +553,8 @@ export default function discussionsReducer(state = initialState, action = {}) {
               .set('isLoading', false);
     }
     case actions.SYNC_EXISTING_REPLIES_SUCCESS: {
-      const { lastSynced, results, questionId } = action.payload;
-      const { existing, deleted } = results;
+      const { lastSynced, replies, questionId } = action.payload;
+      const { existing, deleted } = replies;
       const repliesListPath = ['replies', questionId, 'repliesList'];
 
       return state.withMutations((state) => {
