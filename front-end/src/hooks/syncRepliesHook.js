@@ -6,6 +6,7 @@ import {
 	addDiscussionReplySuccess,
 	editReplySuccess,
 	syncReplyVote,
+	editQuestionSuccess,
 } from '../redux/actions/discussionsActionCreators';
 import { syncExistingReplies } from '../redux/actions/discussionsThunks';
 import { getSocket } from '../socket';
@@ -51,13 +52,17 @@ export default function useSyncReplies(questionId) {
 
 			// Well... This is not really replies.. it's the question those replies are related to
 			// Which is show in the same page with the repleis
+			socket.on('questionEdited', ({payload}) => {
+				dispatch(editQuestionSuccess(payload.editedQuestion))
+			})
 
-			socket.on('questionUpdatedp')
+
 			return () => {
 				socket.off('replyCreated');
 				socket.off('replyDeleted');
 				socket.off('replyUpdated');
 				socket.off('replyUpvoteToggled');
+				socket.off('questionEdited');
 			}
 		}
 	}, [dispatch, socket, isSocketReady]);
