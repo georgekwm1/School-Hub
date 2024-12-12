@@ -7,6 +7,7 @@ import {
   editQuestionSuccess,
   generalDiscussionEntrySuccess,
   syncQuestionVote,
+  updateQuestionRepliesCount,
 } from '../redux/actions/discussionsActionCreators';
 import { syncExistingQuestions } from '../redux/actions/discussionsThunks';
 
@@ -42,11 +43,17 @@ export default function useSyncGeneralDiscussion() {
         dispatch(syncQuestionVote(payload.questionId, payload.isUpvoted));
       });
 
+      socket.on('replyDeleted', ({ payload }) => {
+        dispatch(updateQuestionRepliesCount('decrement', payload.questionId));
+      })
+
+
       return () => {
         socket.off('generalDiscussionQuestionCreated');
         socket.off('generalDiscussionQuestionDeleted');
         socket.off('generalDiscussionQuestionEdited');
         socket.off('questionUpvoteToggled');
+        socket.off('replyDeleted');
       };
     }
   }, [dispatch, socket, isSelectorReady]);
