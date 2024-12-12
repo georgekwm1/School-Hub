@@ -236,7 +236,6 @@ router.post('/questions/:id/replies', verifyToken, (req, res) => {
       payload: {questionId: newReply.questionId, lectureId, courseId },
       userId,
     });
-
   } catch (error) {
     console.error(error);
     res.status(500).send({ message: 'Internal server error' });
@@ -295,8 +294,8 @@ router.delete('/replies/:id', verifyToken, (req, res) => {
       return res.status(404).send({ message: 'Reply not found' });
     }
 
-    const courseId = getReplyCourseId(replyId);
-    if (reply.userId !== userId && !isCourseAdmin(userId, courseId)) {
+    const replyCourseId = getReplyCourseId(replyId);
+    if (reply.userId !== userId && !isCourseAdmin(userId, replyCourseId)) {
       return res
         .status(403)
         .send({ message: 'User is not authorized to delete this reply' });
@@ -309,6 +308,13 @@ router.delete('/replies/:id', verifyToken, (req, res) => {
     io.to(`question-${reply.questionId}`).except(`user-${userId}`).emit('replyDeleted', {
       payload: {replyId, questionId: reply.questionId},
       userId
+    });
+
+    const { lectureId, courseId} = getQuestionParentId(reply.questionId);
+    const room = lectureId ? `lectureDiscussion-${lectureId}` : `generalDiscussion-${courseId}`;
+    io.to(room).emit('replyDeleted', {
+      payload: {questionId: reply.questionId, lectureId, courseId },
+      userId,
     });
   } catch (error) {
     console.error(error);
