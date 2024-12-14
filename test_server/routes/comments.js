@@ -141,6 +141,7 @@ router.put('/comments/:id', verifyToken, (req, res) => {
 
 // Delete an announcement;
 router.delete('/comments/:commentId', verifyToken, (req, res) => {
+  const io = req.app.get('io');
   const { commentId } = req.params;
   const userId = req.userId;
 
@@ -151,7 +152,7 @@ router.delete('/comments/:commentId', verifyToken, (req, res) => {
     if (!comment) {
       return res.status(404).send({ message: 'Comment not found' });
     }
-
+    const announcementId = comment.announcementId;
     const { courseId } = db
       .prepare(
         `
@@ -159,7 +160,7 @@ router.delete('/comments/:commentId', verifyToken, (req, res) => {
         WHERE id = ?
       `
       )
-      .get(comment.announcementId);
+      .get(announcementId);
 
     if (comment.userId !== userId && !isCourseAdmin(userId, courseId)) {
       return res.status(403).send({ message: 'User is not a course admin' });
@@ -168,6 +169,15 @@ router.delete('/comments/:commentId', verifyToken, (req, res) => {
     db.prepare('DELETE FROM comments WHERE id = ?').run(commentId);
 
     res.status(200).json({ message: 'Comment deleted successfully' });
+
+    io.to(`comments-${announcementId}`).except(`user-${userId}`).emit('commentDeleted', {
+      payload: {
+        announcementId,
+        commentId,
+      },
+      userId,
+      courseId
+    })
   } catch (error) {
     console.error(error);
     res.status(500).send({ message: 'Internal server error' });
