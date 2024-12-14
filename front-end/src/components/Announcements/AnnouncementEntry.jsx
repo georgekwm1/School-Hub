@@ -11,7 +11,7 @@ export default function AnnouncementEntry({ content }) {
   const announcementId = content.get('id');
 
   useJoinRoom(`comments-${announcementId}`);
-  useSyncComments(announcementId);
+  useSyncComments(announcementId, showComments);
 
 
   return (

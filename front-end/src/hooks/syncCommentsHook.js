@@ -4,7 +4,7 @@ import { selectIsSocketReady } from '../redux/selectors/uiSelectors';
 import { getSocket } from '../socket';
 import { addCommentSuccess } from '../redux/actions/announcementsActionCreators';
 
-export default function useSyncComments(announcementId) {
+export default function useSyncComments(announcementId, showComments) {
   const dispatch = useDispatch();
   const isSocketReady = useSelector(selectIsSocketReady);
   const socket = getSocket();
