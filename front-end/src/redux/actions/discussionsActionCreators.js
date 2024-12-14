@@ -357,3 +357,13 @@ export const updateQuestionRepliesCount = (action, questionId, lectureId = null)
     action, questionId, lectureId
   }
 })
+
+// This is to sync votes change in the question view.. not in the list or generalQUestions
+// Or lecture questions
+export const syncQuestionDetailsVote = (questionId, isUpvoted) => ({
+  type: actions.SYNC_QUESTION_DETAILS_VOTE,
+  payload: {
+    questionId,
+    isUpvoted,
+  },
+})
