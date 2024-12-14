@@ -293,16 +293,23 @@ router.post('/questions/:id/vote', verifyToken, (req, res) => {
       }
 
       const { courseId, lectureId } = question;
-      const sockerRoom = courseId
+      const socket1stRoom = courseId
         ? `generalDiscussion-${courseId}`
         : `lectureDiscussion-${lectureId}`;
+      const rooms = [socket1stRoom, `question-${questionId}`];
 
-      io.to(sockerRoom)
+      io.to(rooms)
         .except(`user-${userId}`)
         .emit('questionUpvoteToggled', {
           payload: {
             questionId,
             isUpvoted: action === 'upvote',
+            // Now.. I'm questioning.. this won't be needed when emiting
+            // question-id room.. becuase.. only the questionId is suffeciant
+            // to make the effect.. so.. should I emit separately in next lines
+            // or it's ok to have something extra in the payload?
+            // I don't know... I'm not sure..
+            // What is the trait off here...
             lectureId,
           },
           userId,
