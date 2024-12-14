@@ -594,6 +594,12 @@ export default function discussionsReducer(state = initialState, action = {}) {
       });
     }
     
+    case actions.SYNC_QUESTION_DETAILS_VOTE: {
+      const { questionId, isUpvoted } = action.payload;
+      return state.updateIn(['replies', questionId, 'question', 'upvotes'], (count) => {
+        return count + (isUpvoted ? 1 : -1);
+      });
+    }
 
     default: {
       return state;
