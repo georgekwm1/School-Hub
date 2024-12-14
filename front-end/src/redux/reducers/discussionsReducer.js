@@ -9,6 +9,8 @@ export const initialState = fromJS({
   lectureDiscussionsLastFetchedAt: {},
   generalDiscussionLastSyncedAt: '',
   lecturesDiscussionsLastSyncedAt: {},
+  repliesLastFetchedAt: {},
+  repliesLastSyncedAt: {},
   isLoading: false,
   discussionsError: null,
 });
@@ -145,14 +147,23 @@ export default function discussionsReducer(state = initialState, action = {}) {
     }
 
     case actions.FETCH_DISCUSSION_REPLIES_SUCCESS: {
-      const { data } = action.payload;
+      const { question, repliesList, lastFetched } = action.payload;
       return state.withMutations((state) => {
         state
           .set('isLoading', false)
           .set('discussionsError', null)
-          .setIn(['replies', data.question.id], fromJS(data));
+          .updateIn(['replies', question.id], (entry) =>
+            entry
+              ? entry
+                  .update('question', q => q.merge(question))
+                  .update('repliesList', (replies) =>
+                    replies.concat(fromJS(repliesList))
+                  )
+              : fromJS({ question, repliesList }))
+          .setIn(['repliesLastFetchedAt', question.id], lastFetched);
       });
     }
+
     case actions.ADD_DISCUSSION_REPLY_REQUEST: {
       return state.set('isLoading', true);
     }
@@ -166,16 +177,32 @@ export default function discussionsReducer(state = initialState, action = {}) {
     }
 
     case actions.ADD_DISCUSSION_REPLY_SUCCESS: {
-      const { entry } = action.payload;
+      const { entry, lastFetched } = action.payload;
       console.log(entry);
+      // Get the question to incremet it's repliesCount
+      const question = state.getIn(['replies', entry.questionId, 'question']);
+      const lectureId = question.get('lectureId');
+      const questionsListPath = lectureId 
+        ? ['lecturesDiscussions', lectureId]
+        : ['courseGeneralDiscussion'];
+      const index = state.getIn(questionsListPath).findIndex((q) => {
+          return q.questionId === entry.questionId
+        });
+
+      const repliesListPath = ['replies', entry.questionId, 'repliesList'];
+      const repliesLastFetchedAt = ['repliesLastFetchedAt', entry.questionId];
+      const questionRepliesCountPath = [...questionsListPath, index, 'repliesCount'];
+
       return state.withMutations((state) => {
         console.log(state.toJS());
         return state
           .set('isLoading', false)
           .set('discussionsError', null)
-          .updateIn(['replies', entry.questionId, 'repliesList'], (replies) =>
+          .updateIn(repliesListPath, (replies) =>
             replies.unshift(fromJS(entry))
-          );
+          )
+          .setIn(repliesLastFetchedAt, lastFetched)
+          .updateIn(questionRepliesCountPath, count => count + 1);
       });
     }
 
@@ -399,6 +426,7 @@ export default function discussionsReducer(state = initialState, action = {}) {
           .set('discussionsError', null)
           .setIn(['replies', questionId, 'question'], fromJS(editedQuestion))
           .update((state) => {
+            // why did i use let here?!. really.. why?!
             let path = editedQuestion.lectureId
               ? ['lecturesDiscussions', editedQuestion.lectureId]
               : ['courseGeneralDiscussion'];
@@ -439,7 +467,7 @@ export default function discussionsReducer(state = initialState, action = {}) {
               (reply) => reply.get('id') === replyId
             );
 
-            return replies.set(index, fromJS(editedReply));
+            return replies.update(index, reply => reply.merge(editedReply));
           });
       });
     }
@@ -503,6 +531,73 @@ export default function discussionsReducer(state = initialState, action = {}) {
         return questions.updateIn([index, 'upvotes'], (upvotes) => {
           return upvotes + (isUpvoted ? 1 : -1);
         });
+      });
+    }
+
+    case actions.SYNC_REPLY_VOTE: {
+      const { questionId, replyId, isUpvoted } = action.payload;
+
+      return state.updateIn(['replies', questionId, 'repliesList'], (replies) => {
+        const index = replies.findIndex((reply) => reply.get('id') === replyId);
+
+        return replies.updateIn([index, 'upvotes'], (upvotes) => {
+          return upvotes + (isUpvoted ? 1 : -1);
+        });
+      });
+    }
+
+    case actions.SYNC_EXISTING_REPLIES_REQUEST:
+      return state.set('isLoading', true);
+
+    case actions.SYNC_EXISTING_REPLIES_FAILURE: {
+      return state.set('discussionsError', action.payload.error)
+              .set('isLoading', false);
+    }
+    case actions.SYNC_EXISTING_REPLIES_SUCCESS: {
+      const { lastSynced, replies, questionId } = action.payload;
+      const { existing, deleted } = replies;
+      const repliesListPath = ['replies', questionId, 'repliesList'];
+
+      return state.withMutations((state) => {
+        return state
+          .setIn(['replies', questionId, 'lastSyncedAt'], lastSynced)
+          .updateIn(repliesListPath, (replies) => {
+            return replies.filter((reply) => !deleted.includes(reply.get('id')));
+          })
+          .updateIn(repliesListPath, (replies) => {
+            return replies.map((reply) => {
+              const replyId = reply.get('id');
+              return reply.merge(existing[replyId]);
+            });
+          });
+      });
+    }
+
+    case actions.UPDATE_QUESTION_REPLIES_COUNT: {
+      const { questionId, lectureId, action:  countAction } = action.payload;
+      const questionsListPath = lectureId
+        ? ['lecturesDiscussions', lectureId]
+        : ['courseGeneralDiscussion'];
+      return state.updateIn(questionsListPath, (questions) =>{
+        const index = questions.findIndex(
+          (question) => question.get('id') === questionId
+        );
+
+        if (index === -1) {
+          console.error(
+            `Question with id ${questionId} not found in ${questionsListPath}`)
+          return questions;
+        }
+        return questions.updateIn([index, 'repliesCount'], (count) => {
+          return count + (countAction === 'increment' ? 1 : -1);
+        });
+      });
+    }
+    
+    case actions.SYNC_QUESTION_DETAILS_VOTE: {
+      const { questionId, isUpvoted } = action.payload;
+      return state.updateIn(['replies', questionId, 'question', 'upvotes'], (count) => {
+        return count + (isUpvoted ? 1 : -1);
       });
     }
 

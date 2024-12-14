@@ -7,6 +7,7 @@ import {
   deleteQuestionSuccess,
   editQuestionSuccess,
   syncQuestionVote,
+  updateQuestionRepliesCount,
 } from '../redux/actions/discussionsActionCreators';
 import { syncExistingQuestions } from '../redux/actions/discussionsThunks';
 
@@ -18,8 +19,8 @@ export default function useSyncLectureDiscussions(lectureId) {
     dispatch(syncExistingQuestions(lectureId));
   }, [dispatch, lectureId]);
 
+  const socket = getSocket();
   useEffect(() => {
-    const socket = getSocket();
     if (socket) {
       // Sync creation
       socket.on('lectureQuestionCreated', ({ payload }) => {
@@ -50,12 +51,26 @@ export default function useSyncLectureDiscussions(lectureId) {
         dispatch(syncQuestionVote(questionId, isUpvoted, lectureId));
       });
 
+      // SYnc newReply added
+      socket.on('replyCreated', ({ payload }) => {
+        const { questionId, lectureId } = payload;
+        dispatch(updateQuestionRepliesCount('increment', questionId, lectureId));
+      })
+
+      socket.on('replyDeleted', ({ payload }) => {
+        const { lectureId, questionId} = payload
+        dispatch(updateQuestionRepliesCount('decrement', questionId, lectureId));
+      })
+
+
       return () => {
         socket.off('lectureQuestionCreated');
         socket.off('lectureQuestionDeleted');
         socket.off('lectureQuestionEdited');
         socket.off('questionUpvoteToggled');
+        socket.off('replyCreated');
+        socket.off('replyDeleted');
       };
     }
-  }, [dispatch, isSocketReady]);
+  }, [dispatch, socket, isSocketReady]);
 }

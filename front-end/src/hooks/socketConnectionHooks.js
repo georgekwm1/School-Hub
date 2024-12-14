@@ -13,13 +13,17 @@ export default function useConnectSocket() {
 
   useEffect(() => {
     if (token && isLoggedIn) {
-      connectSocket(token);
-			dispatch(setSocketReadiness(true));
+      connectSocket(token)
+      .then(() => dispatch(setSocketReadiness(true)))
+      .catch((error) => {
+        console.error('Error connecting the socket ' + error);
+        setSocketReadiness(false);
+      });
     } else {
 			disconnectSocket();
 			dispatch(setSocketReadiness(false));
     }
-  }, [token, isLoggedIn]);
+  }, [dispatch, token, isLoggedIn]);
 }
 
 export function useJoinRoom(room) {

@@ -293,16 +293,23 @@ router.post('/questions/:id/vote', verifyToken, (req, res) => {
       }
 
       const { courseId, lectureId } = question;
-      const sockerRoom = courseId
+      const socket1stRoom = courseId
         ? `generalDiscussion-${courseId}`
         : `lectureDiscussion-${lectureId}`;
+      const rooms = [socket1stRoom, `question-${questionId}`];
 
-      io.to(sockerRoom)
+      io.to(rooms)
         .except(`user-${userId}`)
         .emit('questionUpvoteToggled', {
           payload: {
             questionId,
             isUpvoted: action === 'upvote',
+            // Now.. I'm questioning.. this won't be needed when emiting
+            // question-id room.. becuase.. only the questionId is suffeciant
+            // to make the effect.. so.. should I emit separately in next lines
+            // or it's ok to have something extra in the payload?
+            // I don't know... I'm not sure..
+            // What is the trait off here...
             lectureId,
           },
           userId,
@@ -362,6 +369,8 @@ router.put('/questions/:id', verifyToken, (req, res) => {
         )
         .get(id);
 
+      // What a consitency here!
+      // God.. what was I thinking.!
       const editedQuestion = {
         ...updatedQuestion,
         user: getUserData(userId),
@@ -381,6 +390,11 @@ router.put('/questions/:id', verifyToken, (req, res) => {
       io.to(room).except(`user-${userId}`).emit(event, {
         payload: { editedQuestion },
       });
+      io.to(`question-${id}`).except(`user-${userId}`).emit('questionEdited', {
+        payload: { editedQuestion },
+        userId,
+      });
+
     })();
   } catch (error) {
     console.error(error);
@@ -432,6 +446,14 @@ router.delete('/questions/:id', verifyToken, (req, res) => {
         },
         userId,
       });
+      io.to(`question-${questionId}`).except(`user-${userId}`).emit('questionDeleted', {
+        payload: {
+          questionId,
+          lectureId,
+        },
+        userId,
+      });
+      
     })();
   } catch (error) {
     console.error(error);
@@ -514,7 +536,7 @@ router.post('/questions/diff', verifyToken, (req, res) => {
     SELECT questionId FROM votes
     -- If you are wondering... take a look at the vots table and you will see
     -- Ther is replyId and questionId..
-    WHERE userId = ? AND questionId IS NULL;
+    WHERE userId = ? AND questionId IS NOT NULL;
     `
     )
     .pluck()

@@ -179,11 +179,19 @@ export const addGeneralDiscussionEntry =
     );
   };
 
-export const fetchReplies = (questionId) => async (dispatch) => {
+export const fetchReplies = (questionId) => async (dispatch, getState) => {
   dispatch(discussionsActions.fetchDiscussionRepliesRequest());
   dispatch(toggleLoading());
+  const state = getState();
+  const lastFetched = state.discussions.getIn(
+    ['repliesLastFetchedAt', questionId]
+  ) || '';
+
+  const params = new URLSearchParams({
+    lastFetched,
+  }).toString();
   try {
-    const response = await fetch(`${DOMAIN}/questions/${questionId}/replies`, {
+    const response = await fetch(`${DOMAIN}/questions/${questionId}/replies?${params}`, {
       headers: {
         Authorization: `Bearer ${getToken('accessToken')}`,
       },
@@ -193,7 +201,15 @@ export const fetchReplies = (questionId) => async (dispatch) => {
     if (!response.ok) {
       throw new Error(data.message);
     }
-    dispatch(discussionsActions.fetchDiscussionRepliesSuccess(data));
+
+    const { question, repliesList, lastFetched } = data;
+    dispatch(
+      discussionsActions.fetchDiscussionRepliesSuccess(
+        question,
+        repliesList,
+        lastFetched,
+      )
+    );
   } catch (error) {
     console.error(error.message);
     dispatch(
@@ -234,7 +250,9 @@ export const addDiscussionReply =
         }
       );
 
-      dispatch(discussionsActions.addDiscussionReplySuccess(data));
+      const { newReply, lastFetched } = data;
+
+      dispatch(discussionsActions.addDiscussionReplySuccess(newReply, lastFetched));
     } catch (error) {
       console.error(error.message);
       dispatch(
@@ -645,3 +663,54 @@ export const syncExistingQuestions =
       );
     }
   };
+
+export const syncExistingReplies = (questionId) => async (dispatch, getState) => {
+  const state = getState();
+
+  const lastFetched = state.discussions.getIn(['repliesLastFetchedAt', questionId]);
+  const entries = state.discussions.getIn(
+    ['replies', questionId, 'repliesList']
+  )?.map(
+    reply => ({id: reply.get('id'), updatedAt: reply.get('updatedAt')})
+  ).toJS();
+  
+  if (!entries) return;
+
+  try {
+    const data = await toast.promise(
+      fetch(`${DOMAIN}/questions/${questionId}/replies/diff`, {
+        method: 'POST',
+        body: JSON.stringify({ entries, lastFetched }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${getToken('accessToken')}`,
+        },
+      }).then((response) => {
+        if (!response.ok) {
+          throw new Error(response.statusText);
+        }
+        return response.json();
+      }),
+      {
+        success: 'Saved replies synced successfully',
+        loading: 'Syncing existing replies',
+        error: 'Error syncing replies',
+      }
+    );
+
+    dispatch(
+      discussionsActions.syncExistingRepliesSuccess(
+        data.results,
+        data.lastSynced,
+        questionId
+      )
+    );
+  } catch (error) {
+    console.error(error);
+    dispatch(
+      discussionsActions.syncExistingRepliesFailure(
+        `Error syncing the existing replies: ${error.message}`
+      )
+    );
+  }
+}
