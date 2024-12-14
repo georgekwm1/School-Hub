@@ -19,6 +19,8 @@ export default function CommentsList({ announcementId = 'testId' }) {
     dispatch(fetchAnnouncementComments(announcementId));
   }, [dispatch, announcementId]);
 
+  useJoinRoom(`comments-${announcementId}`);
+
   const showMoreComments = () => setLimit(limit + 10);
   const showLessComments = () => setLimit(limit - 10);
 
