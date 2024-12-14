@@ -7,8 +7,7 @@ import {
 import Loading from '../utilityComponents/Loading';
 import CommentEntry from './CommentEntry';
 import { fetchAnnouncementComments } from '../../redux/actions/announcementsThunks';
-import useSyncComments from '../../hooks/syncCommentsHook';
-import { useJoinRoom } from '../../hooks/socketConnectionHooks';
+
 
 export default function CommentsList({ announcementId = 'testId' }) {
   const [limit, setLimit] = useState(10);
@@ -20,9 +19,6 @@ export default function CommentsList({ announcementId = 'testId' }) {
   useEffect(() => {
     dispatch(fetchAnnouncementComments(announcementId));
   }, [dispatch, announcementId]);
-
-  useJoinRoom(`comments-${announcementId}`);
-  useSyncComments(announcementId);
 
   const showMoreComments = () => setLimit(limit + 10);
   const showLessComments = () => setLimit(limit - 10);

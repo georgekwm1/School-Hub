@@ -2,9 +2,18 @@ import React, { useState } from 'react';
 import AnnouncementHeader from './AnnouncementHeader';
 import CommentPrompt from './CommentPrompt';
 import CommentsList from './CommentsList';
+import useSyncComments from '../../hooks/syncCommentsHook';
+import { useJoinRoom } from '../../hooks/socketConnectionHooks';
+
 
 export default function AnnouncementEntry({ content }) {
   const [showComments, setShowComments] = useState(false);
+  const announcementId = content.get('id');
+
+  useJoinRoom(`comments-${announcementId}`);
+  useSyncComments(announcementId);
+
+
   return (
     <div className="card my-3 p-3">
       <AnnouncementHeader content={content} />
