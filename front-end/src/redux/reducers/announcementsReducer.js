@@ -77,14 +77,26 @@ export default function announcementsReducer(
 
     case actions.ADD_COMMENT_SUCCESS: {
       const { announcementId, comment } = action.payload;
-      return state
-        .updateIn(['comments', announcementId], (commentsList = fromJS([])) =>
-          commentsList.unshift(fromJS(comment))
-        )
-        .merge({
-          isCommentsLoading: false,
-          announcementsError: null,
-        });
+      return state.withMutations(state => {
+        return state
+          .updateIn(['comments', announcementId], (commentsList = fromJS([])) =>
+            commentsList.unshift(fromJS(comment))
+          )
+          .merge({
+            isCommentsLoading: false,
+            announcementsError: null,
+          })
+          .update('announcements', announcements => {
+            const index = announcements.findIndex(
+              entry => entry.get('id') === announcementId
+            );
+            // I don't know how or when would this happen.. but anyway.....
+            if (index === -1) {
+              return announcements;
+            }
+            return announcements.updateIn([index, 'commentsCount'], count => count + 1);
+          })
+      })
     }
 
     case actions.INCREMENT_COMMENTS_COUNT: {
