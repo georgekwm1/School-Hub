@@ -9,6 +9,7 @@ import {
 	syncReplyVote,
 	editQuestionSuccess,
 	deleteQuestionSuccess,
+	syncQuestionDetailsVote,
 } from '../redux/actions/discussionsActionCreators';
 import { syncExistingReplies } from '../redux/actions/discussionsThunks';
 import { getSocket } from '../socket';
@@ -64,13 +65,19 @@ export default function useSyncReplies(questionId) {
 				toast('Question deleted Remotely');
 			})
 
+			socket.on('questionUpvoteToggled', ({ payload }) => {
+				const { questionId, isUpvoted } = payload;
+				dispatch(syncQuestionDetailsVote(questionId, isUpvoted))
+			})
+
 			return () => {
 				socket.off('replyCreated');
 				socket.off('replyDeleted');
 				socket.off('replyUpdated');
 				socket.off('replyUpvoteToggled');
 				socket.off('questionEdited');
-				socket.off('questionDeleted');
+				socket.off('questionDeleted'); 
+				socket.off('questionUpvoteToggled'); 
 			}
 		}
 	}, [dispatch, socket, isSocketReady]);
