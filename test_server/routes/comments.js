@@ -54,6 +54,7 @@ router.get('/announcements/:id/comments', verifyToken, (req, res) => {
 // Create a comment for an announcement
 router.post('/announcements/:id/comments', verifyToken, (req, res) => {
   const announcementId = req.params.id;
+  const io = req.app.get('io');
   const { comment: body } = req.body;
   const userId = req.userId;
 
@@ -62,6 +63,18 @@ router.post('/announcements/:id/comments', verifyToken, (req, res) => {
   }
 
   try {
+    const { courseId } = db
+      .prepare(
+        `
+        SELECT courseId FROM announcements
+        WHERE id = ?
+      `
+      )
+      .get(announcementId);
+    if (!courseId) {
+      return res.status(404).send({ message: 'Announcement not found' });
+    }
+
     const id = uuidv4();
     db.prepare(
       `INSERT INTO comments (id, announcementId, userId, body) VALUES (?, ?, ?, ?)`
@@ -74,6 +87,16 @@ router.post('/announcements/:id/comments', verifyToken, (req, res) => {
     delete newComment.userId;
 
     res.status(201).json(newComment);
+    
+    const rooms = [`announcements-${courseId}`, `comments-${announcementId}`];
+    io.to(rooms).except(`user-${userId}`).emit('commentCreated', {
+      payload: {
+        announcementId,
+        newComment,
+      },
+      userId,
+    })
+
   } catch (err) {
     console.error(err);
     res.status(500).send({ message: 'Internal server error' });
