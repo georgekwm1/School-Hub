@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectIsSocketReady } from '../redux/selectors/uiSelectors';
 import { getSocket } from '../socket';
-import { addCommentSuccess, incrementCommentsCount } from '../redux/actions/announcementsActionCreators';
+import { addCommentSuccess, syncCommentsCount } from '../redux/actions/announcementsActionCreators';
 
 export default function useSyncComments(announcementId, showComments) {
   const dispatch = useDispatch();
@@ -18,7 +18,7 @@ export default function useSyncComments(announcementId, showComments) {
         if (showComments) {
           dispatch(addCommentSuccess(announcementId, newComment));
         } else {
-          dispatch(incrementCommentsCount(announcementId));
+          dispatch(syncCommentsCount(announcementId));
         }
       });
 

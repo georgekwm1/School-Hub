@@ -100,7 +100,7 @@ export default function announcementsReducer(
       })
     }
 
-    case actions.INCREMENT_COMMENTS_COUNT: {
+    case actions.SYNC_COMMENTS_COUNT: {
       const { announcementId } = action.payload;
       return state.updateIn(['announcements'], (announcements) => {
 

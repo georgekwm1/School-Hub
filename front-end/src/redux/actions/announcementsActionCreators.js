@@ -55,8 +55,8 @@ export const addCommentSuccess = (announcementId, comment) => ({
   payload: { announcementId, comment },
 });
 
-export const incrementCommentsCount = (announcementId) => ({
-  type: actions.INCREMENT_COMMENTS_COUNT,
+export const syncCommentsCount = (announcementId) => ({
+  type: actions.SYNC_COMMENTS_COUNT,
   payload: { announcementId },
 });
 
