@@ -20,6 +20,7 @@ export default function useSyncComments(announcementId, showComments) {
         } else {
           // Again. i'm not as comfortable regarding how clean is this
           dispatch(syncCommentsCount(announcementId, +1));
+        }
       });
 
       return () => {
