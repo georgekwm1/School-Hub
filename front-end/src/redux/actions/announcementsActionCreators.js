@@ -55,9 +55,11 @@ export const addCommentSuccess = (announcementId, comment) => ({
   payload: { announcementId, comment },
 });
 
-export const syncCommentsCount = (announcementId) => ({
+// I'm not so comfortable abou this +1 and -1 way.
+// I feel it's not as clean
+export const syncCommentsCount = (announcementId, changeCount) => ({
   type: actions.SYNC_COMMENTS_COUNT,
-  payload: { announcementId },
+  payload: { announcementId, changeCount },
 });
 
 export const addAnnouncementRequest = () => ({
