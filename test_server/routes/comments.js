@@ -134,7 +134,7 @@ router.put('/comments/:id', verifyToken, (req, res) => {
     delete updatedComment.userId;
 
     res.status(200).json(updatedComment);
-    io.to(`commentes-${updatedComment.announcementId}`).except(`user-${userId}`).emit('commentEdited', {
+    io.to(`comments-${updatedComment.announcementId}`).except(`user-${userId}`).emit('commentEdited', {
       payload: {editedComment: updatedComment},
       userId,
     })
