@@ -18,8 +18,8 @@ export default function useSyncComments(announcementId, showComments) {
         if (showComments) {
           dispatch(addCommentSuccess(announcementId, newComment));
         } else {
-          dispatch(syncCommentsCount(announcementId));
-        }
+          // Again. i'm not as comfortable regarding how clean is this
+          dispatch(syncCommentsCount(announcementId, +1));
       });
 
       return () => {
