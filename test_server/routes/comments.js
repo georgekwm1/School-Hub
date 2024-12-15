@@ -106,6 +106,7 @@ router.post('/announcements/:id/comments', verifyToken, (req, res) => {
 // Edit an announcement
 router.put('/comments/:id', verifyToken, (req, res) => {
   const { id } = req.params;
+  const io = req.app.get('io');
   const { body } = req.body;
   const userId = req.userId;
 
@@ -133,6 +134,10 @@ router.put('/comments/:id', verifyToken, (req, res) => {
     delete updatedComment.userId;
 
     res.status(200).json(updatedComment);
+    io.to(`commentes-${updatedComment.announcementId}`).except(`user-${userId}`).emit('commentEdited', {
+      payload: {editedComment: updatedComment},
+      userId,
+    })
   } catch (error) {
     console.error(error);
     res.status(500).send({ message: 'Internal server error' });
