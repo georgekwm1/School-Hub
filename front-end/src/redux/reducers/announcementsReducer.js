@@ -101,14 +101,14 @@ export default function announcementsReducer(
     }
 
     case actions.SYNC_COMMENTS_COUNT: {
-      const { announcementId, countChange } = action.payload;
+      const { announcementId, changeCount } = action.payload;
       return state.updateIn(['announcements'], (announcements) => {
 
         const index = announcements.findIndex(
           (announcement) => announcement.get('id') === announcementId
         );
         return index !== -1
-          ? announcements.updateIn([index, 'commentsCount'], (count) => count + countChange)
+          ? announcements.updateIn([index, 'commentsCount'], (count) => count + changeCount)
           : announcements;
       });
     }
