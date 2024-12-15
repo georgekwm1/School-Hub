@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectIsSocketReady } from '../redux/selectors/uiSelectors';
 import { getSocket } from '../socket';
-import { addCommentSuccess, syncCommentsCount } from '../redux/actions/announcementsActionCreators';
+import { addCommentSuccess, deleteAnnouncementCommentSuccess, syncCommentsCount } from '../redux/actions/announcementsActionCreators';
 
 export default function useSyncComments(announcementId, showComments) {
   const dispatch = useDispatch();
@@ -23,8 +23,21 @@ export default function useSyncComments(announcementId, showComments) {
         }
       });
 
+
+      // SYnc deletion
+      socket.on('commentDeleted', ({ payload }) => {
+        const { announcementId, commentId } = payload;
+
+        if (showComments) {
+          dispatch(deleteAnnouncementCommentSuccess(announcementId, commentId));
+        } else {
+          dispatch(syncCommentsCount(announcementId, -1));
+        }
+      });
+      
       return () => {
         socket.off('commentCreated');
+        socket.off('commentDeleted');
       };
     }
   }, [dispatch, isSocketReady, showComments, socket]);
