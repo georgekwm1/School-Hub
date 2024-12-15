@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectIsSocketReady } from '../redux/selectors/uiSelectors';
 import { getSocket } from '../socket';
-import { addCommentSuccess, deleteAnnouncementCommentSuccess, syncCommentsCount } from '../redux/actions/announcementsActionCreators';
+import { addCommentSuccess, deleteAnnouncementCommentSuccess, editCommentSuccess, syncCommentsCount } from '../redux/actions/announcementsActionCreators';
 
 export default function useSyncComments(announcementId, showComments) {
   const dispatch = useDispatch();
@@ -35,9 +35,18 @@ export default function useSyncComments(announcementId, showComments) {
         }
       });
       
+
+      // SYnc editing
+      socket.on('commentEdited', ({payload}) => {
+        const {editedComment} = payload;
+        dispatch(editCommentSuccess(editedComment));
+      })
+
+
       return () => {
         socket.off('commentCreated');
         socket.off('commentDeleted');
+        socket.off('commentEdited');
       };
     }
   }, [dispatch, isSocketReady, showComments, socket]);
