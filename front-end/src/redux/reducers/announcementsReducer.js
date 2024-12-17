@@ -77,25 +77,40 @@ export default function announcementsReducer(
 
     case actions.ADD_COMMENT_SUCCESS: {
       const { announcementId, comment } = action.payload;
-      return state
-        .updateIn(['comments', announcementId], (commentsList = fromJS([])) =>
-          commentsList.unshift(fromJS(comment))
-        )
-        .merge({
-          isCommentsLoading: false,
-          announcementsError: null,
-        });
+      return state.withMutations(state => {
+        return state
+          .updateIn(['comments', announcementId], (commentsList = fromJS([])) =>
+            commentsList.unshift(fromJS(comment))
+          )
+          .merge({
+            isCommentsLoading: false,
+            announcementsError: null,
+          })
+          .update('announcements', announcements => {
+            const index = announcements.findIndex(
+              entry => entry.get('id') === announcementId
+            );
+            // I don't know how or when would this happen.. but anyway.....
+            if (index === -1) {
+              return announcements;
+            }
+
+            return announcements.updateIn([index, 'commentsCount'], count => count + 1);
+          })
+      })
     }
 
-    case actions.INCREMENT_COMMENTS_COUNT: {
-      const { announcementId } = action.payload;
-      return state.updateIn(['announcements'], (announcements) =>
-        announcements.map((announcement) =>
-          announcement.get('id') === announcementId
-            ? announcement.update('commentsCount', (count) => count + 1)
-            : announcement
-        )
-      );
+    case actions.SYNC_COMMENTS_COUNT: {
+      const { announcementId, changeCount } = action.payload;
+      return state.updateIn(['announcements'], (announcements) => {
+
+        const index = announcements.findIndex(
+          (announcement) => announcement.get('id') === announcementId
+        );
+        return index !== -1
+          ? announcements.updateIn([index, 'commentsCount'], (count) => count + changeCount)
+          : announcements;
+      });
     }
 
     case actions.ADD_ANNOUNCEMENT_FAILURE: {

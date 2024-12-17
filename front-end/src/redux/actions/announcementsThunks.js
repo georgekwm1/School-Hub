@@ -85,7 +85,6 @@ export const addComment =
         }
       );
       dispatch(creators.addCommentSuccess(announcementId, data));
-      dispatch(creators.incrementCommentsCount(announcementId));
     } catch (error) {
       console.error(error.message);
       dispatch(creators.addCommentFailure(error.message));
