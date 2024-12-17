@@ -11,6 +11,14 @@ export default function useSyncComments(announcementId, showComments) {
 
   useEffect(() => {
     if (socket) {
+      // Always clean up existing listeners first...
+      // Invistigate further why on earth the componenent rereder twice.. 
+      // ANd most impotatnly.. the return call back of the useEffect
+      // Don't evaluate so it cleans the the listeners!
+      socket.off('commentCreated');
+      socket.off('commentDeleted');
+      socket.off('commentEdited');
+
       // Sync Creation
       socket.on('commentCreated', ({ payload }) => {
         const { announcementId, newComment } = payload;
