@@ -321,9 +321,16 @@ router.put('/lectures/:id', verifyToken, (req, res) => {
         .prepare(`SELECT ${lectureFields} FROM lectures WHERE id = ?`)
         .get(id);
       // I some how in the hurry forgot all about quizez.. so.. this is to fixes system wide next
-      res
-        .status(200)
-        .json({ ...updatedLecture, tags, demos, shorts, quizzez: [] });
+      const response = { ...updatedLecture, tags, demos, shorts, quizzez: [] };
+      res.status(200).json(response);
+      
+      io.to([`sections-${lecture.courseId}`, `lecture-${id}`]).except(`user-${userId}`).emit(
+        'lectureUpdated',
+        {
+          payload: {updatedLecture: response},
+          userId,
+        }
+      )
     })();
   } catch (err) {
     console.error(err);
