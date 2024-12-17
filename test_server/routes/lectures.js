@@ -343,6 +343,7 @@ router.put('/lectures/:id', verifyToken, (req, res) => {
 router.delete('/lectures/:id', verifyToken, (req, res) => {
   const lectureId = req.params.id;
   const userId = req.userId;
+  const io = req.app.get('io');
 
   try {
     const lecture = db
@@ -368,6 +369,14 @@ router.delete('/lectures/:id', verifyToken, (req, res) => {
         db.prepare('DELETE FROM sections WHERE id = ?').run(sectionId);
       }
       res.status(200).json({ message: 'Lecture deleted successfully' });
+
+      io.to([`sections-${lecture.courseId}`, `lecture-${id}`]).except(`user-${userId}`).emit(
+        'lectureDeleted',
+        {
+          payload: { lectureId, sectionId },
+          userId
+        }
+      )
     })();
   } catch (err) {
     console.error(err);
