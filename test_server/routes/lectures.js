@@ -235,6 +235,7 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
 // Edit a lecture
 router.put('/lectures/:id', verifyToken, (req, res) => {
   const { id } = req.params;
+  const io = req.app.get('io');
   const {
     name,
     description,
