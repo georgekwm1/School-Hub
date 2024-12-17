@@ -5,6 +5,8 @@ import { getLectureById } from '../../redux/actions/lecturesThunks';
 import Loading from '../utilityComponents/Loading';
 import LectureDiscussion from '../LectureDiscussion/LectureDiscussion';
 import { useParams } from 'react-router-dom';
+import { useJoinRoom } from '../../hooks/socketConnectionHooks';
+import useSyncLectureEntry from '../../hooks/syncLectureEntryHook';
 
 export default function Lecture() {
   const { lectureId } = useParams();
@@ -15,10 +17,11 @@ export default function Lecture() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    if (!lectureData) {
-      dispatch(getLectureById(lectureId));
-    }
-  }, [dispatch, lectureData, lectureId]);
+    dispatch(getLectureById(lectureId));
+  }, [dispatch, lectureId]);
+
+  useJoinRoom(`lecture-${lectureId}`);
+  useSyncLectureEntry();
 
   const getVideoId = () => extractVideoId(lectureData.get('videoLink'));
   const getDemos = () =>  lectureData
