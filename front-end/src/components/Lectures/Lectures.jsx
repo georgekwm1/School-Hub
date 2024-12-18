@@ -9,6 +9,8 @@ import { getCourseLectures } from '../../redux/actions/lecturesThunks';
 import { Link } from 'react-router-dom';
 import TempStyledLectureEntry from './TempStyledLectureEntry';
 import { selectCourseId } from '../../redux/selectors/uiSelectors';
+import { useJoinRoom } from '../../hooks/socketConnectionHooks';
+import useSyncSections from '../../hooks/syncSectionsHook';
 
 export default function Lectures() {
   const isLoading = useSelector(selectLecturesIsLoading);
@@ -26,7 +28,7 @@ export default function Lectures() {
   }, [dispatch]);
 
   useJoinRoom(`sections-${courseId}`);
-  
+  useSyncSections();
 
   const handleShowModal = (section) => {
     setSelectedSection(section);
