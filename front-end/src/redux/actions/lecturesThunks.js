@@ -8,17 +8,29 @@ export const getLectureById = (lectureId) => async (dispatch, getState) => {
 
   const state = getState();
   const courseId = state.ui.getIn(['course', 'id']);
+  // Could be null.. so it hasn't been fetched before;
+  const updatedAt = state.lectures.getIn(['lectures', lectureId, 'updatedAt']);
+  
+  const params = new URLSearchParams({
+    updatedAt,
+  }).toString();
   try {
     const response = await fetch(
-      `${DOMAIN}/courses/${courseId}/lectures/${lectureId}`,
+      `${DOMAIN}/courses/${courseId}/lectures/${lectureId}?${params}`,
       {
         headers: {
           'Authorization': `Bearer ${getToken('accessToken')}`
         },
       }
     );
-    const data = await response.json();
+    
+    if (response.status === 304) {
+      // It's not modified sinse last Fetched
+      dispatch(actionCreators.setLectureLoading(false));
+      return;
+    }
 
+    const data = await response.json();
     if (!response.ok) {
       throw new Error(data.message);
     }
