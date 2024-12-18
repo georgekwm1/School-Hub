@@ -18,6 +18,10 @@ export const initialState = fromJS({
 
 export default function lecturesReducer(state = initialState, action = {}) {
   switch (action.type) {
+    case actions.SET_LECTURE_LOADING: {
+      return state.set('isLoading', action.payload.value);
+    }
+
     case actions.LECTURE_REQUEST: {
       return state.set('isLoading', true);
     }
