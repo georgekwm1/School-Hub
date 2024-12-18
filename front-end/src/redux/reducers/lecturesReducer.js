@@ -163,7 +163,7 @@ export default function lecturesReducer(state = initialState, action = {}) {
               if (!sections?.size) return sections;
 
               const index = sections?.findIndex(
-                (section) => section.title === editedLecture.section
+                (section) => section.id === editedLecture.sectionId
               );
               return sections.updateIn([index, 'lectures'], (lectures) => {
                 const index = lectures.findIndex(
