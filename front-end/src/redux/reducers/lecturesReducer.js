@@ -162,12 +162,12 @@ export default function lecturesReducer(state = initialState, action = {}) {
               // the lectures component before.. so sections will be empty
               if (!sections?.size) return sections;
 
-              const index = sections?.findIndex(
-                (section) => section.id === editedLecture.sectionId
+              const index = sections.findIndex(
+                (section) => section.get('id') === editedLecture.sectionId
               );
               return sections.updateIn([index, 'lectures'], (lectures) => {
                 const index = lectures.findIndex(
-                  (lecture) => lecture.id === editedLecture.id
+                  (lecture) => lecture.get('id') === editedLecture.id
                 );
                 if (index === -1) {
                   return lectures;
