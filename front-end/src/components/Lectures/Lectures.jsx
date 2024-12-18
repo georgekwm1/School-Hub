@@ -8,11 +8,13 @@ import Loading from '../utilityComponents/Loading';
 import { getCourseLectures } from '../../redux/actions/lecturesThunks';
 import { Link } from 'react-router-dom';
 import TempStyledLectureEntry from './TempStyledLectureEntry';
+import { selectCourseId } from '../../redux/selectors/uiSelectors';
 
 export default function Lectures() {
   const isLoading = useSelector(selectLecturesIsLoading);
   const sections = useSelector(selectcourseSectionsJS);
   const userRole = useSelector((state) => state.ui.getIn(['user', 'role']));
+  const courseId = useSelector(selectCourseId);
   const dispatch = useDispatch();
 
   // State to handle the modal visibility and selected section data
@@ -22,6 +24,9 @@ export default function Lectures() {
   useEffect(() => {
     dispatch(getCourseLectures());
   }, [dispatch]);
+
+  useJoinRoom(`sections-${courseId}`);
+  
 
   const handleShowModal = (section) => {
     setSelectedSection(section);
