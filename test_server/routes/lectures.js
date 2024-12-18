@@ -74,6 +74,9 @@ router.get(
   (req, res) => {
     const courseId = req.params.courseId;
     const lectureId = req.params.lectureId;
+    // representing the updatedAt value stored in userCache
+    // sinse fetching the lecture befroe
+    const updatedAt =  req.query.updatedAt;
     const userId = req.userId;
 
     const course = db
@@ -94,6 +97,7 @@ router.get(
 
     const lectureFields = [
       'id',
+      'updatedAt',
       'title',
       'videoLink',
       'notes',
@@ -109,6 +113,8 @@ router.get(
       .get(lectureId);
     if (!lecture) {
       return res.status(404).send({ message: 'Lecture not found' });
+    } else if (lecture.updatedAt === updatedAt) {
+      return res.status(304).send({ message: 'Lecture not updated' });
     }
 
     const getResource = (lectureId, type) => {
