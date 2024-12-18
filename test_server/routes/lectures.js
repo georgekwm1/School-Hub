@@ -370,7 +370,7 @@ router.delete('/lectures/:id', verifyToken, (req, res) => {
       }
       res.status(200).json({ message: 'Lecture deleted successfully' });
 
-      io.to([`sections-${lecture.courseId}`, `lecture-${id}`]).except(`user-${userId}`).emit(
+      io.to([`sections-${lecture.courseId}`, `lecture-${lectureId}`]).except(`user-${userId}`).emit(
         'lectureDeleted',
         {
           payload: { lectureId, sectionId },
