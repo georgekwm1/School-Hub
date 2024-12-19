@@ -255,11 +255,29 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
               lecture: {
                 id: lectureId, title, description, tags
               }
-            }
+            },
+            userId,
           }
         );
-      } 
-
+      } else {
+        const section = db.prepare(
+          'SELECT id, title, description FROM sections WHERE id = ?'
+        ).get(sectionId);
+        // Should the event be more clear?
+        // Like, newlectureWithNewSection?! I don't know
+        io.to(room).except(`user-${userId}`).emit(
+          'newSection',
+          {
+            payload: {
+              ...section,
+              lecture: {
+                id: lectureId, title, description, tags,
+              },
+            },
+            userId,
+          }
+        )
+      }
     })();
   } catch (err) {
     console.error(err);
