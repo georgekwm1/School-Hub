@@ -194,6 +194,19 @@ export default function lecturesReducer(state = initialState, action = {}) {
       return state.set('lectureEdited', false);
     }
 
+    case actions.ADD_LECTURE_TO_SECTION: {
+      const { sectionId, lecture } = action.payload;
+
+      const sectionIndex = state
+        .get('sections')
+        .findIndex((section) => section.get('id') === sectionId);
+      if (sectionId === -1) return state;
+
+      return state.updateIn(['sections', sectionIndex, 'lectures'], (lectures) => {
+        return lectures.push(fromJS(lecture));
+      })
+    }
+
     default: {
       return state;
     }
