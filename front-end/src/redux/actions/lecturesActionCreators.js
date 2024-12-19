@@ -112,3 +112,10 @@ export const editLectureSuccess = (editedLecture) => ({
 export const resetLectureEdited = () => ({
   type: actions.RESET_LECTURE_EDITED,
 });
+
+export const addLectureToSection = (sectionId, lecture) => ({
+  type: actions.ADD_LECTURE_TO_SECTION,
+  paylaod: {
+    sectionId, lecture,
+  }
+})
