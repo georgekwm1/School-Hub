@@ -115,7 +115,7 @@ export const resetLectureEdited = () => ({
 
 export const addLectureToSection = (sectionId, lecture) => ({
   type: actions.ADD_LECTURE_TO_SECTION,
-  paylaod: {
+  payload: {
     sectionId, lecture,
   }
 })

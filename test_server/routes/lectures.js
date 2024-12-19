@@ -253,7 +253,7 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
             payload: {
               sectionId,
               lecture: {
-                id, title, description, tags
+                id: lectureId, title, description, tags
               }
             }
           }
