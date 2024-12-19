@@ -270,9 +270,9 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
           {
             payload: {
               ...section,
-              lecture: {
-                id: lectureId, title, description, tags,
-              },
+              lectures: [
+                {id: lectureId, title, description, tags,},
+              ],
             },
             userId,
           }
