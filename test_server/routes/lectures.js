@@ -258,7 +258,7 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
             }
           }
         );
-      }
+      } 
 
     })();
   } catch (err) {
