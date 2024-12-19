@@ -119,15 +119,26 @@ export default function lecturesReducer(state = initialState, action = {}) {
           .set('isLoading', false)
           .set('lectureError', null)
           .removeIn(['lectures', lectureId])
-          .update('sections', (sections) =>
-            sections.map((section) =>
-              section.get('id') === sectionId
-                ? section.update('lectures', (lectures) =>
-                    lectures.filter((lec) => lec.get('id') !== lectureId)
-                  )
-                : section
-            )
-          );
+          .update('sections', (sections) => {
+            const sectionIndex = sections.findIndex(
+              section => section.get('id') === sectionId
+            );
+            if (sectionIndex === -1) return sections;
+
+            console.log('sectionINd', sectionIndex)
+            
+            if (sections.getIn([sectionIndex, 'lectures']).size === 1) {
+              console.log('delete section', sectionIndex)
+              return sections.deleteIn([sectionIndex]);
+            } else {
+              const lectureIndex = sections.getIn([sectionIndex, 'lectures']).findIndex(lecture => {
+                return lecture.get('id') === lectureId;
+              });
+              
+              console.log('delete lecture', lectureIndex)
+              return sections.removeIn([sectionIndex, 'lectures', lectureIndex]);
+            }            
+          })
       });
     }
 
