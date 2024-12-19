@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectIsSocketReady } from '../redux/selectors/uiSelectors';
 import { getSocket } from '../socket';
-import { deleteLectureSuccess, editLectureSuccess } from '../redux/actions/lecturesActionCreators';
+import { addLectureToSection, deleteLectureSuccess, editLectureSuccess } from '../redux/actions/lecturesActionCreators';
 
 
 export default function useSyncSections() {
@@ -12,6 +12,12 @@ export default function useSyncSections() {
 
 	useEffect(() => {
 		if (socket) {
+			// Sync creating a new lecture to an exisitng section
+			socket.on('lectureCreated', ({ payload }) => {
+				const { lecture, sectionId } = payload;
+				dispatch(addLectureToSection(sectionId, lecture));
+			})
+
 			// Sync updating a lecture
 			socket.on('lectureUpdated', ({ payload }) => {
 				const { updatedLecture } = payload;
@@ -25,6 +31,7 @@ export default function useSyncSections() {
 			});
 
 			return () => {
+				socket.off('lectureCreated');
 				socket.off('lectureUpdated');
 				socket.off('lectureDeleted');
 			}
