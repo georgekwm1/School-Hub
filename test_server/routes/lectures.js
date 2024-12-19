@@ -149,6 +149,7 @@ router.get('/courses/:id/sections_titles', verifyToken, (req, res) => {
 router.post('/courses/:id/lectures', verifyToken, (req, res) => {
   // Oh, Boy, This is big.
   const { id: courseId } = req.params;
+  const io = req.app.get('io');
   const userId = req.userId;
   const {
     demos,
@@ -171,10 +172,14 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
   try {
     db.transaction(() => {
       // Retrieve or create section basd on existence of ht title
+      // I'm skeptic about how good this flag approach is
+      // For later to decide the socketIo event to emit;
+      let newSection = false;
       let sectionId = db
         .prepare('SELECT id FROM sections WHERE title = ?')
         .get(section)?.id;
       if (!sectionId) {
+        newSection = true;
         sectionId = uuidv4();
         db.prepare(
           'INSERT INTO sections (id, title, courseId) VALUES (?, ?, ?)'
@@ -215,7 +220,7 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
       demos.forEach((demo) => insertResource(demo, 'demo'));
       shorts.forEach((short) => insertResource(short, 'short'));
 
-      res.status(201).json({
+      const newLecture = {
         id: lectureId,
         title,
         description,
@@ -230,7 +235,31 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
         demos,
         shorts,
         quizzez: [],
-      });
+      }
+      res.status(201).json(newLecture);
+
+      // I think this one the most obvious reasons that I have to move io events to
+      // Separate middlewares next sprint..
+      // Also.. now I know why in express .. I see teh routes in a place
+      // and the actually logic in another place...
+      // to be able to put middlewares as needes.. 
+      // because here if i try that.. i will have to put the middleware after the function ends.
+      // Which seems very ugly.
+      const room = `sections-${courseId}`;
+      if (!newSection) {
+        io.to(room).except(`user-${userId}`).emit(
+          'lectureCreated',
+          {
+            payload: {
+              sectionId,
+              lecture: {
+                id, title, description, tags
+              }
+            }
+          }
+        );
+      }
+
     })();
   } catch (err) {
     console.error(err);
