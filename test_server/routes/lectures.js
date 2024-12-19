@@ -266,7 +266,7 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
         // Should the event be more clear?
         // Like, newlectureWithNewSection?! I don't know
         io.to(room).except(`user-${userId}`).emit(
-          'newSection',
+          'sectionCreated',
           {
             payload: {
               ...section,
