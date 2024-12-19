@@ -119,3 +119,10 @@ export const addLectureToSection = (sectionId, lecture) => ({
     sectionId, lecture,
   }
 })
+
+export const createNewSection = (newSection) => ({
+  type: actions.CREATE_NEW_SECTION,
+  payload: {
+    newSection,
+  }
+})
