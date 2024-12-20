@@ -207,13 +207,13 @@ export default function lecturesReducer(state = initialState, action = {}) {
       })
     }
 
-case actions.CREATE_NEW_SECTION: {
-  const { newSection } = action.payload;
+    case actions.CREATE_NEW_SECTION: {
+      const { newSection } = action.payload;
 
-  return state.update('sections', (sections) =>
-    sections.push(fromJS(newSection))
-  );
-}
+      return state.update('sections', (sections) =>
+        sections.push(fromJS(newSection))
+      );
+    }
 
     default: {
       return state;

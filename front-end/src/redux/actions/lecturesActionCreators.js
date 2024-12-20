@@ -40,10 +40,11 @@ export const sectionsRequest = () => ({
   type: actions.SECTIONS_REQUEST,
 });
 
-export const sectionsSuccess = (sections) => ({
+export const sectionsSuccess = (sections, lastFetched) => ({
   type: actions.SECTIONS_SUCCESS,
   payload: {
     sections,
+    lastFetched,
   },
 });
 
