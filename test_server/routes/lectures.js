@@ -238,7 +238,8 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
         shorts,
         quizzez: [],
       }
-      res.status(201).json(newLecture);
+      const lastFetched = getCurrentTimeInDBFormat();
+      res.status(201).json({newLecture, lastFetched});
 
       // I think this one the most obvious reasons that I have to move io events to
       // Separate middlewares next sprint..
@@ -256,7 +257,8 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
               sectionId,
               lecture: {
                 id: lectureId, title, description, tags
-              }
+              },
+              lastFetched,
             },
             userId,
           }
