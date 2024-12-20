@@ -14,8 +14,8 @@ export default function useSyncSections() {
 		if (socket) {
 			// Sync creating a new lecture to an exisitng section
 			socket.on('lectureCreated', ({ payload }) => {
-				const { lecture, sectionId } = payload;
-				dispatch(addLectureToSection(sectionId, lecture));
+				const { lecture, sectionId, lastFetched } = payload;
+				dispatch(addLectureToSection(sectionId, lecture, lastFetched));
 			})
 
 			// Sync creating a lecture ina new section
