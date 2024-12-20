@@ -63,8 +63,9 @@ router.get('/courses/:id/lectures', verifyToken, (req, res) => {
     ...section,
     lectures: db
       .prepare(
-        `SELECT ${lectureFields} FROM lectures WHERE sectionId = ? AND createdAt > ?`
-      ).all(section.id, lastFetched),
+        `SELECT ${lectureFields} FROM lectures WHERE sectionId = ?
+         ${lastFetched ? 'AND createdAt > ?': ''}`
+      ).all(...[section.id, ...(lastFetched ? [lastFetched] : [])]),
   }));
   res.json({ sections: lectures, lastFetched: getCurrentTimeInDBFormat() });
 });
