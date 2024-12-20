@@ -70,11 +70,13 @@ export default function lecturesReducer(state = initialState, action = {}) {
     }
 
     case actions.SECTIONS_SUCCESS: {
+      const { sections, lastFetched } = action.payload
       return state.withMutations((state) => {
         return state
           .set('isLoading', false)
           .set('lectureError', null)
-          .set('sections', fromJS(action.payload.sections));
+          .set('sections', fromJS(sections))
+          .set('sectionsLastFetchedAt', lastFetched);
       });
     }
 
