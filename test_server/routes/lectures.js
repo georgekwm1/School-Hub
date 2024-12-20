@@ -13,7 +13,7 @@ const {
 const db = require('../connect');
 const { verifyToken } = require('../middlewares/authMiddlewares');
 const { verify } = require('jsonwebtoken');
-const { isCourseAdmin, isUserEnroledInCourse } = require('../helperFunctions');
+const { isCourseAdmin, isUserEnroledInCourse, getCurrentTimeInDBFormat } = require('../helperFunctions');
 const router = express.Router();
 
 // Get all lectures for a course split on sections
@@ -36,6 +36,7 @@ const router = express.Router();
 // I forgot about that.. and I've very running out of time
 router.get('/courses/:id/lectures', verifyToken, (req, res) => {
   const courseId = req.params.id;
+  const { lastFetched } = req.query;
   const userId = req.userId;
 
   const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(courseId);
@@ -61,10 +62,11 @@ router.get('/courses/:id/lectures', verifyToken, (req, res) => {
   const lectures = sections.map((section) => ({
     ...section,
     lectures: db
-      .prepare(`SELECT ${lectureFields} FROM lectures WHERE sectionId = ?`)
-      .all(section.id),
+      .prepare(
+        `SELECT ${lectureFields} FROM lectures WHERE sectionId = ? AND createdAt > ?`
+      ).all(section.id, lastFetched),
   }));
-  res.json({ sections: lectures });
+  res.json({ sections: lectures, lastFetched: getCurrentTimeInDBFormat() });
 });
 
 // Get a specific lecture
@@ -436,5 +438,6 @@ router.delete('/lectures/:id', verifyToken, (req, res) => {
     res.status(500).send({ message: 'Error deleting lecture' });
   }
 });
+
 
 module.exports = router;
