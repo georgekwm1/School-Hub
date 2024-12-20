@@ -67,7 +67,10 @@ router.get('/courses/:id/lectures', verifyToken, (req, res) => {
          ${lastFetched ? 'AND createdAt > ?': ''}`
       ).all(...[section.id, ...(lastFetched ? [lastFetched] : [])]),
   }));
-  res.json({ sections: lectures, lastFetched: getCurrentTimeInDBFormat() });
+  
+  // Filter empty sections
+  const result = lectures.filter((section) => section.lectures.length > 0);
+  res.json({ sections: result, lastFetched: getCurrentTimeInDBFormat() });
 });
 
 // Get a specific lecture
