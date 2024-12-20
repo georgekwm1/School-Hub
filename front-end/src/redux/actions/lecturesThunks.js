@@ -51,7 +51,7 @@ export const getCourseLectures = (courseId) => async (dispatch, getState) => {
   const courseId = state.ui.getIn(['course', 'id']);
   const lastFetched = state.lectures.get('sectionsLastFetchedAt');
 
-  const params = URLSearchParams({
+  const params = new URLSearchParams({
     lastFetched,
   }).toString();
   try {
