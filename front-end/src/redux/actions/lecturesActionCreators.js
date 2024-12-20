@@ -115,10 +115,10 @@ export const resetLectureEdited = () => ({
   type: actions.RESET_LECTURE_EDITED,
 });
 
-export const addLectureToSection = (sectionId, lecture) => ({
+export const addLectureToSection = (sectionId, lecture, lastFetched) => ({
   type: actions.ADD_LECTURE_TO_SECTION,
   payload: {
-    sectionId, lecture,
+    sectionId, lecture, lastFetched
   }
 })
 

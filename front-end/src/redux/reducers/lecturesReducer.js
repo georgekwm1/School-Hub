@@ -199,7 +199,7 @@ export default function lecturesReducer(state = initialState, action = {}) {
     }
 
     case actions.ADD_LECTURE_TO_SECTION: {
-      const { sectionId, lecture } = action.payload;
+      const { sectionId, lecture, lastFetched } = action.payload;
 
       const sectionIndex = state
         .get('sections')
@@ -208,7 +208,7 @@ export default function lecturesReducer(state = initialState, action = {}) {
 
       return state.updateIn(['sections', sectionIndex, 'lectures'], (lectures) => {
         return lectures.push(fromJS(lecture));
-      })
+      }).set('sectionsLastFetchedAt', lastFetched)
     }
 
     case actions.CREATE_NEW_SECTION: {
