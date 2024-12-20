@@ -14,6 +14,7 @@ export const initialState = fromJS({
   lectureEdited: false,
   lectures: {},
   sections: [],
+  sectionsLastFetchedAt: '',
 });
 
 export default function lecturesReducer(state = initialState, action = {}) {
