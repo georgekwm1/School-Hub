@@ -2,6 +2,7 @@ import toast from 'react-hot-toast';
 import * as actionCreators from './lecturesActionCreators';
 import {DOMAIN} from '../../utils/constants'
 import { getToken } from '../../utils/utilFunctions';
+import { LucideDraftingCompass } from 'lucide-react';
 
 export const getLectureById = (lectureId) => async (dispatch, getState) => {
   dispatch(actionCreators.lectureRequest());
@@ -48,8 +49,13 @@ export const getCourseLectures = (courseId) => async (dispatch, getState) => {
   dispatch(actionCreators.sectionsRequest());
   const state = getState();
   const courseId = state.ui.getIn(['course', 'id']);
+  const lastFetched = state.lectures.get('sectionsLastFetchedAt');
+
+  const params = URLSearchParams({
+    lastFetched,
+  }).toString();
   try {
-    const response = await fetch(`${DOMAIN}/courses/${courseId}/lectures`, {
+    const response = await fetch(`${DOMAIN}/courses/${courseId}/lectures?${params}`, {
       headers: {
         'Authorization': `Bearer ${getToken('accessToken')}`
       },
@@ -59,8 +65,8 @@ export const getCourseLectures = (courseId) => async (dispatch, getState) => {
     if (!response.ok) {
       throw new Error(data.message);
     }
-
-    dispatch(actionCreators.sectionsSuccess(data.sections));
+    const { sections, lastFetched} = data;
+    dispatch(actionCreators.sectionsSuccess(sections, lastFetched));
   } catch (error) {
     console.error(error);
     dispatch(actionCreators.sectionsFailure(error.message));
