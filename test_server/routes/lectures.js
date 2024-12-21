@@ -277,10 +277,13 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
           'sectionCreated',
           {
             payload: {
-              ...section,
-              lectures: [
-                {id: lectureId, title, description, tags,},
-              ],
+              newSection: {
+                ...section,
+                lectures: [
+                  {id: lectureId, title, description, tags,},
+                ],
+              },
+              lastFetched,
             },
             userId,
           }
