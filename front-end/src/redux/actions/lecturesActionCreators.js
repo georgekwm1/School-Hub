@@ -121,9 +121,10 @@ export const addLectureToSection = (sectionId, lecture, lastFetched) => ({
   }
 })
 
-export const createNewSection = (newSection) => ({
+export const createNewSection = (newSection, lastFetched) => ({
   type: actions.CREATE_NEW_SECTION,
   payload: {
     newSection,
+    lastFetched,
   }
 })
