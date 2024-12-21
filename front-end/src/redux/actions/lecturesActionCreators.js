@@ -22,11 +22,10 @@ export const lectureRequest = () => ({
   type: actions.LECTURE_REQUEST,
 });
 
-export const lectureSuccess = (lectureData, lastFetched) => ({
+export const lectureSuccess = (lectureData) => ({
   type: actions.LECTURE_SUCCESS,
   payload: {
     lectureData,
-    lastFetched
   },
 });
 

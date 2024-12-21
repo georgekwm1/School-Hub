@@ -36,13 +36,12 @@ export default function lecturesReducer(state = initialState, action = {}) {
     }
 
     case actions.LECTURE_SUCCESS: {
-      const { lectureData, lastFetched } = action.payload;
+      const { lectureData } = action.payload;
       return state.withMutations((state) => {
         return state
           .set('isLoading', false)
           .set('lectureError', null)
           .setIn(['lectures', lectureData.id], fromJS(lectureData))
-          .set('sectionsLastFetchedAt', lastFetched);
       });
     }
 
