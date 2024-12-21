@@ -72,12 +72,29 @@ export default function lecturesReducer(state = initialState, action = {}) {
 
     case actions.SECTIONS_SUCCESS: {
       const { sections, lastFetched } = action.payload
+      const currentLastFetchedAt = state.get('sectionsLastFetchedAt');
+
       return state.withMutations((state) => {
         return state
           .set('isLoading', false)
           .set('lectureError', null)
-          .set('sections', fromJS(sections))
-          .set('sectionsLastFetchedAt', lastFetched);
+          .set('sectionsLastFetchedAt', lastFetched)
+          .update('sections', currentSections => {
+            if (!currentLastFetchedAt) return fromJS(sections);
+            const currentSectionsJs = currentSections.toJS();
+
+            for (const entry of sections) {
+              const index = currentSectionsJs.findIndex(
+                section => section.id === entry.id
+              );
+              if (index === -1) {
+                currentSectionsJs.push(entry);
+              } else {
+                currentSectionsJs[index].lectures.push(entry.lectures);
+              }
+            }
+            return fromJS(currentSectionsJs)
+          })
       });
     }
 
