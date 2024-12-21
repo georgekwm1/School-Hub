@@ -90,7 +90,7 @@ export default function lecturesReducer(state = initialState, action = {}) {
               if (index === -1) {
                 currentSectionsJs.push(entry);
               } else {
-                currentSectionsJs[index].lectures.push(entry.lectures);
+                currentSectionsJs[index].lectures.push(...entry.lectures);
               }
             }
             return fromJS(currentSectionsJs)
