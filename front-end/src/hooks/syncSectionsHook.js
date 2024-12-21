@@ -21,7 +21,8 @@ export default function useSyncSections() {
 			// Sync creating a lecture ina new section
 			// I'm not very confident with the name and hwo descriptive it is
 			socket.on('sectionCreated', ({ payload }) => {
-				dispatch(createNewSection(payload));
+				const { newSection, lastFetched } = payload;
+				dispatch(createNewSection(newSection, lastFetched));
 			})
 
 			// Sync updating a lecture
