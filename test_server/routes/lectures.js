@@ -251,7 +251,7 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
       // to be able to put middlewares as needes.. 
       // because here if i try that.. i will have to put the middleware after the function ends.
       // Which seems very ugly.
-      
+      const lastFetched = getCurrentTimeInDBFormat();
       const room = `sections-${courseId}`;
       if (!newSection) {
         io.to(room).except(`user-${userId}`).emit(
