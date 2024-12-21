@@ -228,11 +228,11 @@ export default function lecturesReducer(state = initialState, action = {}) {
     }
 
     case actions.CREATE_NEW_SECTION: {
-      const { newSection } = action.payload;
+      const { newSection, lastFetched } = action.payload;
 
       return state.update('sections', (sections) =>
         sections.push(fromJS(newSection))
-      );
+      ).set('sectionsLastFetchedAt', lastFetched);
     }
 
     default: {
