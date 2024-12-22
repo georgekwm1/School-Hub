@@ -2,7 +2,6 @@ import toast from 'react-hot-toast';
 import * as actionCreators from './lecturesActionCreators';
 import {DOMAIN} from '../../utils/constants'
 import { getToken } from '../../utils/utilFunctions';
-import { LucideDraftingCompass } from 'lucide-react';
 
 export const getLectureById = (lectureId) => async (dispatch, getState) => {
   dispatch(actionCreators.lectureRequest());
@@ -167,5 +166,50 @@ export const editLecture = (lectureId, lectureData) => async (dispatch) => {
   } catch (error) {
     console.error(error.message);
     dispatch(actionCreators.editLectureFailure(error.message));
+  }
+};
+
+
+export const syncExistingLectures = () => async (dispatch, getState) => {
+  const state = getState();
+  const courseId = state.ui.getIn(['course', 'id']);
+
+  const currentLastSynced = state.lectures.get('sectionsLastSynced');
+  const fiveMinutesAgo = new Date(Date.now() - 5*60*1000);
+  if (new Date(currentLastSynced) > fiveMinutesAgo) return;
+
+  let entries = state.lectures.get('sections');
+  if (!entries.size) return;
+  const entriesObject = entries.reduce((acc, section) => {
+    acc[section.get('id')] = section.get('lectures').map(lecture => lecture.get('id'));
+    return acc;
+  }, {});
+
+  try {
+    const data = await toast.promise(
+      fetch(`${DOMAIN}/courses/${courseId}/lectures/diff`, {
+        method: 'POST',
+        body: JSON.stringify({entries: entriesObject, currentLastSynced}),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken('accessToken')}`
+        },
+      }).then((response) => {
+        if (!response.ok) {
+          throw new Error(response.statusText);
+        }
+        return response.json();
+      }),
+      {
+        loading: 'Syncing existing Lectures',
+        success: 'Lectures existing Synced',
+        error: 'Error Syncing Lectures',
+      }
+    );
+    const {entries, lastSynced} = data;
+    dispatch(actionCreators.syncExistingLecturesSuccess(entries, lastSynced));
+  } catch (error) {
+    console.error(error.message);
+    dispatch(actionCreators.syncExistingLecturesFailure(error.message));
   }
 };

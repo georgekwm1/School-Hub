@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { selectIsSocketReady } from '../redux/selectors/uiSelectors';
 import { getSocket } from '../socket';
 import { addLectureToSection, deleteLectureSuccess, editLectureSuccess,createNewSection } from '../redux/actions/lecturesActionCreators';
+import { syncExistingLectures } from '../redux/actions/lecturesThunks';
 
 
 export default function useSyncSections() {
@@ -10,6 +11,9 @@ export default function useSyncSections() {
 	const isSocketReady = useSelector(selectIsSocketReady);
 	const socket = getSocket();
 
+	useEffect(() => {
+		dispatch(syncExistingLectures());
+	}, [dispatch])
 	useEffect(() => {
 		if (socket) {
 			// Sync creating a new lecture to an exisitng section
