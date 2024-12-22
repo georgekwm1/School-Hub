@@ -448,5 +448,70 @@ router.delete('/lectures/:id', verifyToken, (req, res) => {
   }
 });
 
+// Sync existing data
+router.post('/courses/:id/lectures/diff', (req, res) => {
+  const courseId = req.params.id;
+  const { entries, lastSynced } = req.body;
+  const userId = req.userId;
+
+  const course = db
+    .prepare('SELECT 1 FROM courses WHERE id = ?')
+    .get(courseId);
+  if (!course)
+    return res.status(404).send({ message: 'Course not found' });
+
+  if (typeof entries !== 'object' || entries === null || lastSynced === null) 
+    return res.status(400).send({ message: 'Missing or invalid entries' });
+
+  /**
+   * [
+   *  sectionId, lecturs[lecturesIds],
+   * ]
+   * }
+   */
+
+  result = {
+    updated: {},
+    deleted: {
+      sections: [],
+      lectures: {},
+    }
+  }
+  const dbSections = db.prepare(
+    `SELECT id FROM sections WHERE courseId = ?, createdAt <= ?`
+  ).pluck().all(courseId, lastSynced);
+
+  for (const section of dbSections) {
+    const sectionLectures = db.prepare(
+      `SELECT id, title, description, tags,
+        (updatedAt >= @lastSynced ) as isChanged
+      FROM lectures WHERE sectionId = @sectionId AND createdAt <= @lastSynced`
+    ).all({sectionId: section, lastSynced});
+
+    for (const lecture of sectionLectures) {
+      if (lecture.isChanged) {
+        if (!result.updated[section]) result.updated[section] = [];
+        delete lecture.isChanged;
+        result.updated[section].push(lecture);
+      }
+    }
+
+    // Deleted lectures
+    const existingIds = sectionLectures.map(lecture => lecture.id);
+    result.deleted.lectures[section] = entries[section].filter(
+      lectureId => !existingIds.includes(lectureId)
+    )
+  }
+
+  // Deleted sections
+  const userSections = Object.keys(entries);
+  result.deleted.sections = dbSections.filter(
+    (sectionId) => !userSections.includes(sectionId)
+  );
+  
+  res.status(200).json({
+    entries, lastSynced: getCurrentTimeInDBFormat()
+  })
+})
 
 module.exports = router;
