@@ -128,3 +128,23 @@ export const createNewSection = (newSection, lastFetched) => ({
     lastFetched,
   }
 })
+
+export const syncExistingLecturesRequest = () => ({
+  type: actions.SYNC_EXISTING_LECTURES_REQUEST,
+});
+
+export const syncExistingLecturesFailure = (errorMessage) => ({
+  type: actions.SYNC_EXISTING_LECTURES_FAILURE,
+  payload: {
+    errorMessage,
+  },
+});
+
+export const syncExistingLecturesSuccess = (entries, lastSynced) => ({
+  type: actions.SYNC_EXISTING_LECTURES_SUCCESS,
+  payload: {
+    entries,
+    lastSynced,
+  },
+});
+
