@@ -237,6 +237,53 @@ export default function lecturesReducer(state = initialState, action = {}) {
       ).set('sectionsLastFetchedAt', lastFetched);
     }
 
+    case actions.SYNC_EXISTING_LECTURES_FAILURE: {
+      return state
+        .set('isLoading', false)
+        .set('lectureError', action.payload.errorMessage);
+    }
+
+    // I diffenetly believe that was and overkill and the kilobytes or data of 
+    // fetching the sections and much much less pricy that all these computations
+    // for iteration and comparisons.. both in the front-end and in the backend..
+
+    // This is absolutely an overkill.. and I don't like it at all.. 
+    // What so ever... I really wanna remove this whole logic
+    case actions.SYNC_EXISTING_LECTURES_SUCCESS: {
+      const { entries, lastSynced } = action.payload;
+      const { updated, deleted } = entries;
+      const { sections: deletedSections, lectures: deletedLectures } = deleted;
+      
+      // Filter deleted sections
+      const sectionsJS = state.get('sections').filter(
+        section => !deletedSections.includes(section.id)
+      ).toJS();
+
+      // Upddate lectures
+      for (const sectionId in updated) {
+        const sectionIndex = sectionsJS.findIndex(
+          section => section.id === sectionId
+        )
+        for (const lecture of updated[sectionId]) {
+          const Index = sectionsJS[sectionIndex].lectures.findIndex(
+            entry => entry.id === lecture.id
+          )
+          sectionsJS[sectionIndex].lectures[Index] = lecture
+        }
+      }
+
+      // Filter deleted lectures;
+      for (const section of sectionsJS) {
+        section.lectures = section.lectures.filter(
+          lecture => !deletedLectures.includes(lecture.id)
+        )
+      };
+
+      return state
+        .set('sections', fromJS(sectionsJS))
+        .set('sectionsLastFetchedAt', lastSynced);
+    }
+
     default: {
       return state;
     }
