@@ -477,41 +477,45 @@ router.post('/courses/:id/lectures/diff', (req, res) => {
       lectures: {},
     }
   }
-  const dbSections = db.prepare(
-    `SELECT id FROM sections WHERE courseId = ?, createdAt <= ?`
-  ).pluck().all(courseId, lastSynced);
+  try {
+    const dbSections = db.prepare(
+      `SELECT id FROM sections WHERE courseId = ? AND createdAt <= ?`
+    ).pluck().all(courseId, lastSynced);
 
-  for (const section of dbSections) {
-    const sectionLectures = db.prepare(
-      `SELECT id, title, description, tags,
-        (updatedAt >= @lastSynced ) as isChanged
-      FROM lectures WHERE sectionId = @sectionId AND createdAt <= @lastSynced`
-    ).all({sectionId: section, lastSynced});
+    for (const section of dbSections) {
+      const sectionLectures = db.prepare(
+        `SELECT id, title, description, tags,
+          (updatedAt >= @lastSynced ) as isChanged
+        FROM lectures WHERE sectionId = @sectionId AND createdAt <= @lastSynced`
+      ).all({sectionId: section, lastSynced});
 
-    for (const lecture of sectionLectures) {
-      if (lecture.isChanged) {
-        if (!result.updated[section]) result.updated[section] = [];
-        delete lecture.isChanged;
-        result.updated[section].push(lecture);
+      for (const lecture of sectionLectures) {
+        if (lecture.isChanged) {
+          if (!result.updated[section]) result.updated[section] = [];
+          delete lecture.isChanged;
+          result.updated[section].push(lecture);
+        }
       }
+
+      // Deleted lectures
+      const existingIds = sectionLectures.map(lecture => lecture.id);
+      result.deleted.lectures[section] = entries[section].filter(
+        lectureId => !existingIds.includes(lectureId)
+      )
     }
 
-    // Deleted lectures
-    const existingIds = sectionLectures.map(lecture => lecture.id);
-    result.deleted.lectures[section] = entries[section].filter(
-      lectureId => !existingIds.includes(lectureId)
-    )
+    // Deleted sections
+    const userSections = Object.keys(entries);
+    result.deleted.sections = dbSections.filter(
+      (sectionId) => !userSections.includes(sectionId)
+    );
+    
+    res.status(200).json({
+      entries, lastSynced: getCurrentTimeInDBFormat()
+    })
+  } catch (error)  {
+    res.status(500).send({ message: 'Internal server error', error });
   }
-
-  // Deleted sections
-  const userSections = Object.keys(entries);
-  result.deleted.sections = dbSections.filter(
-    (sectionId) => !userSections.includes(sectionId)
-  );
-  
-  res.status(200).json({
-    entries, lastSynced: getCurrentTimeInDBFormat()
-  })
 })
 
 module.exports = router;
