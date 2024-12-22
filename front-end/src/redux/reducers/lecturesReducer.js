@@ -15,6 +15,7 @@ export const initialState = fromJS({
   lectures: {},
   sections: [],
   sectionsLastFetchedAt: '',
+  sectionsLastSyncedAt: '',
 });
 
 export default function lecturesReducer(state = initialState, action = {}) {
@@ -78,6 +79,7 @@ export default function lecturesReducer(state = initialState, action = {}) {
           .set('isLoading', false)
           .set('lectureError', null)
           .set('sectionsLastFetchedAt', lastFetched)
+          .set('sectionsLastSyncedAt', lastFetched)
           .update('sections', currentSections => {
             if (!currentLastFetchedAt) return fromJS(sections);
             const currentSectionsJs = currentSections.toJS();
