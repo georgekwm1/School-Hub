@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Loading from '../utilityComponents/Loading';
 import SearchField from '../sharedComponents/SearchField';
-import './css/discussion.css'
+import './css/discussion.css';
 import DiscussionEntryEditor from '../DiscussionEntries/DiscussionEntryEditor';
 import DiscussionEntries from '../DiscussionEntries/DiscussionEntries';
 import {
@@ -13,12 +13,17 @@ import {
   selectDiscussionsIsLoading,
   makeLectureDiscussionsSelector,
 } from '../../redux/selectors/DiscussionsSelectors';
+import useSyncLectureDiscussions from '../../hooks/syncLecturesDiscussionsHook';
+import { useJoinRoom } from '../../hooks/socketConnectionHooks';
 
 export default function LectureDiscussion({ lectureId = '' }) {
   const [askNewQuestion, setAskNewQuestion] = useState(false);
   const dispatch = useDispatch();
   const isLoading = useSelector(selectDiscussionsIsLoading);
   const entries = useSelector(makeLectureDiscussionsSelector(lectureId));
+
+  useJoinRoom(`lectureDiscussion-${lectureId}`);
+  useSyncLectureDiscussions(lectureId);
 
   useEffect(() => {
     // This is not completely right. as still the logic to force reload or by real time pinging
@@ -38,7 +43,7 @@ export default function LectureDiscussion({ lectureId = '' }) {
   return (
     <div className="container my-4">
       <h2 className="text-center">Lecture Discussion</h2>
-  
+
       {/* Search Field */}
       <form className="d-flex mt-4 mb-5" role="search">
         <input
@@ -51,7 +56,7 @@ export default function LectureDiscussion({ lectureId = '' }) {
           Search
         </button>
       </form>
-    
+
       {isLoading ? (
         <Loading />
       ) : (
@@ -59,7 +64,7 @@ export default function LectureDiscussion({ lectureId = '' }) {
           <DiscussionEntries entries={entries} chunkSize={10} isLecture />
         </div>
       )}
-    
+
       <div className="text-center mt-4">
         {askNewQuestion ? (
           <DiscussionEntryEditor onPublish={handlePublishQuestion} />
@@ -73,6 +78,5 @@ export default function LectureDiscussion({ lectureId = '' }) {
         )}
       </div>
     </div>
-  
   );
 }

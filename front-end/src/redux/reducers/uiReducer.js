@@ -4,6 +4,7 @@ import * as actions from '../actions/uiActionTypes';
 export const initialState = fromJS({
   isLoading: false,
   isLoggedIn: false,
+  isSocketReady: false,
   course: {
     id: 'test-course',
   },
@@ -77,6 +78,10 @@ export default function uiReducer(state = initialState, action = {}) {
           .set('isLoggedIn', true)
           .set('user', action.payload.user);
       });
+    }
+
+    case actions.SET_SOCKET_READINESS: {
+      return state.set('isSocketReady', action.payload.status);
     }
 
     default: {

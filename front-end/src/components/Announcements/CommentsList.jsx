@@ -8,6 +8,7 @@ import Loading from '../utilityComponents/Loading';
 import CommentEntry from './CommentEntry';
 import { fetchAnnouncementComments } from '../../redux/actions/announcementsThunks';
 
+
 export default function CommentsList({ announcementId = 'testId' }) {
   const [limit, setLimit] = useState(10);
   const isLoading = useSelector(selectIsCommentsLoading);

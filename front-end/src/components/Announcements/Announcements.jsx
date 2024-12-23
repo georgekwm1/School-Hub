@@ -7,23 +7,33 @@ import {
   selectIsLoading,
   selectAnnouncements,
 } from '../../redux/selectors/announcementsSelectors';
-import { selectUserRole } from '../../redux/selectors/uiSelectors';
+import {
+  selectCourseId,
+  selectUserRole,
+} from '../../redux/selectors/uiSelectors';
 import {
   fetchAnnouncements,
   addNewAnnouncement,
 } from '../../redux/actions/announcementsThunks';
 import DiscussionEntryEditor from '../DiscussionEntries/DiscussionEntryEditor';
+import useSyncAnnouncements from '../../hooks/syncAnnouncementsHook';
+import { useJoinRoom } from '../../hooks/socketConnectionHooks';
 
 export default function Announcements() {
   const [showAnnouncementsEditor, setShowAnnouncementsEditor] = useState(false);
   const isLoading = useSelector(selectIsLoading);
   const announcements = useSelector(selectAnnouncements);
   const userRole = useSelector(selectUserRole);
-
+  const courseId = useSelector(selectCourseId);
   const dispatch = useDispatch();
+
   useEffect(() => {
-    if (!announcements?.size) dispatch(fetchAnnouncements());
-  }, [dispatch, announcements]);
+    // if (!announcements?.size)
+    dispatch(fetchAnnouncements());
+  }, [dispatch]);
+
+  useJoinRoom(`announcements-${courseId}`);
+  useSyncAnnouncements();
 
   const createNewAnnouncement = (title, details) => {
     setShowAnnouncementsEditor(false);

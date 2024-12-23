@@ -74,10 +74,7 @@ export default function QuestionHeader({ question, isLecture }) {
       // the-fog-is-lifting.pages.dev
       // and remindme-l.vercel.app
       dispatch(
-        deleteQuestion(
-          question.get('id'),
-          isLecture ? question.get('lectureId') : ''
-        )
+        deleteQuestion(question.get('id'), question.get('lectureId') || null)
       );
     }
     setShowOptions(false);

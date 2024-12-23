@@ -15,6 +15,7 @@ const {
   getUserData,
   getUpvoteStatus,
   isCourseAdmin,
+  getCurrentTimeInDBFormat,
 } = require('../helperFunctions');
 const { verifyToken } = require('../middlewares/authMiddlewares');
 
@@ -37,37 +38,72 @@ function getReplyCourseId(replyId) {
   return courseIdFromQuestion ? courseIdFromQuestion : courseIdFromLecture;
 }
 
+/**
+ * Returns the parent of a question, either the courseId or lectureId,
+ * depending on the question type.
+ * @param {string} questionId - The id of the question
+ * @returns {{courseId: string, lectureId: string} | null}
+ */
+function getQuestionParentId(questionId) {
+  const query = db.prepare(
+    `
+    SELECT 
+      courseId, lectureId 
+    FROM questions
+    WHERE id = ?;
+    `);
+
+  return query.get(questionId);Create 
+}
+
 // Get question replies
 router.get('/questions/:id/replies', verifyToken, (req, res) => {
   const questionId = req.params.id;
   const userId = req.userId;
+  const { lastFetched } = req.query;
 
   const question = db
     .prepare(
       // Assuming it's a lecture question this won't the lecturId won't be null.
-      `SELECT id, title, body, updatedAt, upvotes, repliesCount, userId, lectureId
+      `SELECT id, title, body, updatedAt, upvotes, repliesCount, userId, lectureId, (updatedAt >= ?) AS isNew
     FROM questions
     WHERE id = ?`
     )
-    .get(questionId);
+    .get(lastFetched, questionId);
 
   if (!question) {
     return res.status(404).send({ message: 'Question not found' });
   }
 
-  const user = getUserData(question.userId);
-  const upvoted = getUpvoteStatus(userId, question.id, 'question');
+  question.upvoted = getUpvoteStatus(userId, question.id, 'question');
+  // Save some bandwidth
+  let questionResponse = question;
+  if (!question.isNew) {
+    questionResponse = {
+      id: question.id,
+      repliesCount: question.repliesCount,
+      upvoted: question.upvoted,
+      upvotes: question.upvotes,
+      updatedAt: question.updatedAt,
+    }
+  } else {
+    questionResponse.user = getUserData(question.userId);
+    delete questionResponse.userId;
+    delete questionResponse.isNew;
+  }
 
+  const params = [questionId].concat(lastFetched ? [lastFetched] : []);
   const replies = db
     .prepare(
       `SELECT id, body, userId, updatedAt, upvotes
     FROM replies
     WHERE questionId = ?
+      ${lastFetched ? 'AND createdAt > ?' : ''}
     ORDER BY updatedAt DESC`
-    )
-    .all(questionId);
+    ).all(...params);
 
-  const results = replies.map((reply) => {
+  const newLastFetched = getCurrentTimeInDBFormat();
+  const repliesList = replies.map((reply) => {
     const user = getUserData(reply.userId);
     const upvoted = getUpvoteStatus(userId, reply.id, 'reply');
 
@@ -78,12 +114,18 @@ router.get('/questions/:id/replies', verifyToken, (req, res) => {
     };
   });
 
-  res.json({ question: { ...question, user, upvoted }, repliesList: results });
+
+  res.json({
+    question: questionResponse,
+    repliesList,
+    lastFetched: newLastFetched,
+  });
 });
 
 // Change user vote for a replies
 router.post('/replies/:id/vote', verifyToken, (req, res) => {
   const replyId = req.params.id;
+  const io = req.app.get('io');
   const { action } = req.body;
   const userId = req.userId;
 
@@ -92,10 +134,10 @@ router.post('/replies/:id/vote', verifyToken, (req, res) => {
   }
 
   // Is this a better way? I don't know.
-  const replyExists =
-    db.prepare(`SELECT 1 FROM replies WHERE id = ?`).get(replyId) !== undefined;
+  const reply =
+    db.prepare(`SELECT id, questionId FROM replies WHERE id = ?`).get(replyId);
 
-  if (!replyExists) {
+  if (!reply) {
     return res.status(404).send({ message: 'Reply not found' });
   }
 
@@ -114,10 +156,10 @@ router.post('/replies/:id/vote', verifyToken, (req, res) => {
       }
       db.prepare(
         `
-    UPDATE replies
-    SET upvotes = upvotes + ${action == 'upvote' ? 1 : -1}
-    WHERE id = ?
-    `
+        UPDATE replies
+        SET upvotes = upvotes + ${action == 'upvote' ? 1 : -1}
+        WHERE id = ?
+        `
       ).run(replyId);
 
       let message;
@@ -127,6 +169,16 @@ router.post('/replies/:id/vote', verifyToken, (req, res) => {
         message = 'Vote deleted successfully';
       }
       res.status(200).json({ message });
+
+      const { questionId } = reply;
+      io.to(`question-${questionId}`).except(`user-${userId}`).emit('replyUpvoteToggled', {
+        payload: {
+          replyId,
+          questionId,
+          isUpvoted: action === 'upvote',
+        },
+        userId,
+      })
     })();
   } catch (err) {
     console.error(err);
@@ -137,6 +189,7 @@ router.post('/replies/:id/vote', verifyToken, (req, res) => {
 // Create a reply for a question
 router.post('/questions/:id/replies', verifyToken, (req, res) => {
   const questionId = req.params.id;
+  const io = req.app.get('io');
   const { body } = req.body;
   const userId = req.userId;
 
@@ -162,10 +215,26 @@ router.post('/questions/:id/replies', verifyToken, (req, res) => {
     const user = getUserData(newReply.userId);
 
     delete newReply.userId;
-    res.status(201).json({
+    const response = {
       ...newReply,
       user,
       upvoted: false,
+    }
+
+    const lastFetched = getCurrentTimeInDBFormat();
+
+    res.status(201).json({newReply: response, lastFetched});
+
+    io.to(`question-${questionId}`).except(`user-${userId}`).emit('replyCreated', {
+      payload: { newReply: response, lastFetched },
+      userId,
+    });
+
+    const { lectureId, courseId } = getQuestionParentId(newReply.questionId);
+    const room = lectureId ? `lectureDiscussion-${lectureId}` : `generalDiscussion-${courseId}`;
+    io.to(room).emit('replyCreated', {
+      payload: {questionId: newReply.questionId, lectureId, courseId },
+      userId,
     });
   } catch (error) {
     console.error(error);
@@ -176,12 +245,12 @@ router.post('/questions/:id/replies', verifyToken, (req, res) => {
 // Edit a reply
 router.put('/replies/:id', verifyToken, (req, res) => {
   const { id } = req.params;
+  const io = req.app.get('io');
   const { body } = req.body;
   const userId = req.userId;
 
   try {
-    const reply = db.prepare('SELECT * FROM replies WHERE id = ?').get(id);
-
+    const reply = db.prepare('SELECT id, userId FROM replies WHERE id = ?').get(id);
     if (!reply) {
       return res.status(404).send({ message: 'Reply not found' });
     }
@@ -195,15 +264,14 @@ router.put('/replies/:id', verifyToken, (req, res) => {
     db.prepare('UPDATE replies SET body = ? WHERE id = ?').run(body, id);
 
     const updatedReply = db
-      .prepare('SELECT * FROM replies WHERE id = ?')
+      .prepare('SELECT id, questionId, body, updatedAt FROM replies WHERE id = ?')
       .get(id);
-    const user = getUserData(updatedReply.userId);
 
-    delete updatedReply.userId;
-    res.status(200).json({
-      ...updatedReply,
-      user,
-      upvoted: false, // Assuming upvote status is false by default
+    res.status(200).json(updatedReply);
+
+    io.to(`question-${updatedReply.questionId}`).except(`user-${userId}`).emit('replyUpdated', {
+      payload: {updatedReply},
+      userId,
     });
   } catch (error) {
     console.error(error);
@@ -214,19 +282,20 @@ router.put('/replies/:id', verifyToken, (req, res) => {
 // Delete a reply
 router.delete('/replies/:id', verifyToken, (req, res) => {
   const replyId = req.params.id;
+  const io = req.app.get('io');
   const userId = req.userId;
 
   try {
     const reply = db
-      .prepare('SELECT id, userId FROM replies WHERE id = ?')
+      .prepare('SELECT id, userId, questionId FROM replies WHERE id = ?')
       .get(replyId);
 
     if (!reply) {
       return res.status(404).send({ message: 'Reply not found' });
     }
 
-    const courseId = getReplyCourseId(replyId);
-    if (reply.userId !== userId && !isCourseAdmin(userId, courseId)) {
+    const replyCourseId = getReplyCourseId(replyId);
+    if (reply.userId !== userId && !isCourseAdmin(userId, replyCourseId)) {
       return res
         .status(403)
         .send({ message: 'User is not authorized to delete this reply' });
@@ -235,10 +304,74 @@ router.delete('/replies/:id', verifyToken, (req, res) => {
     db.prepare('DELETE FROM replies WHERE id = ?').run(replyId);
 
     res.status(200).json({ message: 'Reply deleted successfully' });
+
+    io.to(`question-${reply.questionId}`).except(`user-${userId}`).emit('replyDeleted', {
+      payload: {replyId, questionId: reply.questionId},
+      userId
+    });
+
+    const { lectureId, courseId} = getQuestionParentId(reply.questionId);
+    const room = lectureId ? `lectureDiscussion-${lectureId}` : `generalDiscussion-${courseId}`;
+    io.to(room).emit('replyDeleted', {
+      payload: {questionId: reply.questionId, lectureId, courseId },
+      userId,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).send({ message: 'Error deleting reply' });
   }
 });
 
+// Sync existing replies
+router.post('/questions/:questionId/replies/diff', verifyToken, (req, res) => {
+  const {questionId} = req.params;
+  const userId = req.userId;
+  const { entries, lastFetched } = req.body;
+
+  const entriesMap = new Map(entries.map(
+    reply => [reply.id, reply.updatedAt]
+  ));
+
+  const dbEntries = db.prepare(
+    `SELECT id, updatedAt, body, upvotes FROM replies 
+      WHERE questionId = ? AND createdAt <= ?;`
+  ).all(questionId, lastFetched);
+  const userVotes = db.prepare(
+    `SELECT replyId, userId FROM votes WHERE userId = ? ;`
+  ).pluck().all(userId);
+
+  const results = {
+    existing: {},
+    deleted: [],
+  };
+
+  for (const entry of dbEntries) {
+    const { id, updatedAt, body, upvotes } = entry;
+    const replyEntry = {
+      id,
+      upvotes,
+    };
+    if (updatedAt !== entriesMap.get(id)) {
+      Object.assign(replyEntry, {
+        body,
+        updatedAt
+      });
+    }
+
+    if (userVotes.includes(id)) {
+      replyEntry.upvoted = true;
+    }
+
+    results.existing[id] = replyEntry;
+    entriesMap.delete(id);
+  }
+
+  results.deleted = Array.from(entriesMap.keys());
+
+  res.status(200).json({
+    results,
+    lastSynced: getCurrentTimeInDBFormat(),
+    questionId,
+  });
+})
 module.exports = router;

@@ -13,7 +13,11 @@ const {
 const db = require('../connect');
 const { verifyToken } = require('../middlewares/authMiddlewares');
 const { verify } = require('jsonwebtoken');
-const { isCourseAdmin, isUserEnroledInCourse } = require('../helperFunctions');
+const {
+  isCourseAdmin,
+  isUserEnroledInCourse,
+  getCurrentTimeInDBFormat,
+} = require('../helperFunctions');
 const router = express.Router();
 
 // Get all lectures for a course split on sections
@@ -36,6 +40,7 @@ const router = express.Router();
 // I forgot about that.. and I've very running out of time
 router.get('/courses/:id/lectures', verifyToken, (req, res) => {
   const courseId = req.params.id;
+  const { lastFetched } = req.query;
   const userId = req.userId;
 
   const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(courseId);
@@ -61,10 +66,16 @@ router.get('/courses/:id/lectures', verifyToken, (req, res) => {
   const lectures = sections.map((section) => ({
     ...section,
     lectures: db
-      .prepare(`SELECT ${lectureFields} FROM lectures WHERE sectionId = ?`)
-      .all(section.id),
+      .prepare(
+        `SELECT ${lectureFields} FROM lectures WHERE sectionId = ?
+         ${lastFetched ? 'AND createdAt > ?' : ''}`
+      )
+      .all(...[section.id, ...(lastFetched ? [lastFetched] : [])]),
   }));
-  res.json({ sections: lectures });
+
+  // Filter empty sections
+  const result = lectures.filter((section) => section.lectures.length > 0);
+  res.json({ sections: result, lastFetched: getCurrentTimeInDBFormat() });
 });
 
 // Get a specific lecture
@@ -74,6 +85,9 @@ router.get(
   (req, res) => {
     const courseId = req.params.courseId;
     const lectureId = req.params.lectureId;
+    // representing the updatedAt value stored in userCache
+    // sinse fetching the lecture befroe
+    const updatedAt = req.query.updatedAt;
     const userId = req.userId;
 
     const course = db
@@ -94,6 +108,7 @@ router.get(
 
     const lectureFields = [
       'id',
+      'updatedAt',
       'title',
       'videoLink',
       'notes',
@@ -109,6 +124,8 @@ router.get(
       .get(lectureId);
     if (!lecture) {
       return res.status(404).send({ message: 'Lecture not found' });
+    } else if (lecture.updatedAt === updatedAt) {
+      return res.status(304).send({ message: 'Lecture not updated' });
     }
 
     const getResource = (lectureId, type) => {
@@ -143,6 +160,7 @@ router.get('/courses/:id/sections_titles', verifyToken, (req, res) => {
 router.post('/courses/:id/lectures', verifyToken, (req, res) => {
   // Oh, Boy, This is big.
   const { id: courseId } = req.params;
+  const io = req.app.get('io');
   const userId = req.userId;
   const {
     demos,
@@ -165,10 +183,14 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
   try {
     db.transaction(() => {
       // Retrieve or create section basd on existence of ht title
+      // I'm skeptic about how good this flag approach is
+      // For later to decide the socketIo event to emit;
+      let newSection = false;
       let sectionId = db
         .prepare('SELECT id FROM sections WHERE title = ?')
         .get(section)?.id;
       if (!sectionId) {
+        newSection = true;
         sectionId = uuidv4();
         db.prepare(
           'INSERT INTO sections (id, title, courseId) VALUES (?, ?, ?)'
@@ -209,7 +231,7 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
       demos.forEach((demo) => insertResource(demo, 'demo'));
       shorts.forEach((short) => insertResource(short, 'short'));
 
-      res.status(201).json({
+      const newLecture = {
         id: lectureId,
         title,
         description,
@@ -224,7 +246,53 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
         demos,
         shorts,
         quizzez: [],
-      });
+      };
+      res.status(201).json(newLecture);
+
+      // I think this one the most obvious reasons that I have to move io events to
+      // Separate middlewares next sprint..
+      // Also.. now I know why in express .. I see teh routes in a place
+      // and the actually logic in another place...
+      // to be able to put middlewares as needes..
+      // because here if i try that.. i will have to put the middleware after the function ends.
+      // Which seems very ugly.
+      const lastFetched = getCurrentTimeInDBFormat();
+      const room = `sections-${courseId}`;
+      if (!newSection) {
+        io.to(room)
+          .except(`user-${userId}`)
+          .emit('lectureCreated', {
+            payload: {
+              sectionId,
+              lecture: {
+                id: lectureId,
+                title,
+                description,
+                tags,
+              },
+              lastFetched,
+            },
+            userId,
+          });
+      } else {
+        const section = db
+          .prepare('SELECT id, title, description FROM sections WHERE id = ?')
+          .get(sectionId);
+        // Should the event be more clear?
+        // Like, newlectureWithNewSection?! I don't know
+        io.to(room)
+          .except(`user-${userId}`)
+          .emit('sectionCreated', {
+            payload: {
+              newSection: {
+                ...section,
+                lectures: [{ id: lectureId, title, description, tags }],
+              },
+              lastFetched,
+            },
+            userId,
+          });
+      }
     })();
   } catch (err) {
     console.error(err);
@@ -235,6 +303,7 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
 // Edit a lecture
 router.put('/lectures/:id', verifyToken, (req, res) => {
   const { id } = req.params;
+  const io = req.app.get('io');
   const {
     name,
     description,
@@ -321,9 +390,15 @@ router.put('/lectures/:id', verifyToken, (req, res) => {
         .prepare(`SELECT ${lectureFields} FROM lectures WHERE id = ?`)
         .get(id);
       // I some how in the hurry forgot all about quizez.. so.. this is to fixes system wide next
-      res
-        .status(200)
-        .json({ ...updatedLecture, tags, demos, shorts, quizzez: [] });
+      const response = { ...updatedLecture, tags, demos, shorts, quizzez: [] };
+      res.status(200).json(response);
+
+      io.to([`sections-${lecture.courseId}`, `lecture-${id}`])
+        .except(`user-${userId}`)
+        .emit('lectureUpdated', {
+          payload: { updatedLecture: response },
+          userId,
+        });
     })();
   } catch (err) {
     console.error(err);
@@ -335,6 +410,7 @@ router.put('/lectures/:id', verifyToken, (req, res) => {
 router.delete('/lectures/:id', verifyToken, (req, res) => {
   const lectureId = req.params.id;
   const userId = req.userId;
+  const io = req.app.get('io');
 
   try {
     const lecture = db
@@ -360,10 +436,82 @@ router.delete('/lectures/:id', verifyToken, (req, res) => {
         db.prepare('DELETE FROM sections WHERE id = ?').run(sectionId);
       }
       res.status(200).json({ message: 'Lecture deleted successfully' });
+
+      io.to([`sections-${lecture.courseId}`, `lecture-${lectureId}`])
+        .except(`user-${userId}`)
+        .emit('lectureDeleted', {
+          payload: { lectureId, sectionId },
+          userId,
+        });
     })();
   } catch (err) {
     console.error(err);
     res.status(500).send({ message: 'Error deleting lecture' });
+  }
+});
+
+// Sync existing data
+router.post('/courses/:id/lectures/diff', (req, res) => {
+  const courseId = req.params.id;
+  const { entries, lastSynced } = req.body;
+  const userId = req.userId;
+
+  const course = db.prepare('SELECT 1 FROM courses WHERE id = ?').get(courseId);
+  if (!course) return res.status(404).send({ message: 'Course not found' });
+
+  if (typeof entries !== 'object' || entries === null || lastSynced === null)
+    return res.status(400).send({ message: 'Missing or invalid entries' });
+
+  result = {
+    updated: {},
+    deleted: {
+      sections: [],
+      lectures: {},
+    },
+  };
+  try {
+    const dbSections = db
+      .prepare(`SELECT id FROM sections WHERE courseId = ? AND createdAt <= ?`)
+      .pluck()
+      .all(courseId, lastSynced);
+
+    for (const section of dbSections) {
+      const sectionLectures = db
+        .prepare(
+          `SELECT id, title, description, tags,
+          (updatedAt >= @lastSynced ) as isChanged
+        FROM lectures WHERE sectionId = @sectionId AND createdAt <= @lastSynced`
+        )
+        .all({ sectionId: section, lastSynced });
+
+      for (const lecture of sectionLectures) {
+        if (lecture.isChanged) {
+          if (!result.updated[section]) result.updated[section] = [];
+          delete lecture.isChanged;
+          result.updated[section].push(lecture);
+        }
+      }
+
+      // Deleted lectures
+      const existingIds = sectionLectures.map((lecture) => lecture.id);
+      result.deleted.lectures[section] = entries[section].filter(
+        (lectureId) => !existingIds.includes(lectureId)
+      );
+    }
+
+    // Deleted sections
+    const userSections = Object.keys(entries);
+    result.deleted.sections = userSections.filter(
+      (sectionId) => !dbSections.includes(sectionId)
+    );
+
+    res.status(200).json({
+      entries: result,
+      lastSynced: getCurrentTimeInDBFormat(),
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: 'Internal server error', error });
   }
 });
 

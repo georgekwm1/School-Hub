@@ -31,6 +31,7 @@ export const lectureDiscussionSuccess = (response) => ({
   payload: {
     entries: response.entries,
     lectureId: response.lectureId,
+    lastFetched: response.lastFetched,
   },
 });
 
@@ -45,11 +46,16 @@ export const addDiscussionEntryFailure = (errorMessage) => ({
   },
 });
 
-export const addDiscussionEntrySuccess = ({ lectureId, entry }) => ({
+export const addDiscussionEntrySuccess = ({
+  lectureId,
+  entry,
+  lastFetched,
+}) => ({
   type: actions.ADD_DISCUSSION_ENTRY_SUCCESS,
   payload: {
     lectureId,
     entry,
+    lastFetched,
   },
 });
 
@@ -64,10 +70,11 @@ export const generalDiscussionFailure = (errorMessage) => ({
   },
 });
 
-export const generalDiscussionSuccess = (entries) => ({
+export const generalDiscussionSuccess = (entries, lastFetched) => ({
   type: actions.GENERAL_DISCUSSION_SUCCESS,
   payload: {
     entries,
+    lastFetched,
   },
 });
 
@@ -80,10 +87,11 @@ export const generalDiscussionEntryFailure = (errorMessage) => ({
   payload: { errorMessage },
 });
 
-export const generalDiscussionEntrySuccess = (entry) => ({
+export const generalDiscussionEntrySuccess = (entry, lastFetched) => ({
   type: actions.GENERAL_DISCUSSION_ENTRY_SUCCESS,
   payload: {
     entry,
+    lastFetched,
   },
 });
 
@@ -98,10 +106,10 @@ export const fetchDiscussionRepliesFailure = (errorMessage) => ({
   },
 });
 
-export const fetchDiscussionRepliesSuccess = (data) => ({
+export const fetchDiscussionRepliesSuccess = (question, repliesList, lastFetched) => ({
   type: actions.FETCH_DISCUSSION_REPLIES_SUCCESS,
   payload: {
-    data,
+    question, repliesList, lastFetched,
   },
 });
 
@@ -116,10 +124,11 @@ export const addDiscussionReplyFailure = (errorMessage) => ({
   },
 });
 
-export const addDiscussionReplySuccess = (entry) => ({
+export const addDiscussionReplySuccess = (entry, lastFetched) => ({
   type: actions.ADD_DISCUSSION_REPLY_SUCCESS,
   payload: {
     entry,
+    lastFetched,
   },
 });
 
@@ -279,3 +288,82 @@ export const editReplySuccess = (questionId, editedReply) => ({
     editedReply,
   },
 });
+
+export const syncExistingQuestionsRequest = () => ({
+  type: actions.SYNC_EXISTING_QUESTIONS_REQUEST,
+});
+
+export const syncExistingQuestionsFailure = (errorMessage) => ({
+  type: actions.SYNC_EXISTING_QUESTIONS_FAILURE,
+  payload: {
+    errorMessage,
+  },
+});
+
+export const syncExistingQuestionsSuccess = (
+  questions,
+  lastSynced,
+  lectureId
+) => ({
+  type: actions.SYNC_EXISTING_QUESTIONS_SUCCESS,
+  payload: {
+    questions,
+    lastSynced,
+    lectureId,
+  },
+});
+
+export const syncQuestionVote = (questionId, isUpvoted, lectureId = null) => ({
+  type: actions.SYNC_QUESTION_VOTE,
+  payload: {
+    questionId,
+    isUpvoted,
+    lectureId,
+  },
+});
+
+export const syncReplyVote = (questionId, replyId, isUpvoted) => ({
+  type: actions.SYNC_REPLY_VOTE,
+  payload: {
+    questionId,
+    replyId,
+    isUpvoted,
+  },
+})
+
+export const syncExistingRepliesFailure = (errorMessage) => ({
+  type: actions.SYNC_EXISTING_REPLIES_FAILURE,
+  payload: {
+    errorMessage,
+  },
+});
+
+export const syncExistingRepliesRequest = () => ({
+  type: actions.SYNC_EXISTING_REPLIES_REQUEST,
+});
+
+export const syncExistingRepliesSuccess = (replies, lastSynced, questionId) => ({
+  type: actions.SYNC_EXISTING_REPLIES_SUCCESS,
+  payload: {
+    replies,
+    lastSynced,
+    questionId,
+  },
+});
+
+export const updateQuestionRepliesCount = (action, questionId, lectureId = null) => ({
+  type: actions.UPDATE_QUESTION_REPLIES_COUNT,
+  payload: {
+    action, questionId, lectureId
+  }
+})
+
+// This is to sync votes change in the question view.. not in the list or generalQUestions
+// Or lecture questions
+export const syncQuestionDetailsVote = (questionId, isUpvoted) => ({
+  type: actions.SYNC_QUESTION_DETAILS_VOTE,
+  payload: {
+    questionId,
+    isUpvoted,
+  },
+})

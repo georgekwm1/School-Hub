@@ -40,10 +40,11 @@ export const sectionsRequest = () => ({
   type: actions.SECTIONS_REQUEST,
 });
 
-export const sectionsSuccess = (sections) => ({
+export const sectionsSuccess = (sections, lastFetched) => ({
   type: actions.SECTIONS_SUCCESS,
   payload: {
     sections,
+    lastFetched,
   },
 });
 
@@ -111,4 +112,40 @@ export const editLectureSuccess = (editedLecture) => ({
 
 export const resetLectureEdited = () => ({
   type: actions.RESET_LECTURE_EDITED,
+});
+
+export const addLectureToSection = (sectionId, lecture, lastFetched) => ({
+  type: actions.ADD_LECTURE_TO_SECTION,
+  payload: {
+    sectionId,
+    lecture,
+    lastFetched,
+  },
+});
+
+export const createNewSection = (newSection, lastFetched) => ({
+  type: actions.CREATE_NEW_SECTION,
+  payload: {
+    newSection,
+    lastFetched,
+  },
+});
+
+export const syncExistingLecturesRequest = () => ({
+  type: actions.SYNC_EXISTING_LECTURES_REQUEST,
+});
+
+export const syncExistingLecturesFailure = (errorMessage) => ({
+  type: actions.SYNC_EXISTING_LECTURES_FAILURE,
+  payload: {
+    errorMessage,
+  },
+});
+
+export const syncExistingLecturesSuccess = (entries, lastSynced) => ({
+  type: actions.SYNC_EXISTING_LECTURES_SUCCESS,
+  payload: {
+    entries,
+    lastSynced,
+  },
 });

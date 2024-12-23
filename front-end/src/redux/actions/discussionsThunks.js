@@ -2,40 +2,55 @@ import toast from 'react-hot-toast';
 import * as discussionsActions from './discussionsActionCreators';
 import { toggleLoading } from './uiActionCreators';
 import { getToken } from '../../utils/utilFunctions';
-import {DOMAIN} from '../../utils/constants'
+import { DOMAIN } from '../../utils/constants';
 
-export const getLectureDiscussions = (lectureId) => async (dispatch) => {
-  dispatch(discussionsActions.toggleDiscussionsLoading());
+export const getLectureDiscussions =
+  (lectureId) => async (dispatch, getState) => {
+    dispatch(discussionsActions.toggleDiscussionsLoading());
 
-  try {
-    const response = await fetch(
-      `${DOMAIN}/lectures/${lectureId}/discussion`,
-      {
-        headers: {
-          'Authorization': `Bearer ${getToken('accessToken')}`
+    const state = getState();
+    const currentLastFetched =
+      state.discussions.getIn(
+        ['lectureDiscussionsLastFetchedAt', lectureId]
+        // Somehow and till now couln't tell why.. if this is undefined..
+        // the server on the otherside sees it as 'undefined'.. like a string?!!?!?!?!?!?!
+      ) || '';
+
+    try {
+      const params = new URLSearchParams({
+        lastFetched: currentLastFetched,
+      }).toString();
+      const response = await fetch(
+        `${DOMAIN}/lectures/${lectureId}/discussion?${params}`,
+        {
+          headers: {
+            Authorization: `Bearer ${getToken('accessToken')}`,
+          },
         }
-      }
-    );
-    const data = await response.json();
+      );
+      const data = await response.json();
 
-    if (!response.ok) {
-      throw new Error(data.message);
+      if (!response.ok) {
+        throw new Error(data.message);
+      }
+
+      const { results, lastFetched } = data;
+      dispatch(
+        discussionsActions.lectureDiscussionSuccess({
+          entries: results,
+          lectureId: lectureId,
+          lastFetched,
+        })
+      );
+    } catch (error) {
+      console.error(error.message);
+      dispatch(
+        discussionsActions.lectureDiscussionFailure(
+          `Error fetching entries: ${error.message}`
+        )
+      );
     }
-    dispatch(
-      discussionsActions.lectureDiscussionSuccess({
-        entries: data,
-        lectureId: lectureId,
-      })
-    );
-  } catch (error) {
-    console.error(error.message);
-    dispatch(
-      discussionsActions.lectureDiscussionFailure(
-        `Error fetching entries: ${error.message}`
-      )
-    );
-  }
-};
+  };
 
 export const addLectureDiscussionEntry =
   (lectureId, title, details) => async (dispatch, getState) => {
@@ -46,7 +61,7 @@ export const addLectureDiscussionEntry =
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getToken('accessToken')}`,
+          Authorization: `Bearer ${getToken('accessToken')}`,
         },
         body: JSON.stringify({
           title,
@@ -69,10 +84,12 @@ export const addLectureDiscussionEntry =
     try {
       const data = await promise;
 
+      const { newEntry, lastFetched } = data;
       dispatch(
         discussionsActions.addDiscussionEntrySuccess({
           lectureId,
-          entry: data,
+          entry: newEntry,
+          lastFetched,
         })
       );
     } catch (error) {
@@ -88,13 +105,19 @@ export const addLectureDiscussionEntry =
 export const getGeneralDiscussion = () => async (dispatch, getState) => {
   dispatch(discussionsActions.generalDiscussionRequest());
 
-  const courseId = getState().ui.getIn(['course', 'id']) || 'testId';
+  const state = getState();
+  const courseId = state.ui.getIn(['course', 'id']) || 'testId';
+  const lastFetched = state.discussions.get('generalDiscussionLastFetchedAt');
+  const params = new URLSearchParams({
+    lastFetched,
+  }).toString();
+
   try {
     const response = await fetch(
-      `${DOMAIN}/courses/${courseId}/general_discussion`,
+      `${DOMAIN}/courses/${courseId}/general_discussion?${params}`,
       {
         headers: {
-          'Authorization': `Bearer ${getToken('accessToken')}`
+          Authorization: `Bearer ${getToken('accessToken')}`,
         },
       }
     );
@@ -104,7 +127,12 @@ export const getGeneralDiscussion = () => async (dispatch, getState) => {
       throw new Error(data.message);
     }
 
-    dispatch(discussionsActions.generalDiscussionSuccess(data));
+    dispatch(
+      discussionsActions.generalDiscussionSuccess(
+        data.questions,
+        data.lastFetched
+      )
+    );
   } catch (error) {
     console.error(error.message);
     dispatch(
@@ -125,7 +153,7 @@ export const addGeneralDiscussionEntry =
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getToken('accessToken')}`,
+          Authorization: `Bearer ${getToken('accessToken')}`,
         },
         body: JSON.stringify({
           title,
@@ -144,28 +172,44 @@ export const addGeneralDiscussionEntry =
     if (!response.ok) {
       throw new Error(data.message);
     }
+    const { newEntry, lastFetched } = data;
 
-    dispatch(discussionsActions.generalDiscussionEntrySuccess(data));
+    dispatch(
+      discussionsActions.generalDiscussionEntrySuccess(newEntry, lastFetched)
+    );
   };
 
-export const fetchReplies = (questionId) => async (dispatch) => {
+export const fetchReplies = (questionId) => async (dispatch, getState) => {
   dispatch(discussionsActions.fetchDiscussionRepliesRequest());
   dispatch(toggleLoading());
+  const state = getState();
+  const lastFetched = state.discussions.getIn(
+    ['repliesLastFetchedAt', questionId]
+  ) || '';
+
+  const params = new URLSearchParams({
+    lastFetched,
+  }).toString();
   try {
-    const response = await fetch(
-      `${DOMAIN}/questions/${questionId}/replies`,
-      {
-        headers: {
-          'Authorization': `Bearer ${getToken('accessToken')}`
-        }
-      }
-    );
+    const response = await fetch(`${DOMAIN}/questions/${questionId}/replies?${params}`, {
+      headers: {
+        Authorization: `Bearer ${getToken('accessToken')}`,
+      },
+    });
     const data = await response.json();
 
     if (!response.ok) {
       throw new Error(data.message);
     }
-    dispatch(discussionsActions.fetchDiscussionRepliesSuccess(data));
+
+    const { question, repliesList, lastFetched } = data;
+    dispatch(
+      discussionsActions.fetchDiscussionRepliesSuccess(
+        question,
+        repliesList,
+        lastFetched,
+      )
+    );
   } catch (error) {
     console.error(error.message);
     dispatch(
@@ -188,9 +232,9 @@ export const addDiscussionReply =
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${getToken('accessToken')}`,
+            Authorization: `Bearer ${getToken('accessToken')}`,
           },
-            body: JSON.stringify({
+          body: JSON.stringify({
             body,
           }),
         }).then((response) => {
@@ -206,7 +250,9 @@ export const addDiscussionReply =
         }
       );
 
-      dispatch(discussionsActions.addDiscussionReplySuccess(data));
+      const { newReply, lastFetched } = data;
+
+      dispatch(discussionsActions.addDiscussionReplySuccess(newReply, lastFetched));
     } catch (error) {
       console.error(error.message);
       dispatch(
@@ -261,7 +307,7 @@ export const toggleDiscussionEntryVote =
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${getToken('accessToken')}`,
+            Authorization: `Bearer ${getToken('accessToken')}`,
           },
           body: JSON.stringify({ action }),
         }).then((response) => {
@@ -303,9 +349,9 @@ export const toggleReplyVote =
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${getToken('accessToken')}`,
+            Authorization: `Bearer ${getToken('accessToken')}`,
           },
-            body: JSON.stringify({ action }),
+          body: JSON.stringify({ action }),
         }).then((response) => {
           if (!response.ok) {
             const data = response.json();
@@ -359,7 +405,7 @@ export const toggleQuestionVote =
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${getToken('accessToken')}`,
+            Authorization: `Bearer ${getToken('accessToken')}`,
           },
           body: JSON.stringify({ action }),
         }).then((response) => {
@@ -408,14 +454,15 @@ export const toggleQuestionVote =
   };
 
 export const deleteQuestion =
-  (questionId, lectureId = null) => async (dispatch) => {
+  (questionId, lectureId = null) =>
+  async (dispatch) => {
     try {
       await toast.promise(
         fetch(`${DOMAIN}/questions/${questionId}`, {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${getToken('accessToken')}`,
-          }
+            Authorization: `Bearer ${getToken('accessToken')}`,
+          },
         }).then((response) => {
           const data = response.json();
           if (!response.ok) {
@@ -447,8 +494,8 @@ export const deleteReply = (questionId, replyId) => async (dispatch) => {
       fetch(`${DOMAIN}/replies/${replyId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${getToken('accessToken')}`
-        }
+          Authorization: `Bearer ${getToken('accessToken')}`,
+        },
       }).then((response) => {
         const data = response.json();
         if (!response.ok) {
@@ -481,7 +528,7 @@ export const editQuestion = (questionId, title, body) => async (dispatch) => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getToken('accessToken')}`,
+          Authorization: `Bearer ${getToken('accessToken')}`,
         },
         body: JSON.stringify({
           title,
@@ -512,7 +559,6 @@ export const editQuestion = (questionId, title, body) => async (dispatch) => {
   }
 };
 
-
 export const editReply = (questionId, replyId, body) => async (dispatch) => {
   try {
     const editedReply = await toast.promise(
@@ -520,7 +566,7 @@ export const editReply = (questionId, replyId, body) => async (dispatch) => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getToken('accessToken')}`,
+          Authorization: `Bearer ${getToken('accessToken')}`,
         },
         body: JSON.stringify({
           body,
@@ -549,3 +595,122 @@ export const editReply = (questionId, replyId, body) => async (dispatch) => {
     );
   }
 };
+
+export const syncExistingQuestions =
+  (lectureId = null) =>
+  async (dispatch, getState) => {
+    const state = getState();
+
+    let courseId = '';
+    if (!lectureId) {
+      courseId = state.ui.getIn(['course', 'id']);
+    }
+    const lastFetched = state.discussions.getIn(
+      lectureId
+        ? ['lectureDiscussionsLastFetchedAt', lectureId]
+        : ['generalDiscussionLastFetchedAt']
+    );
+    const entriesPath = lectureId
+      ? ['lecturesDiscussions', lectureId]
+      : ['courseGeneralDiscussion'];
+    const entries = state.discussions
+      .getIn(entriesPath)
+      ?.map((question) => ({
+        id: question.get('id'),
+        updatedAt: question.get('updatedAt'),
+      }))
+      .toJS();
+    console.log(entries, lectureId, lastFetched);
+
+    // There is not entries existing to sync it
+    if (!entries) return;
+
+    try {
+      const data = await toast.promise(
+        fetch(`${DOMAIN}/questions/diff`, {
+          method: 'POST',
+          body: JSON.stringify({ entries, lastFetched, courseId, lectureId }),
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${getToken('accessToken')}`,
+          },
+        }).then((response) => {
+          if (!response.ok) {
+            throw new Error(response.statusText);
+          }
+          return response.json();
+        }),
+        {
+          loading: 'Syncing existing questions',
+          error: 'Error syncing questions',
+        }
+      );
+
+      dispatch(
+        discussionsActions.syncExistingQuestionsSuccess(
+          data.results,
+          data.lastSynced,
+          lectureId
+        )
+      );
+    } catch (error) {
+      console.error(error);
+      toast.error('Error syncing existing questions');
+      dispatch(
+        discussionsActions.syncExistingQuestionsFailure(
+          `Error syncing the existing questions: ${error.message}`
+        )
+      );
+    }
+  };
+
+export const syncExistingReplies = (questionId) => async (dispatch, getState) => {
+  const state = getState();
+
+  const lastFetched = state.discussions.getIn(['repliesLastFetchedAt', questionId]);
+  const entries = state.discussions.getIn(
+    ['replies', questionId, 'repliesList']
+  )?.map(
+    reply => ({id: reply.get('id'), updatedAt: reply.get('updatedAt')})
+  ).toJS();
+  
+  if (!entries) return;
+
+  try {
+    const data = await toast.promise(
+      fetch(`${DOMAIN}/questions/${questionId}/replies/diff`, {
+        method: 'POST',
+        body: JSON.stringify({ entries, lastFetched }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${getToken('accessToken')}`,
+        },
+      }).then((response) => {
+        if (!response.ok) {
+          throw new Error(response.statusText);
+        }
+        return response.json();
+      }),
+      {
+        success: 'Saved replies synced successfully',
+        loading: 'Syncing existing replies',
+        error: 'Error syncing replies',
+      }
+    );
+
+    dispatch(
+      discussionsActions.syncExistingRepliesSuccess(
+        data.results,
+        data.lastSynced,
+        questionId
+      )
+    );
+  } catch (error) {
+    console.error(error);
+    dispatch(
+      discussionsActions.syncExistingRepliesFailure(
+        `Error syncing the existing replies: ${error.message}`
+      )
+    );
+  }
+}

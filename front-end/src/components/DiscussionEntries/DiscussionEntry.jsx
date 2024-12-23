@@ -51,19 +51,25 @@ export default function DiscussionEntry({ content, isLecture }) {
         <div className="discussion-info">
           <h3 className="discussion-title">{content.get('title')}</h3>
           <div className="discussion-meta">
-            <span className="author-name">{content.getIn(['user', 'name'])}</span>
+            <span className="author-name">
+              {content.getIn(['user', 'name'])}
+            </span>
             <Dot className="dot-separator" />
             <span className="date">{date}</span>
           </div>
         </div>
       </div>
       <div>
-      <button onClick={toggleUpvote} className={`upvote-button ${upvoted ? 'upvoted' : ''}`}>
-      {upvotes} 
-					{ !upvoted 
-						? <CircleArrowUp color="grey" strokeWidth={2}/>
-						: <CircleArrowUp color="black" strokeWidth={2.2}/>
-					}
+        <button
+          onClick={toggleUpvote}
+          className={`upvote-button ${upvoted ? 'upvoted' : ''}`}
+        >
+          {upvotes}
+          {!upvoted ? (
+            <CircleArrowUp color="grey" strokeWidth={2} />
+          ) : (
+            <CircleArrowUp color="black" strokeWidth={2.2} />
+          )}
         </button>
         {/* I don't know why this is a link in a button honestly..
           but i'm going to continue like that..
@@ -93,11 +99,11 @@ export default function DiscussionEntry({ content, isLecture }) {
           front-end
           https://remindme-l.vercela.app
         */}
-        
+
         <button className="comment-button" type="button">
           <Link
             to={`/questions/${content.get('id')}`}
-            state={{  backRoute: window.location.pathname , isLecture }}
+            state={{ backRoute: window.location.pathname, isLecture }}
             className="comment-link"
           >
             {content.get('repliesCount')} <MessagesSquare />

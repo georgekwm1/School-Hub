@@ -172,7 +172,7 @@ db.exec(`
 	);
 	`);
 
-// Announcements table
+	// Announcements table
 db.exec(`
 	CREATE TABLE IF NOT EXISTS announcements (
 		id TEXT PRIMARY KEY,
@@ -292,6 +292,17 @@ db.exec(`
 	END	
 `);
 
+db.exec(
+	`
+	CREATE TRIGGER IF NOT EXISTS update_lecture_updatedAt
+	AFTER UPDATE ON lectures
+	BEGIN
+		UPDATE lectures
+		SET updatedAt = CURRENT_TIMESTAMP
+		WHERE id = old.id;
+	END
+	`
+)
 process.on('exit', () => db.close());
 process.on('SIGHUP', () => process.exit(128 + 1));
 process.on('SIGINT', () => process.exit(128 + 2));

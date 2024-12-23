@@ -3,7 +3,8 @@ const https = require('https');
 const fs = require('fs');
 const ImageKit = require('imagekit');
 const cors = require('cors');
-const app = express();
+const { Server: IO } = require('socket.io');
+const socketIOLogic = require('./socketIO/server');
 const db = require('./connect');
 const authRouter = require('./routes/auth');
 const lecturesRouter = require('./routes/lectures');
@@ -13,7 +14,12 @@ const announcementsRouter = require('./routes/announcements');
 const commentsRouter = require('./routes/comments');
 
 require('dotenv').config();
+const key = fs.readFileSync('./key.pem');
+const cert = fs.readFileSync('./cert.pem');
+const port = 3000;
 
+
+const app = express();
 app.use(express.json());
 app.use(cors({ origin: '*' }));
 app.use((req, res, next) => {
@@ -21,6 +27,18 @@ app.use((req, res, next) => {
   res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
   next();
 });
+
+const httpsServer = https.createServer({ key, cert }, app);
+
+const io = new IO(httpsServer, {
+  cors: {
+    // Don't forget to set this properly
+    origin: '*',
+  }
+})
+app.set('io', io);
+socketIOLogic(io);
+
 
 app.use('/auth', authRouter);
 app.use(lecturesRouter);
@@ -33,11 +51,6 @@ app.use((req, res, next) => {
   res.status(404).send({ message: 'Not found' });
 });
 
-const key = fs.readFileSync('./key.pem');
-const cert = fs.readFileSync('./cert.pem');
-
-const port = 3000;
-const httpsServer = https.createServer({ key, cert }, app);
 httpsServer.listen(port, () => {
   console.log(`Server started on https://localhost:${port}`);
 });

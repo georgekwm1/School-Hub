@@ -19,7 +19,8 @@
     "imagekit": "^5.2.0",
     "imagekit-javascript": "^3.0.2",
     "jsonwebtoken": "^9.0.2",
-    "socket.io": "^4.7.4",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
     "uuid": "^11.0.3",
     "youtube-transcript": "^1.2.1",
     "ytdl-core": "^4.11.5"
