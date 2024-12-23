@@ -42,7 +42,7 @@ export default function lecturesReducer(state = initialState, action = {}) {
         return state
           .set('isLoading', false)
           .set('lectureError', null)
-          .setIn(['lectures', lectureData.id], fromJS(lectureData))
+          .setIn(['lectures', lectureData.id], fromJS(lectureData));
       });
     }
 
@@ -71,7 +71,7 @@ export default function lecturesReducer(state = initialState, action = {}) {
     }
 
     case actions.SECTIONS_SUCCESS: {
-      const { sections, lastFetched } = action.payload
+      const { sections, lastFetched } = action.payload;
       const currentLastFetchedAt = state.get('sectionsLastFetchedAt');
 
       return state.withMutations((state) => {
@@ -80,13 +80,13 @@ export default function lecturesReducer(state = initialState, action = {}) {
           .set('lectureError', null)
           .set('sectionsLastFetchedAt', lastFetched)
           .set('sectionsLastSyncedAt', lastFetched)
-          .update('sections', currentSections => {
+          .update('sections', (currentSections) => {
             if (!currentLastFetchedAt) return fromJS(sections);
             const currentSectionsJs = currentSections.toJS();
 
             for (const entry of sections) {
               const index = currentSectionsJs.findIndex(
-                section => section.id === entry.id
+                (section) => section.id === entry.id
               );
               if (index === -1) {
                 currentSectionsJs.push(entry);
@@ -94,8 +94,8 @@ export default function lecturesReducer(state = initialState, action = {}) {
                 currentSectionsJs[index].lectures.push(...entry.lectures);
               }
             }
-            return fromJS(currentSectionsJs)
-          })
+            return fromJS(currentSectionsJs);
+          });
       });
     }
 
@@ -143,24 +143,30 @@ export default function lecturesReducer(state = initialState, action = {}) {
           .removeIn(['lectures', lectureId])
           .update('sections', (sections) => {
             const sectionIndex = sections.findIndex(
-              section => section.get('id') === sectionId
+              (section) => section.get('id') === sectionId
             );
             if (sectionIndex === -1) return sections;
 
-            console.log('sectionINd', sectionIndex)
-            
+            console.log('sectionINd', sectionIndex);
+
             if (sections.getIn([sectionIndex, 'lectures']).size === 1) {
-              console.log('delete section', sectionIndex)
+              console.log('delete section', sectionIndex);
               return sections.deleteIn([sectionIndex]);
             } else {
-              const lectureIndex = sections.getIn([sectionIndex, 'lectures']).findIndex(lecture => {
-                return lecture.get('id') === lectureId;
-              });
-              
-              console.log('delete lecture', lectureIndex)
-              return sections.removeIn([sectionIndex, 'lectures', lectureIndex]);
-            }            
-          })
+              const lectureIndex = sections
+                .getIn([sectionIndex, 'lectures'])
+                .findIndex((lecture) => {
+                  return lecture.get('id') === lectureId;
+                });
+
+              console.log('delete lecture', lectureIndex);
+              return sections.removeIn([
+                sectionIndex,
+                'lectures',
+                lectureIndex,
+              ]);
+            }
+          });
       });
     }
 
@@ -224,17 +230,19 @@ export default function lecturesReducer(state = initialState, action = {}) {
         .findIndex((section) => section.get('id') === sectionId);
       if (sectionId === -1) return state;
 
-      return state.updateIn(['sections', sectionIndex, 'lectures'], (lectures) => {
-        return lectures.push(fromJS(lecture));
-      }).set('sectionsLastFetchedAt', lastFetched)
+      return state
+        .updateIn(['sections', sectionIndex, 'lectures'], (lectures) => {
+          return lectures.push(fromJS(lecture));
+        })
+        .set('sectionsLastFetchedAt', lastFetched);
     }
 
     case actions.CREATE_NEW_SECTION: {
       const { newSection, lastFetched } = action.payload;
 
-      return state.update('sections', (sections) =>
-        sections.push(fromJS(newSection))
-      ).set('sectionsLastFetchedAt', lastFetched);
+      return state
+        .update('sections', (sections) => sections.push(fromJS(newSection)))
+        .set('sectionsLastFetchedAt', lastFetched);
     }
 
     case actions.SYNC_EXISTING_LECTURES_FAILURE: {
@@ -243,32 +251,33 @@ export default function lecturesReducer(state = initialState, action = {}) {
         .set('lectureError', action.payload.errorMessage);
     }
 
-    // I diffenetly believe that was and overkill and the kilobytes or data of 
+    // I diffenetly believe that was and overkill and the kilobytes or data of
     // fetching the sections and much much less pricy that all these computations
     // for iteration and comparisons.. both in the front-end and in the backend..
 
-    // This is absolutely an overkill.. and I don't like it at all.. 
+    // This is absolutely an overkill.. and I don't like it at all..
     // What so ever... I really wanna remove this whole logic
     case actions.SYNC_EXISTING_LECTURES_SUCCESS: {
       const { entries, lastSynced } = action.payload;
       const { updated, deleted } = entries;
       const { sections: deletedSections, lectures: deletedLectures } = deleted;
-      
+
       // Filter deleted sections
-      const sectionsJS = state.get('sections').filter(
-        section => !deletedSections.includes(section.get('id'))
-      ).toJS();
+      const sectionsJS = state
+        .get('sections')
+        .filter((section) => !deletedSections.includes(section.get('id')))
+        .toJS();
 
       // Upddate lectures
       for (const sectionId in updated) {
         const sectionIndex = sectionsJS.findIndex(
-          section => section.id === sectionId
-        )
+          (section) => section.id === sectionId
+        );
         for (const lecture of updated[sectionId]) {
           const Index = sectionsJS[sectionIndex].lectures.findIndex(
-            entry => entry.id === lecture.id
-          )
-          sectionsJS[sectionIndex].lectures[Index] = lecture
+            (entry) => entry.id === lecture.id
+          );
+          sectionsJS[sectionIndex].lectures[Index] = lecture;
         }
       }
 
@@ -276,9 +285,9 @@ export default function lecturesReducer(state = initialState, action = {}) {
       for (const section of sectionsJS) {
         if (!deletedLectures[section.id]) continue;
         section.lectures = section.lectures.filter(
-          lecture => !deletedLectures[section.id].includes(lecture.id)
-        )
-      };
+          (lecture) => !deletedLectures[section.id].includes(lecture.id)
+        );
+      }
 
       return state
         .set('sections', fromJS(sectionsJS))

@@ -117,17 +117,19 @@ export const resetLectureEdited = () => ({
 export const addLectureToSection = (sectionId, lecture, lastFetched) => ({
   type: actions.ADD_LECTURE_TO_SECTION,
   payload: {
-    sectionId, lecture, lastFetched
-  }
-})
+    sectionId,
+    lecture,
+    lastFetched,
+  },
+});
 
 export const createNewSection = (newSection, lastFetched) => ({
   type: actions.CREATE_NEW_SECTION,
   payload: {
     newSection,
     lastFetched,
-  }
-})
+  },
+});
 
 export const syncExistingLecturesRequest = () => ({
   type: actions.SYNC_EXISTING_LECTURES_REQUEST,
@@ -147,4 +149,3 @@ export const syncExistingLecturesSuccess = (entries, lastSynced) => ({
     lastSynced,
   },
 });
-
