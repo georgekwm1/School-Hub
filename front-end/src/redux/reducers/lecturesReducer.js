@@ -14,10 +14,16 @@ export const initialState = fromJS({
   lectureEdited: false,
   lectures: {},
   sections: [],
+  sectionsLastFetchedAt: '',
+  sectionsLastSyncedAt: '',
 });
 
 export default function lecturesReducer(state = initialState, action = {}) {
   switch (action.type) {
+    case actions.SET_LECTURE_LOADING: {
+      return state.set('isLoading', action.payload.value);
+    }
+
     case actions.LECTURE_REQUEST: {
       return state.set('isLoading', true);
     }
@@ -65,11 +71,31 @@ export default function lecturesReducer(state = initialState, action = {}) {
     }
 
     case actions.SECTIONS_SUCCESS: {
+      const { sections, lastFetched } = action.payload;
+      const currentLastFetchedAt = state.get('sectionsLastFetchedAt');
+
       return state.withMutations((state) => {
         return state
           .set('isLoading', false)
           .set('lectureError', null)
-          .set('sections', fromJS(action.payload.sections));
+          .set('sectionsLastFetchedAt', lastFetched)
+          .set('sectionsLastSyncedAt', lastFetched)
+          .update('sections', (currentSections) => {
+            if (!currentLastFetchedAt) return fromJS(sections);
+            const currentSectionsJs = currentSections.toJS();
+
+            for (const entry of sections) {
+              const index = currentSectionsJs.findIndex(
+                (section) => section.id === entry.id
+              );
+              if (index === -1) {
+                currentSectionsJs.push(entry);
+              } else {
+                currentSectionsJs[index].lectures.push(...entry.lectures);
+              }
+            }
+            return fromJS(currentSectionsJs);
+          });
       });
     }
 
@@ -115,15 +141,32 @@ export default function lecturesReducer(state = initialState, action = {}) {
           .set('isLoading', false)
           .set('lectureError', null)
           .removeIn(['lectures', lectureId])
-          .update('sections', (sections) =>
-            sections.map((section) =>
-              section.get('id') === sectionId
-                ? section.update('lectures', (lectures) =>
-                    lectures.filter((lec) => lec.get('id') !== lectureId)
-                  )
-                : section
-            )
-          );
+          .update('sections', (sections) => {
+            const sectionIndex = sections.findIndex(
+              (section) => section.get('id') === sectionId
+            );
+            if (sectionIndex === -1) return sections;
+
+            console.log('sectionINd', sectionIndex);
+
+            if (sections.getIn([sectionIndex, 'lectures']).size === 1) {
+              console.log('delete section', sectionIndex);
+              return sections.deleteIn([sectionIndex]);
+            } else {
+              const lectureIndex = sections
+                .getIn([sectionIndex, 'lectures'])
+                .findIndex((lecture) => {
+                  return lecture.get('id') === lectureId;
+                });
+
+              console.log('delete lecture', lectureIndex);
+              return sections.removeIn([
+                sectionIndex,
+                'lectures',
+                lectureIndex,
+              ]);
+            }
+          });
       });
     }
 
@@ -158,12 +201,12 @@ export default function lecturesReducer(state = initialState, action = {}) {
               // the lectures component before.. so sections will be empty
               if (!sections?.size) return sections;
 
-              const index = sections?.findIndex(
-                (section) => section.title === editedLecture.section
+              const index = sections.findIndex(
+                (section) => section.get('id') === editedLecture.sectionId
               );
               return sections.updateIn([index, 'lectures'], (lectures) => {
                 const index = lectures.findIndex(
-                  (lecture) => lecture.id === editedLecture.id
+                  (lecture) => lecture.get('id') === editedLecture.id
                 );
                 if (index === -1) {
                   return lectures;
@@ -177,6 +220,78 @@ export default function lecturesReducer(state = initialState, action = {}) {
 
     case actions.RESET_LECTURE_EDITED: {
       return state.set('lectureEdited', false);
+    }
+
+    case actions.ADD_LECTURE_TO_SECTION: {
+      const { sectionId, lecture, lastFetched } = action.payload;
+
+      const sectionIndex = state
+        .get('sections')
+        .findIndex((section) => section.get('id') === sectionId);
+      if (sectionId === -1) return state;
+
+      return state
+        .updateIn(['sections', sectionIndex, 'lectures'], (lectures) => {
+          return lectures.push(fromJS(lecture));
+        })
+        .set('sectionsLastFetchedAt', lastFetched);
+    }
+
+    case actions.CREATE_NEW_SECTION: {
+      const { newSection, lastFetched } = action.payload;
+
+      return state
+        .update('sections', (sections) => sections.push(fromJS(newSection)))
+        .set('sectionsLastFetchedAt', lastFetched);
+    }
+
+    case actions.SYNC_EXISTING_LECTURES_FAILURE: {
+      return state
+        .set('isLoading', false)
+        .set('lectureError', action.payload.errorMessage);
+    }
+
+    // I diffenetly believe that was and overkill and the kilobytes or data of
+    // fetching the sections and much much less pricy that all these computations
+    // for iteration and comparisons.. both in the front-end and in the backend..
+
+    // This is absolutely an overkill.. and I don't like it at all..
+    // What so ever... I really wanna remove this whole logic
+    case actions.SYNC_EXISTING_LECTURES_SUCCESS: {
+      const { entries, lastSynced } = action.payload;
+      const { updated, deleted } = entries;
+      const { sections: deletedSections, lectures: deletedLectures } = deleted;
+
+      // Filter deleted sections
+      const sectionsJS = state
+        .get('sections')
+        .filter((section) => !deletedSections.includes(section.get('id')))
+        .toJS();
+
+      // Upddate lectures
+      for (const sectionId in updated) {
+        const sectionIndex = sectionsJS.findIndex(
+          (section) => section.id === sectionId
+        );
+        for (const lecture of updated[sectionId]) {
+          const Index = sectionsJS[sectionIndex].lectures.findIndex(
+            (entry) => entry.id === lecture.id
+          );
+          sectionsJS[sectionIndex].lectures[Index] = lecture;
+        }
+      }
+
+      // Filter deleted lectures;
+      for (const section of sectionsJS) {
+        if (!deletedLectures[section.id]) continue;
+        section.lectures = section.lectures.filter(
+          (lecture) => !deletedLectures[section.id].includes(lecture.id)
+        );
+      }
+
+      return state
+        .set('sections', fromJS(sectionsJS))
+        .set('sectionsLastFetchedAt', lastSynced);
     }
 
     default: {
