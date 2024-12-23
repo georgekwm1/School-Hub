@@ -256,7 +256,7 @@ export default function lecturesReducer(state = initialState, action = {}) {
       
       // Filter deleted sections
       const sectionsJS = state.get('sections').filter(
-        section => !deletedSections.includes(section.id)
+        section => !deletedSections.includes(section.get('id'))
       ).toJS();
 
       // Upddate lectures
@@ -274,8 +274,9 @@ export default function lecturesReducer(state = initialState, action = {}) {
 
       // Filter deleted lectures;
       for (const section of sectionsJS) {
+        if (!deletedLectures[section.id]) continue;
         section.lectures = section.lectures.filter(
-          lecture => !deletedLectures.includes(lecture.id)
+          lecture => !deletedLectures[section.id].includes(lecture.id)
         )
       };
 

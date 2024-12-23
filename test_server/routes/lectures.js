@@ -463,13 +463,6 @@ router.post('/courses/:id/lectures/diff', (req, res) => {
   if (typeof entries !== 'object' || entries === null || lastSynced === null) 
     return res.status(400).send({ message: 'Missing or invalid entries' });
 
-  /**
-   * [
-   *  sectionId, lecturs[lecturesIds],
-   * ]
-   * }
-   */
-
   result = {
     updated: {},
     deleted: {
@@ -506,14 +499,15 @@ router.post('/courses/:id/lectures/diff', (req, res) => {
 
     // Deleted sections
     const userSections = Object.keys(entries);
-    result.deleted.sections = dbSections.filter(
-      (sectionId) => !userSections.includes(sectionId)
+    result.deleted.sections = userSections.filter(
+      (sectionId) => !dbSections.includes(sectionId)
     );
-    
+
     res.status(200).json({
-      entries, lastSynced: getCurrentTimeInDBFormat()
+      entries: result, lastSynced: getCurrentTimeInDBFormat()
     })
   } catch (error)  {
+    console.error(error);
     res.status(500).send({ message: 'Internal server error', error });
   }
 })

@@ -174,7 +174,7 @@ export const syncExistingLectures = () => async (dispatch, getState) => {
   const state = getState();
   const courseId = state.ui.getIn(['course', 'id']);
 
-  const currentLastSynced = state.lectures.get('sectionsLastSynced');
+  const currentLastSynced = state.lectures.get('sectionsLastSyncedAt');
   const fiveMinutesAgo = new Date(Date.now() - 5*60*1000);
   if (new Date(currentLastSynced) > fiveMinutesAgo) return;
 
@@ -189,7 +189,7 @@ export const syncExistingLectures = () => async (dispatch, getState) => {
     const data = await toast.promise(
       fetch(`${DOMAIN}/courses/${courseId}/lectures/diff`, {
         method: 'POST',
-        body: JSON.stringify({entries: entriesObject, currentLastSynced}),
+        body: JSON.stringify({entries: entriesObject, lastSynced:currentLastSynced}),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${getToken('accessToken')}`
