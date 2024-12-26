@@ -26,14 +26,14 @@ const pluck = (rows) => {
 }
 
 module.exports = {
-	query: async (query, params) => {
+	query: async (query, params, pluck=false) => {
 		const [results] = await pool.query(query, params);
-		return results;
+		return pluck ? pluck(results) : results;
 	},
 
-	execute: async (query, params) => {
+	execute: async (query, params, pluck=false) => {
 		const [results] = await pool.execute(query, params);
-		return results;
+		return pluck ? pluck(results) : results;
 	},
 	pool,
 	transaction: async (callback) => {
