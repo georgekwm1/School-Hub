@@ -27,36 +27,33 @@ const pluck = (rows) => {
 
 /**
  * Executes a query and optionally plucks results.
- * @param {Function} method - The query or execute method to use.
  * @param {any} connection - The database connection or pool.
  * @param {string} query - The SQL query.
  * @param {Array} params - The query parameters.
+ * @param {Function} method - The query or execute method to use.
  * @param {boolean} pluck - Whether to pluck results.
  */
-const runQuery = async (method, connection, query, params, pluck=false) => {
+const runQuery = async (connection, query, params,method='query', pluck=false) => {
+	if (!method in ['query', 'execute']) throw new Error('Invalid method');
+
 	const [results] = await connection[method](query, params);
 	return pluck ? pluck(results) : results;
 };
 
 
 module.exports = {
-	query: async (query, params, pluck=false) => {
-		const [results] = await pool.query(query, params);
-		return pluck ? pluck(results) : results;
-	},
-
-	execute: async (query, params, pluck=false) => {
-		const [results] = await pool.execute(query, params);
-		return pluck ? pluck(results) : results;
-	},
 	pool,
+	query: async (query, params, pluck=false) => 
+		runQuery(pool, query, params),
+	execute: async (query, params, pluck=false) =>
+		runQuery(pool, query, params, method='execute'),
+		
 	transaction: async (callback) => {
 		const connection = await pool.getConnection();
 		try {
 			await connection.beginTransaction();
 			const result = await callback(connection);
 			await connection.commit();
-
 			return result;
 		} catch (error) {
 			await connection.rollback();
