@@ -25,6 +25,20 @@ const pluck = (rows) => {
 	return rows.map((row) => row[key]);
 }
 
+/**
+ * Executes a query and optionally plucks results.
+ * @param {Function} method - The query or execute method to use.
+ * @param {any} connection - The database connection or pool.
+ * @param {string} query - The SQL query.
+ * @param {Array} params - The query parameters.
+ * @param {boolean} pluck - Whether to pluck results.
+ */
+const runQuery = async (method, connection, query, params, pluck=false) => {
+	const [results] = await connection[method](query, params);
+	return pluck ? pluck(results) : results;
+};
+
+
 module.exports = {
 	query: async (query, params, pluck=false) => {
 		const [results] = await pool.query(query, params);
@@ -42,6 +56,7 @@ module.exports = {
 			await connection.beginTransaction();
 			const result = await callback(connection);
 			await connection.commit();
+
 			return result;
 		} catch (error) {
 			await connection.rollback();
