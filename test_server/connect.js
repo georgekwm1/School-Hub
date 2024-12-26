@@ -10,44 +10,44 @@ const db = require('./db');
 // **************************
 
 // Users table
-await db.execute(`
+ db.execute(`
 	CREATE TABLE IF NOT EXISTS users (
-		id TEXT PRIMARY KEY,
+		id varchar(36) PRIMARY KEY,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
 		updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-		email TEXT UNIQUE NOT NULL,
-		passwordHash TEXT,
-		googleId TEXT UNIQUE,
-		firstName TEXT NOT NULL,
-		lastName TEXT NOT NULL,
+		email VARCHAR(255) UNIQUE NOT NULL,
+		passwordHash VARCHAR(512),
+		googleId VARCHAR(255) UNIQUE,
+		firstName VARCHAR(255) NOT NULL,
+		lastName VARCHAR(255) NOT NULL,
 		-- I added and this mocking the data in teh mock vars.. but
 		-- I havn't relied on it on or havn't needed it.
-		username TEXT,
-		pictureId TEXT,
-		pictureUrl TEXT,
-		pictureThumbnail TEXT,
-		role TEXT CHECK (role IN ('student', 'admin', 'tutor')) DEFAULT 'student',
-		CHECK (googleId NOT NULL OR passwordHash NOT NULL)
+		username VARCHAR(255),
+		pictureId VARCHAR(255),
+		pictureUrl VARCHAR(255),
+		pictureThumbnail VARCHAR(255),
+		role VARCHAR(255) CHECK (role IN ('student', 'admin', 'tutor')) DEFAULT 'student',
+		CHECK (googleId IS NOT NULL OR passwordHash IS NOT NULL)
 	);
 	`);
 
 // Courses table
-await db.execute(`
+ db.execute(`
 	CREATE TABLE IF NOT EXISTS courses (
-		id TEXT PRIMARY KEY,
+		id varchar(36) PRIMARY KEY,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-		updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-		title TEXT NOT NULL,
-		description TEXT
+		updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		title VARCHAR(255) NOT NULL,
+		description VARCHAR(512)
 	);
 `);
 
 // Course admins table
-await db.execute(
+ db.execute(
   `
 	CREATE TABLE IF NOT EXISTS courseAdmins (
-		courseId TEXT NOT NULL,
-		userId TEXT NOT NULL,
+		courseId VARCHAR(36) NOT NULL,
+		userId VARCHAR(36) NOT NULL,
 		FOREIGN KEY (courseId) REFERENCES courses(id) ON DELETE CASCADE,
 		FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
 		PRIMARY KEY (courseId, userId)
@@ -56,10 +56,10 @@ await db.execute(
 );
 
 // Course Enrollments table
-await db.execute(`
+ db.execute(`
 	CREATE TABLE IF NOT EXISTS courseEnrollments (
-		courseId TEXT NOT NULL,
-		userId TEXT NOT NULL,
+		courseId VARCHAR(36) NOT NULL,
+		userId VARCHAR(36) NOT NULL,
 		FOREIGN KEY (courseId) REFERENCES courses(id) ON DELETE CASCADE,
 		FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
 		PRIMARY KEY (courseId, userId)
@@ -67,36 +67,36 @@ await db.execute(`
 	`);
 
 // Sections table
-await db.execute(`
+ db.execute(`
 	CREATE TABLE IF NOT EXISTS sections (
-		id TEXT PRIMARY KEY,
+		id VARCHAR(36) PRIMARY KEY,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-		updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-		title TEXT NOT NULL,
-		description TEXT,
-		courseId TEXT NOT NULL,
+		updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		title TINYTEXT NOT NULL,
+		description VARCHAR(512),
+		courseId VARCHAR(36) NOT NULL,
 		FOREIGN KEY (courseId) REFERENCES courses(id) ON DELETE CASCADE
 	);	
 	`);
 
 // Lectures table
-await db.execute(`
+ db.execute(`
 	CREATE TABLE IF NOT EXISTS lectures (
-		id TEXT PRIMARY KEY,
+		id VARCHAR(36) PRIMARY KEY,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-		updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-		title TEXT NOT NULL,
-		description TEXT NOT NULL,
-		tags TEXT,
-		videoLink TEXT NOT NULL,
-		notes TEXT NOT NULL,
-		audioLink TEXT,
-		slides TEXT,
-		subtitles TEXT,
-		transcript TEXT,
-		userId TEXT NOT NULL,
-		courseId TEXT NOT NULL,
-		sectionId TEXT NOT NULL,
+		updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		title VARCHAR(255) NOT NULL,
+		description VARCHAR(512) NOT NULL,
+		tags VARCHAR(255),
+		videoLink VARCHAR(255) NOT NULL,
+		notes VARCHAR(255) NOT NULL,
+		audioLink VARCHAR(255),
+		slides VARCHAR(255),
+		subtitles VARCHAR(255),
+		transcript VARCHAR(255),
+		userId VARCHAR(36) NOT NULL,
+		courseId VARCHAR(36) NOT NULL,
+		sectionId VARCHAR(36) NOT NULL,
 		FOREIGN KEY (userId) REFERENCES users(id),
 		FOREIGN KEY (courseId) REFERENCES courses(id) ON DELETE CASCADE,
 		FOREIGN KEY (sectionId) REFERENCES sections(id) ON DELETE CASCADE
@@ -104,32 +104,32 @@ await db.execute(`
 	`);
 
 // lecture resources
-await db.execute(`
+ db.execute(`
 	CREATE TABLE IF NOT EXISTS lectureResources (
-		id TEXT PRIMARY KEY,
+		id VARCHAR(36) PRIMARY KEY,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-		updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-		title TEXT NOT NULL,
-		url TEXT NOT NULL,
-		type TEXT CHECK (type IN ('short', 'demo', 'quiz')),
-		lectureId TEXT NOT NULL,
+		updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		title VARCHAR(255) NOT NULL,
+		url VARCHAR(255) NOT NULL,
+		type VARCHAR(64) CHECK (type IN ('short', 'demo', 'quiz')),
+		lectureId VARCHAR(36) NOT NULL,
 		FOREIGN KEY (lectureId) REFERENCES lectures(id) ON DELETE CASCADE
 	)
 `);
 
 // Questions table
-await db.execute(`
+ db.execute(`
 	CREATE TABLE IF NOT EXISTS questions(
-		id TEXT PRIMARY KEY,
+		id VARCHAR(36) PRIMARY KEY,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-		updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-		title TEXT NOT NULL,
-		body TEXT NOT NULL,
-		upvotes INTEGER DEFAULT 0,
-		repliesCount INTEGER DEFAULT 0,
-		userId TEXT NOT NULL,
-		lectureId TEXT,
-		courseId TEXT,
+		updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		title VARCHAR(255) NOT NULL,
+		body VARCHAR(1024) NOT NULL,
+		upvotes MEDIUMINT DEFAULT 0,
+		repliesCount MEDIUMINT DEFAULT 0,
+		userId VARCHAR(36) NOT NULL,
+		lectureId VARCHAR(36),
+		courseId VARCHAR(36),
 		FOREIGN KEY (userId) REFERENCES users(id),
 		FOREIGN KEY (lectureId) REFERENCES lectures(id) ON DELETE CASCADE,
 		FOREIGN KEY (courseId) REFERENCES courses(id) ON DELETE CASCADE,
@@ -138,15 +138,15 @@ await db.execute(`
 	`);
 
 // Replies Table
-await db.execute(`
+ db.execute(`
 	CREATE TABLE IF NOT EXISTS replies (
-		id TEXT PRIMARY KEY,
+		id VARCHAR(36) PRIMARY KEY,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-		updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-		upvotes INTEGER DEFAULT 0,
-		body TEXT NOT NULL,
-		userId TEXT NOT NULL,
-		questionId TEXT NOT NULL,
+		updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		upvotes MEDIUMINT DEFAULT 0,
+		body VARCHAR(1024) NOT NULL,
+		userId VARCHAR(36) NOT NULL,
+		questionId VARCHAR(36) NOT NULL,
 		FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
 		FOREIGN KEY (questionId) REFERENCES questions(id) ON DELETE CASCADE
 	)
@@ -154,12 +154,12 @@ await db.execute(`
 
 // votes table
 // I'm not sure about my design for this table...
-await db.execute(`
+ db.execute(`
 	CREATE TABLE IF NOT EXISTS votes (
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    userId TEXT NOT NULL,
-    questionId TEXT,
-    replyId TEXT,
+    userId VARCHAR(36) NOT NULL,
+    questionId VARCHAR(36),
+    replyId VARCHAR(36),
     FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (questionId) REFERENCES questions(id) ON DELETE CASCADE,
     FOREIGN KEY (replyId) REFERENCES replies(id) ON DELETE CASCADE,
@@ -170,30 +170,30 @@ await db.execute(`
 	`);
 
 	// Announcements table
-await db.execute(`
+ db.execute(`
 	CREATE TABLE IF NOT EXISTS announcements (
-		id TEXT PRIMARY KEY,
+		id VARCHAR(36) PRIMARY KEY,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-		updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-		title TEXT NOT NULL,
-		body TEXT NOT NULL,
-		commentsCount INTEGER DEFAULT 0,
-		userId TEXT NOT NULL,
-		courseId TEXT NOT NULL,
+		updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		title VARCHAR(255) NOT NULL,
+		body VARCHAR(1024) NOT NULL,
+		commentsCount MEDIUMINT DEFAULT 0,
+		userId VARCHAR(36) NOT NULL,
+		courseId VARCHAR(36) NOT NULL,
 		FOREIGN KEY (userId) REFERENCES users(id),
 		FOREIGN KEY (courseId) REFERENCES courses(id) ON DELETE CASCADE
 	)
 	`);
 
 // Commments table
-await db.execute(`
+ db.execute(`
 	CREATE TABLE IF NOT EXISTS comments (
-		id TEXT PRIMARY KEY,
+		id VARCHAR(36) PRIMARY KEY,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-		updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-		body TEXT NOT NULL,
-		announcementId TEXT NOT NULL ,
-		userId TEXT NOT NULL,
+		updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		body VARCHAR(512) NOT NULL,
+		announcementId VARCHAR(36) NOT NULL ,
+		userId VARCHAR(36) NOT NULL,
 		FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
 		FOREIGN KEY (announcementId) REFERENCES announcements(id) ON DELETE CASCADE
 	);
@@ -203,7 +203,7 @@ await db.execute(`
 // These triggers are amazing.. that will save alot of redunenet code
 // Thank god sqlite doesn't have on update current_timestamp
 // otherwise i wouln't have searched for these triggers stuff
-await db.query(`
+ db.query(`
 	CREATE TRIGGER IF NOT EXISTS questions_update
 	AFTER UPDATE ON questions
 	WHEN old.title != new.title OR old.body != new.body
@@ -214,7 +214,7 @@ await db.query(`
 	END
 `);
 
-await db.query(`
+ db.query(`
 	CREATE TRIGGER IF NOT EXISTS reply_update_time
 	AFTER UPDATE ON replies
 	WHEN old.body != new.body
@@ -225,7 +225,7 @@ await db.query(`
 	END
 `);
 
-await db.query(`
+ db.query(`
 	CREATE TRIGGER IF NOT EXISTS increase_question_replies_count
 	AFTER INSERT ON replies
 	BEGIN
@@ -235,7 +235,7 @@ await db.query(`
 	END
 `);
 
-await db.query(`
+ db.query(`
 	CREATE TRIGGER IF NOT EXISTS decrease_quesiton_replies_count
 	AFTER DELETE ON replies
 	BEGIN
@@ -245,7 +245,7 @@ await db.query(`
 	END	
 `);
 
-await db.query(`
+ db.query(`
 	CREATE TRIGGER IF NOT EXISTS announcement_update_time
 	AFTER UPDATE ON announcements
 	WHEN old.title != new.title OR old.body != new.body
@@ -256,7 +256,7 @@ await db.query(`
 	END
 `);
 
-await db.query(`
+ db.query(`
 	CREATE TRIGGER IF NOT EXISTS increase_announcement_comments_count
 	AFTER INSERT ON comments
 	BEGIN
@@ -266,7 +266,7 @@ await db.query(`
 	END
 `);
 
-await db.query(
+ db.query(
   `
 	CREATE TRIGGER IF NOT EXISTS change_commment_updatedAt
 	AFTER UPDATE ON COMMENTS
@@ -279,7 +279,7 @@ await db.query(
 	`
 );
 
-await db.query(`
+ db.query(`
 	CREATE TRIGGER IF NOT EXISTS decrease_announcement_comments_count
 	AFTER DELETE ON comments
 	BEGIN
@@ -289,7 +289,7 @@ await db.query(`
 	END	
 `);
 
-await db.query(
+ db.query(
 	`
 	CREATE TRIGGER IF NOT EXISTS update_lecture_updatedAt
 	AFTER UPDATE ON lectures
