@@ -19,6 +19,7 @@
     "imagekit": "^5.2.0",
     "imagekit-javascript": "^3.0.2",
     "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.12.0",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "uuid": "^11.0.3",

@@ -1,7 +1,4 @@
-const db = require('better-sqlite3')('./db.sqlite');
-
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
+const db = require('./db');
 
 // ************** Note: Don't do like me.. I'm violating SQL convetions here
 //
@@ -13,7 +10,7 @@ db.pragma('foreign_keys = ON');
 // **************************
 
 // Users table
-db.exec(`
+await db.execute(`
 	CREATE TABLE IF NOT EXISTS users (
 		id TEXT PRIMARY KEY,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -35,7 +32,7 @@ db.exec(`
 	`);
 
 // Courses table
-db.exec(`
+await db.execute(`
 	CREATE TABLE IF NOT EXISTS courses (
 		id TEXT PRIMARY KEY,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -46,7 +43,7 @@ db.exec(`
 `);
 
 // Course admins table
-db.exec(
+await db.execute(
   `
 	CREATE TABLE IF NOT EXISTS courseAdmins (
 		courseId TEXT NOT NULL,
@@ -59,7 +56,7 @@ db.exec(
 );
 
 // Course Enrollments table
-db.exec(`
+await db.execute(`
 	CREATE TABLE IF NOT EXISTS courseEnrollments (
 		courseId TEXT NOT NULL,
 		userId TEXT NOT NULL,
@@ -70,7 +67,7 @@ db.exec(`
 	`);
 
 // Sections table
-db.exec(`
+await db.execute(`
 	CREATE TABLE IF NOT EXISTS sections (
 		id TEXT PRIMARY KEY,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -83,7 +80,7 @@ db.exec(`
 	`);
 
 // Lectures table
-db.exec(`
+await db.execute(`
 	CREATE TABLE IF NOT EXISTS lectures (
 		id TEXT PRIMARY KEY,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -107,7 +104,7 @@ db.exec(`
 	`);
 
 // lecture resources
-db.exec(`
+await db.execute(`
 	CREATE TABLE IF NOT EXISTS lectureResources (
 		id TEXT PRIMARY KEY,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -121,7 +118,7 @@ db.exec(`
 `);
 
 // Questions table
-db.exec(`
+await db.execute(`
 	CREATE TABLE IF NOT EXISTS questions(
 		id TEXT PRIMARY KEY,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -141,7 +138,7 @@ db.exec(`
 	`);
 
 // Replies Table
-db.exec(`
+await db.execute(`
 	CREATE TABLE IF NOT EXISTS replies (
 		id TEXT PRIMARY KEY,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -157,7 +154,7 @@ db.exec(`
 
 // votes table
 // I'm not sure about my design for this table...
-db.exec(`
+await db.execute(`
 	CREATE TABLE IF NOT EXISTS votes (
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     userId TEXT NOT NULL,
@@ -173,7 +170,7 @@ db.exec(`
 	`);
 
 	// Announcements table
-db.exec(`
+await db.execute(`
 	CREATE TABLE IF NOT EXISTS announcements (
 		id TEXT PRIMARY KEY,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -189,7 +186,7 @@ db.exec(`
 	`);
 
 // Commments table
-db.exec(`
+await db.execute(`
 	CREATE TABLE IF NOT EXISTS comments (
 		id TEXT PRIMARY KEY,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -206,7 +203,7 @@ db.exec(`
 // These triggers are amazing.. that will save alot of redunenet code
 // Thank god sqlite doesn't have on update current_timestamp
 // otherwise i wouln't have searched for these triggers stuff
-db.exec(`
+await db.query(`
 	CREATE TRIGGER IF NOT EXISTS questions_update
 	AFTER UPDATE ON questions
 	WHEN old.title != new.title OR old.body != new.body
@@ -217,7 +214,7 @@ db.exec(`
 	END
 `);
 
-db.exec(`
+await db.query(`
 	CREATE TRIGGER IF NOT EXISTS reply_update_time
 	AFTER UPDATE ON replies
 	WHEN old.body != new.body
@@ -228,7 +225,7 @@ db.exec(`
 	END
 `);
 
-db.exec(`
+await db.query(`
 	CREATE TRIGGER IF NOT EXISTS increase_question_replies_count
 	AFTER INSERT ON replies
 	BEGIN
@@ -238,7 +235,7 @@ db.exec(`
 	END
 `);
 
-db.exec(`
+await db.query(`
 	CREATE TRIGGER IF NOT EXISTS decrease_quesiton_replies_count
 	AFTER DELETE ON replies
 	BEGIN
@@ -248,7 +245,7 @@ db.exec(`
 	END	
 `);
 
-db.exec(`
+await db.query(`
 	CREATE TRIGGER IF NOT EXISTS announcement_update_time
 	AFTER UPDATE ON announcements
 	WHEN old.title != new.title OR old.body != new.body
@@ -259,7 +256,7 @@ db.exec(`
 	END
 `);
 
-db.exec(`
+await db.query(`
 	CREATE TRIGGER IF NOT EXISTS increase_announcement_comments_count
 	AFTER INSERT ON comments
 	BEGIN
@@ -269,7 +266,7 @@ db.exec(`
 	END
 `);
 
-db.exec(
+await db.query(
   `
 	CREATE TRIGGER IF NOT EXISTS change_commment_updatedAt
 	AFTER UPDATE ON COMMENTS
@@ -282,7 +279,7 @@ db.exec(
 	`
 );
 
-db.exec(`
+await db.query(`
 	CREATE TRIGGER IF NOT EXISTS decrease_announcement_comments_count
 	AFTER DELETE ON comments
 	BEGIN
@@ -292,7 +289,7 @@ db.exec(`
 	END	
 `);
 
-db.exec(
+await db.query(
 	`
 	CREATE TRIGGER IF NOT EXISTS update_lecture_updatedAt
 	AFTER UPDATE ON lectures
@@ -303,7 +300,8 @@ db.exec(
 	END
 	`
 )
-process.on('exit', () => db.close());
+
+process.on('exit', async () => db.pool.end());
 process.on('SIGHUP', () => process.exit(128 + 1));
 process.on('SIGINT', () => process.exit(128 + 2));
 process.on('SIGTERM', () => process.exit(128 + 15));
