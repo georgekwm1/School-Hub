@@ -317,8 +317,9 @@ router.post('/register', async (req, res) => {
 
 router.post('/admin/login', async (req, res) => {
   const { email, password, courseId } = req.body;
-  const query = db.prepare('SELECT * FROM users WHERE email = ? AND role = ?');
-  const user = query.get(email, 'admin');
+  const [user] = await db.execute(
+    'SELECT * FROM users WHERE email = ? AND role = ?', [email, 'admin']
+  );
   if (!user) {
     res.status(401).send({ message: 'Invalid credentials' });
     return;
@@ -331,9 +332,10 @@ router.post('/admin/login', async (req, res) => {
     return;
   }
 
-  const enrollment = db
-    .prepare('SELECT * FROM courseAdmins WHERE userId = ? AND courseId = ?')
-    .get(user.id, courseId);
+  const [enrollment] = await db.execute(
+    'SELECT * FROM courseAdmins WHERE userId = ? AND courseId = ?',
+    [user.id, courseId]
+  );
   if (!enrollment) {
     return res.status(403).send({ message: 'User is not a course admin' });
   }
