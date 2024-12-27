@@ -10,7 +10,7 @@ const db = require('./db');
 // **************************
 
 // Users table
- db.execute(`
+db.execute(`
 	CREATE TABLE IF NOT EXISTS users (
 		id varchar(36) PRIMARY KEY,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -32,7 +32,7 @@ const db = require('./db');
 	`);
 
 // Courses table
- db.execute(`
+db.execute(`
 	CREATE TABLE IF NOT EXISTS courses (
 		id varchar(36) PRIMARY KEY,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -43,7 +43,7 @@ const db = require('./db');
 `);
 
 // Course admins table
- db.execute(
+db.execute(
   `
 	CREATE TABLE IF NOT EXISTS courseAdmins (
 		courseId VARCHAR(36) NOT NULL,
@@ -56,7 +56,7 @@ const db = require('./db');
 );
 
 // Course Enrollments table
- db.execute(`
+db.execute(`
 	CREATE TABLE IF NOT EXISTS courseEnrollments (
 		courseId VARCHAR(36) NOT NULL,
 		userId VARCHAR(36) NOT NULL,
@@ -67,7 +67,7 @@ const db = require('./db');
 	`);
 
 // Sections table
- db.execute(`
+db.execute(`
 	CREATE TABLE IF NOT EXISTS sections (
 		id VARCHAR(36) PRIMARY KEY,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -80,7 +80,7 @@ const db = require('./db');
 	`);
 
 // Lectures table
- db.execute(`
+db.execute(`
 	CREATE TABLE IF NOT EXISTS lectures (
 		id VARCHAR(36) PRIMARY KEY,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -104,7 +104,7 @@ const db = require('./db');
 	`);
 
 // lecture resources
- db.execute(`
+db.execute(`
 	CREATE TABLE IF NOT EXISTS lectureResources (
 		id VARCHAR(36) PRIMARY KEY,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -118,7 +118,7 @@ const db = require('./db');
 `);
 
 // Questions table
- db.execute(`
+db.execute(`
 	CREATE TABLE IF NOT EXISTS questions(
 		id VARCHAR(36) PRIMARY KEY,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -138,7 +138,7 @@ const db = require('./db');
 	`);
 
 // Replies Table
- db.execute(`
+db.execute(`
 	CREATE TABLE IF NOT EXISTS replies (
 		id VARCHAR(36) PRIMARY KEY,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -154,7 +154,7 @@ const db = require('./db');
 
 // votes table
 // I'm not sure about my design for this table...
- db.execute(`
+db.execute(`
 	CREATE TABLE IF NOT EXISTS votes (
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     userId VARCHAR(36) NOT NULL,
@@ -170,7 +170,7 @@ const db = require('./db');
 	`);
 
 	// Announcements table
- db.execute(`
+db.execute(`
 	CREATE TABLE IF NOT EXISTS announcements (
 		id VARCHAR(36) PRIMARY KEY,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -186,7 +186,7 @@ const db = require('./db');
 	`);
 
 // Commments table
- db.execute(`
+db.execute(`
 	CREATE TABLE IF NOT EXISTS comments (
 		id VARCHAR(36) PRIMARY KEY,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -203,43 +203,47 @@ const db = require('./db');
 // These triggers are amazing.. that will save alot of redunenet code
 // Thank god sqlite doesn't have on update current_timestamp
 // otherwise i wouln't have searched for these triggers stuff
- db.query(`
+db.query(`
 	CREATE TRIGGER IF NOT EXISTS increase_question_replies_count
 	AFTER INSERT ON replies
+	FOR EACH ROW
 	BEGIN
 		UPDATE questions
 		SET repliesCount = repliesCount + 1
-		WHERE id = new.questionId;
+		WHERE id = NEW.questionId;
 	END
 `);
 
- db.query(`
+db.query(`
 	CREATE TRIGGER IF NOT EXISTS decrease_quesiton_replies_count
 	AFTER DELETE ON replies
+	FOR EACH ROW
 	BEGIN
 		UPDATE questions
 		SET repliesCount = repliesCount - 1
-		WHERE id = old.questionId;
+		WHERE id = OLD.questionId;
 	END	
 `);
 
- db.query(`
+db.query(`
 	CREATE TRIGGER IF NOT EXISTS increase_announcement_comments_count
 	AFTER INSERT ON comments
+	FOR EACH ROW
 	BEGIN
 		UPDATE announcements
 		SET commentsCount = commentsCount + 1
-		WHERE id = new.announcementId;
+		WHERE id = NEW.announcementId;
 	END
 `);
 
- db.query(`
+db.query(`
 	CREATE TRIGGER IF NOT EXISTS decrease_announcement_comments_count
 	AFTER DELETE ON comments
+	FOR EACH ROW
 	BEGIN
 		UPDATE announcements
 		SET commentsCount = commentsCount - 1
-		WHERE id = old.announcementId;
+		WHERE id = OLD.announcementId;
 	END	
 `);
 
