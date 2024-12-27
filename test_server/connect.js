@@ -204,28 +204,6 @@ const db = require('./db');
 // Thank god sqlite doesn't have on update current_timestamp
 // otherwise i wouln't have searched for these triggers stuff
  db.query(`
-	CREATE TRIGGER IF NOT EXISTS questions_update
-	AFTER UPDATE ON questions
-	WHEN old.title != new.title OR old.body != new.body
-	BEGIN
-		UPDATE questions
-		SET updatedAt = CURRENT_TIMESTAMP
-		WHERE id = old.id;
-	END
-`);
-
- db.query(`
-	CREATE TRIGGER IF NOT EXISTS reply_update_time
-	AFTER UPDATE ON replies
-	WHEN old.body != new.body
-	BEGIN
-		UPDATE replies
-		SET updatedAt = CURRENT_TIMESTAMP
-		WHERE id = old.id;
-	END
-`);
-
- db.query(`
 	CREATE TRIGGER IF NOT EXISTS increase_question_replies_count
 	AFTER INSERT ON replies
 	BEGIN
@@ -246,17 +224,6 @@ const db = require('./db');
 `);
 
  db.query(`
-	CREATE TRIGGER IF NOT EXISTS announcement_update_time
-	AFTER UPDATE ON announcements
-	WHEN old.title != new.title OR old.body != new.body
-	BEGIN
-		UPDATE announcements
-		SET updatedAt = CURRENT_TIMESTAMP
-		WHERE id = old.id;
-	END
-`);
-
- db.query(`
 	CREATE TRIGGER IF NOT EXISTS increase_announcement_comments_count
 	AFTER INSERT ON comments
 	BEGIN
@@ -265,19 +232,6 @@ const db = require('./db');
 		WHERE id = new.announcementId;
 	END
 `);
-
- db.query(
-  `
-	CREATE TRIGGER IF NOT EXISTS change_commment_updatedAt
-	AFTER UPDATE ON COMMENTS
-	WHEN old.body != new.body
-	BEGIN
-		UPDATE comments
-		SET updatedAt = CURRENT_TIMESTAMP
-		WHERE id = old.id;
-	END
-	`
-);
 
  db.query(`
 	CREATE TRIGGER IF NOT EXISTS decrease_announcement_comments_count
@@ -288,18 +242,6 @@ const db = require('./db');
 		WHERE id = old.announcementId;
 	END	
 `);
-
- db.query(
-	`
-	CREATE TRIGGER IF NOT EXISTS update_lecture_updatedAt
-	AFTER UPDATE ON lectures
-	BEGIN
-		UPDATE lectures
-		SET updatedAt = CURRENT_TIMESTAMP
-		WHERE id = old.id;
-	END
-	`
-)
 
 process.on('exit', async () => db.pool.end());
 process.on('SIGHUP', () => process.exit(128 + 1));
