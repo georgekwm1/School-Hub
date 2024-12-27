@@ -42,9 +42,8 @@ async function insertAdmin() {
 async function insertTestCourseAdmin() {
   const insertCourseAdmin = db.execute(
     `INSERT INTO courseAdmins (courseId, userId) VALUES (?, ?)`
+    ['test-course', 'admin']
   );
-
-  insertCourseAdmin.run('test-course', 'admin');
 }
 // insertTestCourseAdmin();
 
