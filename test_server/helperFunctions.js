@@ -20,24 +20,24 @@ function getUpvoteStatus(userId, resourceId, resourceType) {
   const idColumn = resourceType === 'question' ? 'questionId' : 'replyId';
 
   return (
-    db.execture(
+    db.execute(
         `SELECT userId FROM votes WHERE userId = ? AND ${idColumn} = ?`,
         [userId, resourceId]
-      ) !== undefined
+      ).length !== 0
   );
 }
 
 function isCourseAdmin(userId, courseId) {
   const stmt = 
     'SELECT 1 FROM courseAdmins WHERE courseId = ? AND userId = ?';
-  return db.execture(stmt, [courseId, userId]).length !== 0;
+  return db.execute(stmt, [courseId, userId]).length !== 0;
 }
 
 function isUserEnroledInCourse(userId, courseId) {
-  const stmt = db.prepare(
-    'SELECT 1 FROM courseEnrollments WHERE courseId = ? AND userId = ?'
-  );
-  return stmt.get(courseId, userId) !== undefined;
+  const stmt =
+    'SELECT 1 FROM courseEnrollments WHERE courseId = ? AND userId = ?';
+
+  return db.execute(stmt,[courseId, userId]).length !== 0;
 }
 
 function getCurrentTimeInDBFormat() {
