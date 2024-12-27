@@ -42,7 +42,7 @@ router.post('/login', async (req, res) => {
   console.log(req.body);
   const { email, password, courseId } = req.body;
 
-  const [user] = db.execute('SELECT * FROM users WHERE email = ?', [email]);
+  const [user] = await db.execute('SELECT * FROM users WHERE email = ?', [email]);
 
   if (!user) {
     return res.status(401).send({ message: 'Email not found' });
@@ -67,7 +67,7 @@ router.post('/login', async (req, res) => {
     return res.status(401).json({ message });
   }
 
-  const enrollment = db.execute(
+  const [enrollment] = await db.execute(
       'SELECT * FROM courseEnrollments WHERE userId = ? AND courseId = ?',
       [user.id, courseId]
     );
@@ -114,14 +114,15 @@ router.post('/oauth/google', async (req, res) => {
       res.status(401).send({ message: 'Email not verified' });
     }
 
-    const getUser = db.prepare('SELECT * FROM users WHERE email = ?');
-    const user = getUser.get(data.email);
+    const [user] = await db.execute('SELECT * FROM users WHERE email = ?', [data.email]);
     if (!user) {
       return res.status(401).json({ message: 'User not found' });
     } else if (!user.googleId) {
-      db.prepare(`UPDATE users SET googleId = ? WHERE email = ?`).run(
-        data.sub,
-        data.email
+      await db.execute(`UPDATE users SET googleId = ? WHERE email = ?`,
+        [
+          data.sub,
+          data.email
+        ]
       );
     }
     if (!isUserEnroledInCourse(user.id, courseId)) {
