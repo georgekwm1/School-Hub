@@ -13,11 +13,10 @@ const {
 } = require('./mockData');
 
 async function insertAdmin() {
-  const id = uuidv4();
   const passwordHash = await bcrypt.hash('admin', 10);
 
   const params = [
-    id,
+    'admin',
     // I'm testing here OK? Don't do that ever
     'admin',
     passwordHash,
@@ -41,7 +40,7 @@ async function insertAdmin() {
 
 async function insertTestCourseAdmin() {
   await db.execute(
-    `INSERT INTO courseAdmins (courseId, userId) VALUES (?, ?)`
+    `INSERT INTO courseAdmins (courseId, userId) VALUES (?, ?)`,
     ['test-course', 'admin']
   );
 }
@@ -68,7 +67,7 @@ async function insertTestSections() {
       [
         section.id,
         section.title,
-        section.description,
+        section.description ?? '',
         'test-course'
       ]
     );
