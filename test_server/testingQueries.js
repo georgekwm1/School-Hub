@@ -40,7 +40,7 @@ async function insertAdmin() {
 // insertAdmin();
 
 async function insertTestCourseAdmin() {
-  const insertCourseAdmin = db.execute(
+  await db.execute(
     `INSERT INTO courseAdmins (courseId, userId) VALUES (?, ?)`
     ['test-course', 'admin']
   );
@@ -48,15 +48,13 @@ async function insertTestCourseAdmin() {
 // insertTestCourseAdmin();
 
 async function insertTestCourse() {
-  const insertCourse = db.execute(
-    `INSERT INTO courses (id, title, description) VALUES (?, ?, ?)`
-  );
-
-  insertCourse.run(
-    'test-course',
-    'Test CS50',
-    'This is a test data mocking CS50 with manipulation of course'
-  );
+  await db.execute(
+    `INSERT INTO courses (id, title, description) VALUES (?, ?, ?)`,
+    [
+      'test-course',
+      'Test CS50',
+      'This is a test data mocking CS50 with manipulation of course'
+    ]);
 }
 // insertTestCourse();
 
