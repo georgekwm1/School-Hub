@@ -28,10 +28,9 @@ function getUpvoteStatus(userId, resourceId, resourceType) {
 }
 
 function isCourseAdmin(userId, courseId) {
-  const stmt = db.prepare(
-    'SELECT 1 FROM courseAdmins WHERE courseId = ? AND userId = ?'
-  );
-  return stmt.get(courseId, userId) !== undefined;
+  const stmt = 
+    'SELECT 1 FROM courseAdmins WHERE courseId = ? AND userId = ?';
+  return db.execture(stmt, [courseId, userId]).length !== 0;
 }
 
 function isUserEnroledInCourse(userId, courseId) {
