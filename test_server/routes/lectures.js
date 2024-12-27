@@ -292,7 +292,7 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
             userId,
           });
       }
-    })();
+    });
   } catch (err) {
     console.error(err);
     res.status(500).send({ message: 'Error creating lecture' });
@@ -315,7 +315,7 @@ router.put('/lectures/:id', verifyToken, (req, res) => {
     demos,
   } = req.body;
   const userId = req.userId;
-  const lecture = db.prepare('SELECT * FROM lectures WHERE id = ?').get(id);
+  const [lecture] = db.execute('SELECT * FROM lectures WHERE id = ?', [id]);
 
   if (!lecture) {
     return res.status(404).send({ message: 'Lecture not found' });
@@ -327,48 +327,46 @@ router.put('/lectures/:id', verifyToken, (req, res) => {
       .send({ message: "User don't have previlate to delete this lecture" });
 
   try {
-    db.transaction(() => {
+    db.transaction(async (connection) => {
       let sectionId;
-      const sectionLecture = db
-        .prepare('SELECT id FROM sections WHERE title = ?')
-        .get(section);
+      const [sectionLecture] = connection.query(
+        'SELECT id FROM sections WHERE title = ?', [section]
+      );
+        
       if (sectionLecture) {
         sectionId = sectionLecture.id;
       } else {
         sectionId = uuidv4();
-        db.prepare(
-          'INSERT INTO sections (id, title, courseId) VALUES (?, ?, ?)'
-        ).run(sectionId, section, lecture.courseId);
+        connection.query(
+          'INSERT INTO sections (id, title, courseId) VALUES (?, ?, ?)',
+          [sectionId, section, lecture.courseId],
+        );
       }
 
-      db.prepare(
-        `
-        UPDATE lectures
+      connection.query(
+        `UPDATE lectures
         SET title = ?, description = ?, videoLink = ?, notes = ?, slides = ?, sectionId = ?, tags = ?
-        WHERE id = ?
-      `
-      ).run(
-        name,
-        description,
-        youtubeLink,
-        notesLink,
-        slidesLink,
-        sectionId,
-        tags.join(','),
-        id
+        WHERE id = ?`,
+        [
+          name,
+          description,
+          youtubeLink,
+          notesLink,
+          slidesLink,
+          sectionId,
+          tags.join(','),
+          id
+        ]
       );
 
-      db.prepare('DELETE FROM lectureResources WHERE lectureId = ?').run(id);
+      connection.query('DELETE FROM lectureResources WHERE lectureId = ?', [id]);
 
       const insertResource = (resource, type) =>
-        db
-          .prepare(
-            `
-        INSERT INTO lectureResources (id, title, url, type, lectureId) 
-        VALUES (?, ?, ?, ?, ?)
-      `
-          )
-          .run(uuidv4(), resource.title, resource.url, type, id);
+        connection.execute(
+          `INSERT INTO lectureResources (id, title, url, type, lectureId) 
+          VALUES (?, ?, ?, ?, ?)`,
+          [uuidv4(), resource.title, resource.url, type, id],
+        );
 
       demos.forEach((demo) => insertResource(demo, 'demo'));
       shorts.forEach((short) => insertResource(short, 'short'));
@@ -385,9 +383,10 @@ router.put('/lectures/:id', verifyToken, (req, res) => {
         'audioLink',
         'sectionId',
       ].join(', ');
-      const updatedLecture = db
-        .prepare(`SELECT ${lectureFields} FROM lectures WHERE id = ?`)
-        .get(id);
+      const [updatedLecture] = db.query(
+        `SELECT ${lectureFields} FROM lectures WHERE id = ?`,
+        [id],
+      )
       // I some how in the hurry forgot all about quizez.. so.. this is to fixes system wide next
       const response = { ...updatedLecture, tags, demos, shorts, quizzez: [] };
       res.status(200).json(response);
