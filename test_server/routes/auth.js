@@ -42,8 +42,7 @@ router.post('/login', async (req, res) => {
   console.log(req.body);
   const { email, password, courseId } = req.body;
 
-  const query = db.prepare('SELECT * FROM users WHERE email = ?');
-  const user = query.get(email);
+  const [user] = db.execute('SELECT * FROM users WHERE email = ?', [email]);
 
   if (!user) {
     return res.status(401).send({ message: 'Email not found' });
@@ -68,11 +67,10 @@ router.post('/login', async (req, res) => {
     return res.status(401).json({ message });
   }
 
-  const enrollment = db
-    .prepare(
-      'SELECT * FROM courseEnrollments WHERE userId = ? AND courseId = ?'
-    )
-    .get(user.id, courseId);
+  const enrollment = db.execute(
+      'SELECT * FROM courseEnrollments WHERE userId = ? AND courseId = ?',
+      [user.id, courseId]
+    );
 
   if (!enrollment) {
     return res
