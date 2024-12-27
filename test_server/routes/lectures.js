@@ -150,8 +150,8 @@ router.get(
 // Get all section titles for creating a lecture
 router.get('/courses/:id/sections_titles', verifyToken, (req, res) => {
   const courseId = req.params.id;
-  const stmt = db.prepare('SELECT title FROM sections where courseId = ?');
-  const sectionTitles = stmt.all(courseId).map((row) => row.title);
+  const stmt = 'SELECT title FROM sections where courseId = ?';
+  const sectionTitles = db.execute(stmt, [courseId], pluck=true);
   res.json(sectionTitles);
 });
 
