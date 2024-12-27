@@ -43,7 +43,7 @@ router.get('/courses/:id/lectures', verifyToken, (req, res) => {
   const { lastFetched } = req.query;
   const userId = req.userId;
 
-  const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(courseId);
+  const [course] = db.execute('SELECT * FROM courses WHERE id = ?', [courseId]);
   if (!course) {
     return res.status(404).send({ message: 'Course not found' });
   }
@@ -57,20 +57,20 @@ router.get('/courses/:id/lectures', verifyToken, (req, res) => {
       .send({ message: 'User is not enrolled in this course' });
   }
 
-  const sections = db
-    .prepare('SELECT id, title, description FROM sections WHERE courseId = ?')
-    .all(courseId);
+  const sections = db.execute(
+    'SELECT id, title, description FROM sections WHERE courseId = ?',
+    [courseId]
+  );
 
   const lectureFields = ['id', 'title', 'description', 'tags'].join(', ');
 
   const lectures = sections.map((section) => ({
     ...section,
-    lectures: db
-      .prepare(
-        `SELECT ${lectureFields} FROM lectures WHERE sectionId = ?
-         ${lastFetched ? 'AND createdAt > ?' : ''}`
-      )
-      .all(...[section.id, ...(lastFetched ? [lastFetched] : [])]),
+    lectures: db.execute(
+        `SELECT ${lectureFields} FROM lectures WHERE sectionId = ? 
+        ${lastFetched ? 'AND createdAt > ?' : ''}`,
+        [section.id, ...(lastFetched ? [lastFetched] : [])],
+    ),
   }));
 
   // Filter empty sections
