@@ -90,9 +90,9 @@ router.get(
     const updatedAt = req.query.updatedAt;
     const userId = req.userId;
 
-    const course = db
-      .prepare('SELECT * FROM courses WHERE id = ?')
-      .get(courseId);
+    const [course] = db.execute(
+      'SELECT * FROM courses WHERE id = ?', [courseId]
+    );
     if (!course) {
       return res.status(404).send({ message: 'Course not found' });
     }
@@ -119,9 +119,9 @@ router.get(
       'description',
       'tags',
     ].join(', ');
-    const lecture = db
-      .prepare(`SELECT ${lectureFields} FROM lectures WHERE id = ?`)
-      .get(lectureId);
+    const [lecture] = db.execute(
+      `SELECT ${lectureFields} FROM lectures WHERE id = ?`, [lectureId]
+    )
     if (!lecture) {
       return res.status(404).send({ message: 'Lecture not found' });
     } else if (lecture.updatedAt === updatedAt) {
@@ -129,11 +129,10 @@ router.get(
     }
 
     const getResource = (lectureId, type) => {
-      return db
-        .prepare(
-          'SELECT title, url FROM lectureResources WHERE lectureId = ? AND type = ?'
-        )
-        .all(lectureId, type);
+      return db.execute(
+          'SELECT title, url FROM lectureResources WHERE lectureId = ? AND type = ?',
+          [lectureId, type]
+      );
     };
 
     res.json({
