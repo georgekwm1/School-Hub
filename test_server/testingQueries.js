@@ -13,17 +13,10 @@ const {
 } = require('./mockData');
 
 async function insertAdmin() {
-  const insertAdmin = db.prepare(
-    `INSERT INTO users (
-			id, email, passwordHash, firstName, lastName, username, role, pictureId,
-			pictureUrl, pictureThumbnail)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  );
-
   const id = uuidv4();
   const passwordHash = await bcrypt.hash('admin', 10);
 
-  insertAdmin.run(
+  const params = [
     id,
     // I'm testing here OK? Don't do that ever
     'admin',
@@ -35,12 +28,19 @@ async function insertAdmin() {
     '',
     'https://picsum.photos/100',
     'https://picsum.photos/100'
+    ];
+  await db.execute(
+    `INSERT INTO users (
+			id, email, passwordHash, firstName, lastName, username, role, pictureId,
+			pictureUrl, pictureThumbnail)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    params
   );
 }
 // insertAdmin();
 
 async function insertTestCourseAdmin() {
-  const insertCourseAdmin = db.prepare(
+  const insertCourseAdmin = db.execute(
     `INSERT INTO courseAdmins (courseId, userId) VALUES (?, ?)`
   );
 
@@ -49,7 +49,7 @@ async function insertTestCourseAdmin() {
 // insertTestCourseAdmin();
 
 async function insertTestCourse() {
-  const insertCourse = db.prepare(
+  const insertCourse = db.execute(
     `INSERT INTO courses (id, title, description) VALUES (?, ?, ?)`
   );
 
@@ -62,7 +62,7 @@ async function insertTestCourse() {
 // insertTestCourse();
 
 async function insertTestSections() {
-  const insertSection = db.prepare(
+  const insertSection = db.execute(
     'INSERT INTO sections (id, title, description, courseId) VALUES (?, ?, ?, ?);'
   );
 
