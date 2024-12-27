@@ -1,4 +1,4 @@
-const db = require('better-sqlite3')('./db.sqlite');
+const db = require('./connect');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 
@@ -59,16 +59,18 @@ async function insertTestCourse() {
 // insertTestCourse();
 
 async function insertTestSections() {
-  const insertSection = db.execute(
-    'INSERT INTO sections (id, title, description, courseId) VALUES (?, ?, ?, ?);'
-  );
+  const insertSectionQuery = 
+    'INSERT INTO sections (id, title, description, courseId) VALUES (?, ?, ?, ?);';
 
   for (const section of mockSections) {
-    insertSection.run(
-      section.id,
-      section.title,
-      section.description,
-      'test-course'
+    await db.execute(
+      insertSectionQuery,
+      [
+        section.id,
+        section.title,
+        section.description,
+        'test-course'
+      ]
     );
   }
 }
