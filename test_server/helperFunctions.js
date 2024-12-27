@@ -1,13 +1,13 @@
 const db = require('./connect');
 
 function getUserData(userId) {
-  const user = db
-    .prepare(
+  const [user] = db.execute(
       `SELECT id, firstName, lastName, pictureThumbnail
-    FROM users
-    WHERE id = ?`
-    )
-    .get(userId);
+      FROM users
+      WHERE id = ?`,
+      [userId]
+    );
+
 
   return {
     id: user.id,
