@@ -20,9 +20,10 @@ function getUpvoteStatus(userId, resourceId, resourceType) {
   const idColumn = resourceType === 'question' ? 'questionId' : 'replyId';
 
   return (
-    db
-      .prepare(`SELECT userId FROM votes WHERE userId = ? AND ${idColumn} = ?`)
-      .get(userId, resourceId) !== undefined
+    db.execture(
+        `SELECT userId FROM votes WHERE userId = ? AND ${idColumn} = ?`,
+        [userId, resourceId]
+      ) !== undefined
   );
 }
 
