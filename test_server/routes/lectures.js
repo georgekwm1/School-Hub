@@ -173,59 +173,58 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
     youtubeLink,
   } = req.body;
 
-  const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(courseId);
+  const [course] = db.execute('SELECT * FROM courses WHERE id = ?', [courseId]);
   if (!course) return res.status(404).send({ message: 'Course not found' });
 
   if (!isCourseAdmin(userId, courseId))
     return res.status(403).send({ message: 'User is not a course admin' });
 
   try {
-    db.transaction(() => {
+    db.transaction(async (connection) => {
       // Retrieve or create section basd on existence of ht title
       // I'm skeptic about how good this flag approach is
       // For later to decide the socketIo event to emit;
       let newSection = false;
-      let sectionId = db
-        .prepare('SELECT id FROM sections WHERE title = ?')
-        .get(section)?.id;
+      let [sectionId] = connection.execute(
+        'SELECT id FROM sections WHERE title = ?', [section], pluck=true
+      );
       if (!sectionId) {
         newSection = true;
         sectionId = uuidv4();
-        db.prepare(
-          'INSERT INTO sections (id, title, courseId) VALUES (?, ?, ?)'
-        ).run(sectionId, section, courseId);
+        connection.execute(
+          'INSERT INTO sections (id, title, courseId) VALUES (?, ?, ?)',
+          [sectionId, section, courseId]
+        );
       }
 
       // Create lecture
       const lectureId = uuidv4();
-      db.prepare(
+      connection.execute(
         `
         INSERT INTO lectures (id, title, description, tags, videoLink, notes, slides, userId, courseId, sectionId)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `
-      ).run(
-        lectureId,
-        title,
-        description,
-        tags.join(','),
-        youtubeLink,
-        notesLink,
-        slidesLink,
-        userId,
-        courseId,
-        sectionId
+        `,
+        [
+          lectureId,
+          title,
+          description,
+          tags.join(','),
+          youtubeLink ?? '',
+          notesLink ?? '',
+          slidesLink ?? '',
+          userId,
+          courseId,
+          sectionId
+        ]
       );
 
       // Insert resources
       const insertResource = (resource, type) =>
-        db
-          .prepare(
-            `
-        INSERT INTO lectureResources (id, title, url, type, lectureId) 
-        VALUES (?, ?, ?, ?, ?)
-      `
-          )
-          .run(uuidv4(), resource.title, resource.url, type, lectureId);
+        connection.execute(
+          `INSERT INTO lectureResources (id, title, url, type, lectureId) 
+          VALUES (?, ?, ?, ?, ?)`,
+          [uuidv4(), resource.title, resource.url, type, lectureId]
+        );
 
       demos.forEach((demo) => insertResource(demo, 'demo'));
       shorts.forEach((short) => insertResource(short, 'short'));
@@ -274,9 +273,10 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
             userId,
           });
       } else {
-        const section = db
-          .prepare('SELECT id, title, description FROM sections WHERE id = ?')
-          .get(sectionId);
+        const [section] = connection.execute(
+          'SELECT id, title, description FROM sections WHERE id = ?',
+          [sectionId],
+        );
         // Should the event be more clear?
         // Like, newlectureWithNewSection?! I don't know
         io.to(room)
