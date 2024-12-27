@@ -188,30 +188,31 @@ router.post('/oauth/googleRegister', async (req, res) => {
     console.log(userData);
     console.log(userData.email);
 
-    const existingUser = db
-      .prepare('SELECT 1 FROM users WHERE email = ?')
-      .get(userData.email);
+    const [existingUser] = await db
+      .execute('SELECT 1 FROM users WHERE email = ?', [userData.email]);
     if (existingUser) {
       return res.status(409).send({ message: 'Email already exists' });
     }
 
-    db.transaction(() => {
+    await db.transaction(async (connection) => {
       const userId = userData.sub;
-      db.prepare(
+      await connection.execute(
         `INSERT INTO users (id, googleId, email, firstName, lastName, pictureUrl, pictureThumbnail)
-        VALUES (?, ?, ?, ?, ?, ?, ?)`
-      ).run(
-        userId,
-        userId,
-        userData.email,
-        userData.given_name,
-        userData.family_name,
-        userData.picture,
-        userData.picture
+        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          userId,
+          userId,
+          userData.email,
+          userData.given_name,
+          userData.family_name,
+          userData.picture,
+          userData.picture
+        ]
       );
-      db.prepare(
-        'INSERT INTO courseEnrollments (userId, courseId) VALUES (?, ?)'
-      ).run(userId, courseId);
+      await connection.execute(
+        'INSERT INTO courseEnrollments (userId, courseId) VALUES (?, ?)',
+        [userId, courseId]
+      );
 
       const accessToken = jwt.sign(
         { userId, courseId, role: 'student' },
