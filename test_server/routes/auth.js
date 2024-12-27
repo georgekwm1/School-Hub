@@ -361,6 +361,11 @@ router.post('/admin/login', async (req, res) => {
 });
 
 router.post('/admin/OAuth/google', (req, res) => {
+  // I have one simple question ❓❔❓❔❓❔❓❔❓❔❓
+  // How on earth i just moved on without checking if the user
+  // Exists in the database or not.. 
+  // I really have no idea...
+  // TODO: Fix this stupid bug..
   const idToken = req.body.token;
   const googleVerifyUrl = `https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`;
   fetch(googleVerifyUrl)
