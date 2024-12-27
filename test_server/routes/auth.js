@@ -253,9 +253,9 @@ router.post('/register', async (req, res) => {
     pictureThumbnail,
   } = userData;
   try {
-    const existingUser = db
-      .prepare(`SELECT * FROM users WHERE email = ?`)
-      .get(email);
+    const [existingUser] = await db.execute(
+      `SELECT * FROM users WHERE email = ?`, [email]
+    );
     if (existingUser) {
       res.status(409).json({ message: 'Email already exists' });
       return;
@@ -263,31 +263,31 @@ router.post('/register', async (req, res) => {
     const id = uuidv4();
     const passwordHash = await bcrypt.hash(password, 10);
 
-    db.transaction(() => {
-      const query = db.prepare(
+    await db.transaction(async (connection) => {
+      await connection.execute(
         `INSERT INTO users (
           id, email, passwordHash, firstName, lastName, username, pictureId,
           pictureUrl, pictureThumbnail
         ) VALUES (
           ?, ?, ?, ?, ?, ?, ?, ?, ?
-        )`
+        )`,
+        [
+          id,
+          email,
+          passwordHash,
+          firstName,
+          lastName,
+          username,
+          pictureId,
+          pictureURL,
+          pictureThumbnail
+        ]
       );
 
-      query.run(
-        id,
-        email,
-        passwordHash,
-        firstName,
-        lastName,
-        username,
-        pictureId,
-        pictureURL,
-        pictureThumbnail
-      );
-
-      db.prepare(
-        `INSERT INTO courseEnrollments (userId, courseId) VALUES (?, ?)`
-      ).run(id, courseId);
+      await connection.execute(
+        `INSERT INTO courseEnrollments (userId, courseId) VALUES (?, ?)`,
+        [id, courseId]
+      )
       // Student is the default of the role for now.. admins will be added amnaully when instantiating
       // and instance for the course.. and seeting things up and if there are customizations..
       const accessToken = jwt.sign(
