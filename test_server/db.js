@@ -31,31 +31,31 @@ const pluck = (rows) => {
  * @param {string} query - The SQL query.
  * @param {Array} params - The query parameters.
  * @param {Function} method - The query or execute method to use.
- * @param {boolean} pluck - Whether to pluck results.
+ * @param {boolean} isPluck - Whether to pluck results.
  */
-const runQuery = async (connection, query, params,method='query', pluck=false) => {
+const runQuery = async (connection, query, params,method='query', isPluck=false) => {
 	if (!method in ['query', 'execute']) throw new Error('Invalid method');
 
 	const [results] = await connection[method](query, params);
-	return pluck ? pluck(results) : results;
+	return isPluck ? pluck(results) : results;
 };
 
 
 module.exports = {
 	pool,
 	query: async (query, params, pluck=false) => 
-		runQuery(pool, query, params, method='query', pluck=pluck),
+		runQuery(pool, query, params, method='query', isPluck=pluck),
 	execute: async (query, params, pluck=false) =>
-		runQuery(pool, query, params, method='execute',  pluck=pluck),
+		runQuery(pool, query, params, method='execute',  isPluck=pluck),
 		
 	transaction: async (callback) => {
 		const connection = await pool.getConnection();
 		try {
 			await connection.beginTransaction();
 			connection.executeWithPluck = (query, params) =>
-				runQuery(connection, query, params, method='execute', pluck=true);
+				runQuery(connection, query, params, method='execute', isPluck=true);
 			connection.queryWithPluck = (query, params) =>
-				runQuery(connection, query, params, pluck=true);
+				runQuery(connection, query, params, method='query',  isPluck=true);
 
 			const result = await callback(connection);
 			await connection.commit();
