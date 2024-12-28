@@ -405,15 +405,16 @@ router.put('/lectures/:id', verifyToken, async (req, res) => {
 });
 
 // delete a lecture
-router.delete('/lectures/:id', verifyToken, (req, res) => {
+router.delete('/lectures/:id', verifyToken, async (req, res) => {
   const lectureId = req.params.id;
   const userId = req.userId;
   const io = req.app.get('io');
 
   try {
-    const lecture = db
-      .prepare('SELECT * FROM lectures WHERE id = ?')
-      .get(lectureId);
+    const [lecture] = await db.query(
+      'SELECT * FROM lectures WHERE id = ?',
+      [lectureId]
+    )
     if (!lecture) {
       return res.status(404).send({ message: 'Lecture not found' });
     }
@@ -421,17 +422,20 @@ router.delete('/lectures/:id', verifyToken, (req, res) => {
     if (!isCourseAdmin(userId, lecture.courseId))
       return res.status(403).send({ message: 'User is not a course admin' });
 
-    db.transaction(() => {
-      const sectionId = db
-        .prepare(`SELECT sectionId FROM lectures WHERE id = ?`)
-        .get(lectureId).sectionId;
-      db.prepare('DELETE FROM lectures WHERE id = ?').run(lectureId);
+    await db.transaction(async (connection) => {
+      const [sectionId] = await connection.query(
+        `SELECT sectionId FROM lectures WHERE id = ?`,
+        [lectureId],
+        pluck=true
+      );
+      await connection.query('DELETE FROM lectures WHERE id = ?', [lectureId]);
 
-      const lectures = db
-        .prepare('SELECT id  FROM lectures WHERE sectionId = ?')
-        .all(sectionId);
+      const lectures = await connection.query(
+        'SELECT id  FROM lectures WHERE sectionId = ?',
+        [sectionId],
+      );
       if (lectures.length === 0) {
-        db.prepare('DELETE FROM sections WHERE id = ?').run(sectionId);
+        await connection.query('DELETE FROM sections WHERE id = ?', [sectionId]);
       }
       res.status(200).json({ message: 'Lecture deleted successfully' });
 
