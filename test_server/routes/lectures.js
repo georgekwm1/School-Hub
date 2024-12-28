@@ -65,15 +65,16 @@ router.get('/courses/:id/lectures', verifyToken, async (req, res) => {
 
     const lectureFields = ['id', 'title', 'description', 'tags'].join(', ');
 
-    const lectures = sections.map(async (section) => ({
-      ...section,
-      lectures: await db.execute(
-          `SELECT ${lectureFields} FROM lectures WHERE sectionId = ? 
-          ${lastFetched ? 'AND createdAt > ?' : ''}`,
-          [section.id, ...(lastFetched ? [lastFetched] : [])],
-      ),
-    }));
-
+    const lectures = [];
+    for (const section of sections) {
+      const sectionLectures = await db.execute(
+        `SELECT ${lectureFields} FROM lectures WHERE sectionId = ? 
+        ${lastFetched ? 'AND createdAt > ?' : ''}`,
+        [section.id, ...(lastFetched ? [lastFetched] : [])],
+      )
+      lectures.push({...section, lectures: sectionLectures});
+    };
+    console.log(sections, lectures);
     // Filter empty sections
     const result = lectures.filter((section) => section.lectures.length > 0);
     res.json({ sections: result, lastFetched: getCurrentTimeInDBFormat() });
