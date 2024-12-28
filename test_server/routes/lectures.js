@@ -403,7 +403,7 @@ router.put('/lectures/:id', verifyToken, async (req, res) => {
           payload: { updatedLecture: response },
           userId,
         });
-    })();
+    });
   } catch (err) {
     console.error(err);
     res.status(500).send({ message: 'Error updating lecture' });
@@ -450,7 +450,7 @@ router.delete('/lectures/:id', verifyToken, async (req, res) => {
           payload: { lectureId, sectionId },
           userId,
         });
-    })();
+    });
   } catch (err) {
     console.error(err);
     res.status(500).send({ message: 'Error deleting lecture' });
