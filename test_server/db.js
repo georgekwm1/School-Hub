@@ -44,9 +44,9 @@ const runQuery = async (connection, query, params,method='query', pluck=false) =
 module.exports = {
 	pool,
 	query: async (query, params, pluck=false) => 
-		runQuery(pool, query, params),
+		runQuery(pool, query, params, method='query', pluck=pluck),
 	execute: async (query, params, pluck=false) =>
-		runQuery(pool, query, params, method='execute'),
+		runQuery(pool, query, params, method='execute',  pluck=pluck),
 		
 	transaction: async (callback) => {
 		const connection = await pool.getConnection();
