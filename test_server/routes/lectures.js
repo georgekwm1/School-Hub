@@ -38,12 +38,12 @@ const router = express.Router();
 // and I will just keep with that part of editing and adding.. sinse I will check if the user
 // is an admin or not..
 // I forgot about that.. and I've very running out of time
-router.get('/courses/:id/lectures', verifyToken, (req, res) => {
+router.get('/courses/:id/lectures', verifyToken, async (req, res) => {
   const courseId = req.params.id;
   const { lastFetched } = req.query;
   const userId = req.userId;
 
-  const [course] = db.execute('SELECT * FROM courses WHERE id = ?', [courseId]);
+  const [course] = await db.execute('SELECT * FROM courses WHERE id = ?', [courseId]);
   if (!course) {
     return res.status(404).send({ message: 'Course not found' });
   }
@@ -57,16 +57,16 @@ router.get('/courses/:id/lectures', verifyToken, (req, res) => {
       .send({ message: 'User is not enrolled in this course' });
   }
 
-  const sections = db.execute(
+  const sections = await db.execute(
     'SELECT id, title, description FROM sections WHERE courseId = ?',
     [courseId]
   );
 
   const lectureFields = ['id', 'title', 'description', 'tags'].join(', ');
 
-  const lectures = sections.map((section) => ({
+  const lectures = sections.map(async (section) => ({
     ...section,
-    lectures: db.execute(
+    lectures: await db.execute(
         `SELECT ${lectureFields} FROM lectures WHERE sectionId = ? 
         ${lastFetched ? 'AND createdAt > ?' : ''}`,
         [section.id, ...(lastFetched ? [lastFetched] : [])],
@@ -82,7 +82,7 @@ router.get('/courses/:id/lectures', verifyToken, (req, res) => {
 router.get(
   '/courses/:courseId/lectures/:lectureId',
   verifyToken,
-  (req, res) => {
+  async (req, res) => {
     const courseId = req.params.courseId;
     const lectureId = req.params.lectureId;
     // representing the updatedAt value stored in userCache
@@ -90,7 +90,7 @@ router.get(
     const updatedAt = req.query.updatedAt;
     const userId = req.userId;
 
-    const [course] = db.execute(
+    const [course] = await db.execute(
       'SELECT * FROM courses WHERE id = ?', [courseId]
     );
     if (!course) {
@@ -119,7 +119,7 @@ router.get(
       'description',
       'tags',
     ].join(', ');
-    const [lecture] = db.execute(
+    const [lecture] = await db.execute(
       `SELECT ${lectureFields} FROM lectures WHERE id = ?`, [lectureId]
     )
     if (!lecture) {
@@ -128,8 +128,8 @@ router.get(
       return res.status(304).send({ message: 'Lecture not updated' });
     }
 
-    const getResource = (lectureId, type) => {
-      return db.execute(
+    const getResource = async (lectureId, type) => {
+      return await db.execute(
           'SELECT title, url FROM lectureResources WHERE lectureId = ? AND type = ?',
           [lectureId, type]
       );
@@ -148,15 +148,15 @@ router.get(
 );
 
 // Get all section titles for creating a lecture
-router.get('/courses/:id/sections_titles', verifyToken, (req, res) => {
+router.get('/courses/:id/sections_titles', verifyToken, async (req, res) => {
   const courseId = req.params.id;
   const stmt = 'SELECT title FROM sections where courseId = ?';
-  const sectionTitles = db.execute(stmt, [courseId], pluck=true);
+  const sectionTitles = await db.execute(stmt, [courseId], pluck=true);
   res.json(sectionTitles);
 });
 
 // create a course lecture
-router.post('/courses/:id/lectures', verifyToken, (req, res) => {
+router.post('/courses/:id/lectures', verifyToken, async (req, res) => {
   // Oh, Boy, This is big.
   const { id: courseId } = req.params;
   const io = req.app.get('io');
@@ -173,25 +173,25 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
     youtubeLink,
   } = req.body;
 
-  const [course] = db.execute('SELECT * FROM courses WHERE id = ?', [courseId]);
+  const [course] = await db.execute('SELECT * FROM courses WHERE id = ?', [courseId]);
   if (!course) return res.status(404).send({ message: 'Course not found' });
 
   if (!isCourseAdmin(userId, courseId))
     return res.status(403).send({ message: 'User is not a course admin' });
 
   try {
-    db.transaction(async (connection) => {
+    await db.transaction(async (connection) => {
       // Retrieve or create section basd on existence of ht title
       // I'm skeptic about how good this flag approach is
       // For later to decide the socketIo event to emit;
       let newSection = false;
-      let [sectionId] = connection.execute(
+      let [sectionId] = await connection.execute(
         'SELECT id FROM sections WHERE title = ?', [section], pluck=true
       );
       if (!sectionId) {
         newSection = true;
         sectionId = uuidv4();
-        connection.execute(
+        await connection.execute(
           'INSERT INTO sections (id, title, courseId) VALUES (?, ?, ?)',
           [sectionId, section, courseId]
         );
@@ -199,7 +199,7 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
 
       // Create lecture
       const lectureId = uuidv4();
-      connection.execute(
+      await connection.execute(
         `
         INSERT INTO lectures (id, title, description, tags, videoLink, notes, slides, userId, courseId, sectionId)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -219,8 +219,8 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
       );
 
       // Insert resources
-      const insertResource = (resource, type) =>
-        connection.execute(
+      const insertResource = async (resource, type) =>
+        await connection.execute(
           `INSERT INTO lectureResources (id, title, url, type, lectureId) 
           VALUES (?, ?, ?, ?, ?)`,
           [uuidv4(), resource.title, resource.url, type, lectureId]
@@ -273,7 +273,7 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
             userId,
           });
       } else {
-        const [section] = connection.execute(
+        const [section] = await connection.execute(
           'SELECT id, title, description FROM sections WHERE id = ?',
           [sectionId],
         );
@@ -300,7 +300,7 @@ router.post('/courses/:id/lectures', verifyToken, (req, res) => {
 });
 
 // Edit a lecture
-router.put('/lectures/:id', verifyToken, (req, res) => {
+router.put('/lectures/:id', verifyToken, async (req, res) => {
   const { id } = req.params;
   const io = req.app.get('io');
   const {
@@ -315,7 +315,7 @@ router.put('/lectures/:id', verifyToken, (req, res) => {
     demos,
   } = req.body;
   const userId = req.userId;
-  const [lecture] = db.execute('SELECT * FROM lectures WHERE id = ?', [id]);
+  const [lecture] = await db.execute('SELECT * FROM lectures WHERE id = ?', [id]);
 
   if (!lecture) {
     return res.status(404).send({ message: 'Lecture not found' });
@@ -327,9 +327,9 @@ router.put('/lectures/:id', verifyToken, (req, res) => {
       .send({ message: "User don't have previlate to delete this lecture" });
 
   try {
-    db.transaction(async (connection) => {
+    await db.transaction(async (connection) => {
       let sectionId;
-      const [sectionLecture] = connection.query(
+      const [sectionLecture] = await connection.query(
         'SELECT id FROM sections WHERE title = ?', [section]
       );
         
@@ -337,13 +337,13 @@ router.put('/lectures/:id', verifyToken, (req, res) => {
         sectionId = sectionLecture.id;
       } else {
         sectionId = uuidv4();
-        connection.query(
+        await connection.query(
           'INSERT INTO sections (id, title, courseId) VALUES (?, ?, ?)',
           [sectionId, section, lecture.courseId],
         );
       }
 
-      connection.query(
+      await connection.query(
         `UPDATE lectures
         SET title = ?, description = ?, videoLink = ?, notes = ?, slides = ?, sectionId = ?, tags = ?
         WHERE id = ?`,
@@ -359,10 +359,10 @@ router.put('/lectures/:id', verifyToken, (req, res) => {
         ]
       );
 
-      connection.query('DELETE FROM lectureResources WHERE lectureId = ?', [id]);
+      await connection.query('DELETE FROM lectureResources WHERE lectureId = ?', [id]);
 
-      const insertResource = (resource, type) =>
-        connection.execute(
+      const insertResource = async (resource, type) =>
+        await connection.execute(
           `INSERT INTO lectureResources (id, title, url, type, lectureId) 
           VALUES (?, ?, ?, ?, ?)`,
           [uuidv4(), resource.title, resource.url, type, id],
@@ -383,7 +383,7 @@ router.put('/lectures/:id', verifyToken, (req, res) => {
         'audioLink',
         'sectionId',
       ].join(', ');
-      const [updatedLecture] = db.query(
+      const [updatedLecture] = await db.query(
         `SELECT ${lectureFields} FROM lectures WHERE id = ?`,
         [id],
       )
