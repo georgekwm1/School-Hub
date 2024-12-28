@@ -232,7 +232,7 @@ router.post('/oauth/googleRegister', async (req, res) => {
         },
         message: 'User registered and logged in successfully',
       });
-    })();
+    });
   } catch (error) {
     console.error(error);
     res.status(500).send({ message: 'Server Error while registering' });
