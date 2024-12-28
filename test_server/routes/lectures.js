@@ -43,39 +43,44 @@ router.get('/courses/:id/lectures', verifyToken, async (req, res) => {
   const { lastFetched } = req.query;
   const userId = req.userId;
 
-  const [course] = await db.execute('SELECT * FROM courses WHERE id = ?', [courseId]);
-  if (!course) {
-    return res.status(404).send({ message: 'Course not found' });
+  try {
+    const [course] = await db.execute('SELECT * FROM courses WHERE id = ?', [courseId]);
+    if (!course) {
+      return res.status(404).send({ message: 'Course not found' });
+    }
+
+    if (
+      !isUserEnroledInCourse(userId, courseId) &&
+      !isCourseAdmin(userId, courseId)
+    ) {
+      return res
+        .status(403)
+        .send({ message: 'User is not enrolled in this course' });
+    }
+
+    const sections = await db.execute(
+      'SELECT id, title, description FROM sections WHERE courseId = ?',
+      [courseId]
+    );
+
+    const lectureFields = ['id', 'title', 'description', 'tags'].join(', ');
+
+    const lectures = sections.map(async (section) => ({
+      ...section,
+      lectures: await db.execute(
+          `SELECT ${lectureFields} FROM lectures WHERE sectionId = ? 
+          ${lastFetched ? 'AND createdAt > ?' : ''}`,
+          [section.id, ...(lastFetched ? [lastFetched] : [])],
+      ),
+    }));
+
+    // Filter empty sections
+    const result = lectures.filter((section) => section.lectures.length > 0);
+    res.json({ sections: result, lastFetched: getCurrentTimeInDBFormat() });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({message: 'Error getting the lectures'});
   }
-
-  if (
-    !isUserEnroledInCourse(userId, courseId) &&
-    !isCourseAdmin(userId, courseId)
-  ) {
-    return res
-      .status(403)
-      .send({ message: 'User is not enrolled in this course' });
-  }
-
-  const sections = await db.execute(
-    'SELECT id, title, description FROM sections WHERE courseId = ?',
-    [courseId]
-  );
-
-  const lectureFields = ['id', 'title', 'description', 'tags'].join(', ');
-
-  const lectures = sections.map(async (section) => ({
-    ...section,
-    lectures: await db.execute(
-        `SELECT ${lectureFields} FROM lectures WHERE sectionId = ? 
-        ${lastFetched ? 'AND createdAt > ?' : ''}`,
-        [section.id, ...(lastFetched ? [lastFetched] : [])],
-    ),
-  }));
-
-  // Filter empty sections
-  const result = lectures.filter((section) => section.lectures.length > 0);
-  res.json({ sections: result, lastFetched: getCurrentTimeInDBFormat() });
 });
 
 // Get a specific lecture
