@@ -40,6 +40,9 @@ const runQuery = async (connection, query, params,method='query', isPluck=false)
 	return isPluck ? pluck(results) : results;
 };
 
+// 📝🔔🛑 I think .. simply making a function to to add the pluck function to the 
+// prototype of the result array would have samed me all this code here..
+// Hopefully... I remember when internet is back
 
 module.exports = {
 	pool,
