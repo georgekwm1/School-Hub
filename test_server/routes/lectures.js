@@ -191,8 +191,8 @@ router.post('/courses/:id/lectures', verifyToken, async (req, res) => {
       // I'm skeptic about how good this flag approach is
       // For later to decide the socketIo event to emit;
       let newSection = false;
-      let [sectionId] = await connection.execute(
-        'SELECT id FROM sections WHERE title = ?', [section], pluck=true
+      let [sectionId] = await connection.queryWithPluck(
+        'SELECT id FROM sections WHERE title = ?', [section]
       );
       if (!sectionId) {
         newSection = true;
@@ -429,10 +429,9 @@ router.delete('/lectures/:id', verifyToken, async (req, res) => {
       return res.status(403).send({ message: 'User is not a course admin' });
 
     await db.transaction(async (connection) => {
-      const [sectionId] = await connection.query(
+      const [sectionId] = await connection.queryWithPluck(
         `SELECT sectionId FROM lectures WHERE id = ?`,
-        [lectureId],
-        pluck=true
+        [lectureId]
       );
       await connection.query('DELETE FROM lectures WHERE id = ?', [lectureId]);
 
