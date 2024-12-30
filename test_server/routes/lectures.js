@@ -145,9 +145,9 @@ router.get(
       lectureData: {
         ...lecture,
         tags: lecture.tags.split(','),
-        demos: getResource(lectureId, 'demo'),
-        shorts: getResource(lectureId, 'short'),
-        quizzez: getResource(lectureId, 'quiz'),
+        demos: await getResource(lectureId, 'demo'),
+        shorts: await getResource(lectureId, 'short'),
+        quizzez: await getResource(lectureId, 'quiz'),
       },
     });
   }
