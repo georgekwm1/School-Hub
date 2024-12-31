@@ -197,7 +197,7 @@ router.post('/courses/:id/lectures', verifyToken, async (req, res) => {
       if (!sectionId) {
         newSection = true;
         sectionId = uuidv4();
-        await connection.execute(
+        await connection.executeWithPluck(
           'INSERT INTO sections (id, title, courseId) VALUES (?, ?, ?)',
           [sectionId, section, courseId]
         );
@@ -205,7 +205,7 @@ router.post('/courses/:id/lectures', verifyToken, async (req, res) => {
 
       // Create lecture
       const lectureId = uuidv4();
-      await connection.execute(
+      await connection.executeWithPluck(
         `
         INSERT INTO lectures (id, title, description, tags, videoLink, notes, slides, userId, courseId, sectionId)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -226,7 +226,7 @@ router.post('/courses/:id/lectures', verifyToken, async (req, res) => {
 
       // Insert resources
       const insertResource = async (resource, type) =>
-        await connection.execute(
+        await connection.executeWithPluck(
           `INSERT INTO lectureResources (id, title, url, type, lectureId) 
           VALUES (?, ?, ?, ?, ?)`,
           [uuidv4(), resource.title, resource.url, type, lectureId]
@@ -279,7 +279,7 @@ router.post('/courses/:id/lectures', verifyToken, async (req, res) => {
             userId,
           });
       } else {
-        const [section] = await connection.execute(
+        const [section] = await connection.executeWithPluck(
           'SELECT id, title, description FROM sections WHERE id = ?',
           [sectionId],
         );
@@ -369,7 +369,7 @@ router.put('/lectures/:id', verifyToken, async (req, res) => {
       await connection.queryWithPluck('DELETE FROM lectureResources WHERE lectureId = ?', [id]);
 
       const insertResource = async (resource, type) =>
-        await connection.execute(
+        await connection.executeWithPluck(
           `INSERT INTO lectureResources (id, title, url, type, lectureId) 
           VALUES (?, ?, ?, ?, ?)`,
           [uuidv4(), resource.title, resource.url, type, id],
