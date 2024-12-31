@@ -488,8 +488,8 @@ router.post('/courses/:id/lectures/diff', async (req, res) => {
     for (const section of dbSections) {
       const sectionLectures = await db.execute(
         `SELECT id, title, description, tags,
-        (updatedAt >= @lastSynced ) as isChanged
-        FROM lectures WHERE sectionId = @sectionId AND createdAt <= @lastSynced`,
+        (updatedAt >= :lastSynced ) as isChanged
+        FROM lectures WHERE sectionId = :sectionId AND createdAt <= :lastSynced`,
         [{ sectionId: section, lastSynced }]
       );
 
