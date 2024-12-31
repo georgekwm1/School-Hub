@@ -55,10 +55,10 @@ module.exports = {
 		const connection = await pool.getConnection();
 		try {
 			await connection.beginTransaction();
-			connection.executeWithPluck = (query, params) =>
-				runQuery(connection, query, params, method='execute', isPluck=true);
-			connection.queryWithPluck = (query, params) =>
-				runQuery(connection, query, params, method='query',  isPluck=true);
+			connection.executeWithPluck = (query, params, pluck=false) =>
+				runQuery(connection, query, params, method='execute', isPluck=pluck);
+			connection.queryWithPluck = (query, params, pluck=false) =>
+				runQuery(connection, query, params, method='query',  isPluck=pluck);
 
 			const result = await callback(connection);
 			await connection.commit();
