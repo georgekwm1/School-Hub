@@ -336,7 +336,7 @@ router.put('/lectures/:id', verifyToken, async (req, res) => {
     await db.transaction(async (connection) => {
       let sectionId;
       // WHat a name i used! 🙂🙁
-      const [sectionLecture] = await connection.query(
+      const [sectionLecture] = await connection.queryWithPluck(
         'SELECT id FROM sections WHERE title = ?', [section]
       );
       console.log(sectionLecture)
@@ -344,13 +344,13 @@ router.put('/lectures/:id', verifyToken, async (req, res) => {
         sectionId = sectionLecture.id;
       } else {
         sectionId = uuidv4();
-        await connection.query(
+        await connection.queryWithPluck(
           'INSERT INTO sections (id, title, courseId) VALUES (?, ?, ?)',
           [sectionId, section, lecture.courseId],
         );
       }
 
-      await connection.query(
+      await connection.queryWithPluck(
         `UPDATE lectures
         SET title = ?, description = ?, videoLink = ?, notes = ?, slides = ?, sectionId = ?, tags = ?
         WHERE id = ?`,
@@ -366,7 +366,7 @@ router.put('/lectures/:id', verifyToken, async (req, res) => {
         ]
       );
 
-      await connection.query('DELETE FROM lectureResources WHERE lectureId = ?', [id]);
+      await connection.queryWithPluck('DELETE FROM lectureResources WHERE lectureId = ?', [id]);
 
       const insertResource = async (resource, type) =>
         await connection.execute(
@@ -435,14 +435,14 @@ router.delete('/lectures/:id', verifyToken, async (req, res) => {
         [lectureId],
         pluck=true,
       );
-      await connection.query('DELETE FROM lectures WHERE id = ?', [lectureId]);
+      await connection.queryWithPluck('DELETE FROM lectures WHERE id = ?', [lectureId]);
 
-      const lectures = await connection.query(
+      const lectures = await connection.queryWithPluck(
         'SELECT id  FROM lectures WHERE sectionId = ?',
         [sectionId],
       );
       if (lectures.length === 0) {
-        await connection.query('DELETE FROM sections WHERE id = ?', [sectionId]);
+        await connection.queryWithPluck('DELETE FROM sections WHERE id = ?', [sectionId]);
       }
       res.status(200).json({ message: 'Lecture deleted successfully' });
 
