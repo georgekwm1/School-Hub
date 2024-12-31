@@ -192,7 +192,7 @@ router.post('/courses/:id/lectures', verifyToken, async (req, res) => {
       // For later to decide the socketIo event to emit;
       let newSection = false;
       let [sectionId] = await connection.queryWithPluck(
-        'SELECT id FROM sections WHERE title = ?', [section]
+        'SELECT id FROM sections WHERE title = ?', [section], pluck=true
       );
       if (!sectionId) {
         newSection = true;
@@ -335,10 +335,11 @@ router.put('/lectures/:id', verifyToken, async (req, res) => {
   try {
     await db.transaction(async (connection) => {
       let sectionId;
+      // WHat a name i used! 🙂🙁
       const [sectionLecture] = await connection.query(
         'SELECT id FROM sections WHERE title = ?', [section]
       );
-        
+      console.log(sectionLecture)
       if (sectionLecture) {
         sectionId = sectionLecture.id;
       } else {
@@ -431,7 +432,8 @@ router.delete('/lectures/:id', verifyToken, async (req, res) => {
     await db.transaction(async (connection) => {
       const [sectionId] = await connection.queryWithPluck(
         `SELECT sectionId FROM lectures WHERE id = ?`,
-        [lectureId]
+        [lectureId],
+        pluck=true,
       );
       await connection.query('DELETE FROM lectures WHERE id = ?', [lectureId]);
 
