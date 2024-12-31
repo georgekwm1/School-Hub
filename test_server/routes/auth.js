@@ -196,7 +196,7 @@ router.post('/oauth/googleRegister', async (req, res) => {
 
     await db.transaction(async (connection) => {
       const userId = userData.sub;
-      await connection.execute(
+      await connection.executeWithPluck(
         `INSERT INTO users (id, googleId, email, firstName, lastName, pictureUrl, pictureThumbnail)
         VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [
@@ -209,7 +209,7 @@ router.post('/oauth/googleRegister', async (req, res) => {
           userData.picture
         ]
       );
-      await connection.execute(
+      await connection.executeWithPluck(
         'INSERT INTO courseEnrollments (userId, courseId) VALUES (?, ?)',
         [userId, courseId]
       );
@@ -264,7 +264,7 @@ router.post('/register', async (req, res) => {
     const passwordHash = await bcrypt.hash(password, 10);
 
     await db.transaction(async (connection) => {
-      await connection.execute(
+      await connection.executeWithPluck(
         `INSERT INTO users (
           id, email, passwordHash, firstName, lastName, username, pictureId,
           pictureUrl, pictureThumbnail
@@ -284,7 +284,7 @@ router.post('/register', async (req, res) => {
         ]
       );
 
-      await connection.execute(
+      await connection.executeWithPluck(
         `INSERT INTO courseEnrollments (userId, courseId) VALUES (?, ?)`,
         [id, courseId]
       )
