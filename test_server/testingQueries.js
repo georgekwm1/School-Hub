@@ -38,14 +38,6 @@ async function insertAdmin() {
 }
 // insertAdmin();
 
-async function insertTestCourseAdmin() {
-  await db.execute(
-    `INSERT INTO courseAdmins (courseId, userId) VALUES (?, ?)`,
-    ['test-course', 'admin']
-  );
-}
-// insertTestCourseAdmin();
-
 async function insertTestCourse() {
   await db.execute(
     `INSERT INTO courses (id, title, description) VALUES (?, ?, ?)`,
@@ -56,6 +48,43 @@ async function insertTestCourse() {
     ]);
 }
 // insertTestCourse();
+
+async function insertTestCourseAdmin() {
+  await db.execute(
+    `INSERT INTO courseAdmins (courseId, userId) VALUES (?, ?)`,
+    ['test-course', 'admin']
+  );
+}
+// insertTestCourseAdmin();
+
+async function insertTestUser() {
+  const passwordHash = await bcrypt.hash('test', 10);
+  const params = [
+    'test-user',
+    'test',
+    passwordHash,
+    'Test',
+    'User',
+    'testUser',
+    'student',
+    '',
+    'https://picsum.photos/100',
+    'https://picsum.photos/100'
+  ];
+  await db.execute(
+    `INSERT INTO users (
+      id, email, passwordHash, firstName, lastName, username, role, pictureId,
+      pictureUrl, pictureThumbnail)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    params
+  );
+
+  await db.execute(
+    `INSERT INTO courseEnrollments (userId, courseId) VALUES (?, ?)`,
+    ['test-user', 'test-course']
+  )
+}
+// insertTestUser();
 
 async function insertTestSections() {
   const insertSectionQuery = 
