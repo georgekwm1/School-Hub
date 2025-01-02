@@ -74,3 +74,29 @@ async function insertTestSections() {
   }
 }
 // insertTestSections();
+
+async function insertCourseLectures() {
+  for (const section of mockSections) {
+    const lectureId = `${section.id}-lecture-1`;
+    const insertLectureQuery = 
+      `INSERT INTO lectures
+        (id, title, description, tags, videoLink, notes, slides, userId, courseId, sectionId)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+    await db.execute(
+      insertLectureQuery,
+      [
+        lectureId,
+        'Test Lecture',
+        'This is a test lecture',
+        'test',
+        'https://www.youtube.com/watch?v=5a3lKp7aCj8',
+        'https://drive.google.com/file/d/1JmV9lJ3uKz3qEhYhR--qjQbT9s9A5H8/view?usp=sharing',
+        'https://drive.google.com/file/d/1JmV9lJ3uKz3qEhYhR--qjQbT9s9A5H8/view?usp=sharing',
+        'admin',
+        'test-course',
+        section.id
+      ]
+    );
+  }
+}
+// insertCourseLectures();
