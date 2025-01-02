@@ -7,6 +7,7 @@ const pool = mysql.createPool({
 	password: process.env.DB_PASSWORD,
 	database: process.env.DB_NAME,
 	namedPlaceholders: true,
+	timezone: 'Z' // that's just zulu.. same os UTC.
 })
 
 /**
