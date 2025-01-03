@@ -490,7 +490,7 @@ router.post('/courses/:id/lectures/diff', async (req, res) => {
         `SELECT id, title, description, tags,
         (updatedAt >= :lastSynced ) as isChanged
         FROM lectures WHERE sectionId = :sectionId AND createdAt <= :lastSynced`,
-        [{ sectionId: section, lastSynced }]
+        { sectionId: section, lastSynced }
       );
 
       for (const lecture of sectionLectures) {
