@@ -390,7 +390,7 @@ router.put('/lectures/:id', verifyToken, async (req, res) => {
         'audioLink',
         'sectionId',
       ].join(', ');
-      const [updatedLecture] = await db.query(
+      const [updatedLecture] = await connection.queryWithPluck(
         `SELECT ${lectureFields} FROM lectures WHERE id = ?`,
         [id],
       )
