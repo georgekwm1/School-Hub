@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Toaster } from 'react-hot-toast';
 import { Routes, Route, Navigate, Outlet} from 'react-router-dom';
 import './App.css';
+import './bootstrap.min.css';
 import './components/Login/css/util.css';
 import './components/Login/css/main.css';
 import './components/Register/css/util.css';
