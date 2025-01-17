@@ -358,8 +358,8 @@ router.put('/questions/:id', verifyToken, async (req, res) => {
       // God.. what was I thinking.!
       const editedQuestion = {
         ...updatedQuestion,
-        user: getUserData(userId),
-        upvoted: getUpvoteStatus(userId, id, 'question'),
+        user: await getUserData(userId),
+        upvoted: await getUpvoteStatus(userId, id, 'question'),
       };
 
       res.status(200).json(editedQuestion);
