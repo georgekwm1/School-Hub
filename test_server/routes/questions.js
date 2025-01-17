@@ -449,7 +449,7 @@ router.delete('/questions/:id', verifyToken, async (req, res) => {
 });
 
 // Sync existing questions
-router.post('/questions/diff', verifyToken, (req, res) => {
+router.post('/questions/diff', verifyToken, async (req, res) => {
   // After writing this endpoint....
   // I sometimes think that this is an overkill
   // and it's even better to fetch teh whole data without all these comparisons here..
@@ -485,16 +485,15 @@ router.post('/questions/diff', verifyToken, (req, res) => {
         'courseId and lectureId are both defined?!.. which category are the questions?',
     });
   } else if (courseId) {
-    const course = db
-      .prepare('SELECT * FROM courses WHERE id = ?')
-      .get(courseId);
+    const [course] = await db.query(
+      'SELECT * FROM courses WHERE id = ?', [courseId]
+    );
     if (!course) {
       return res.status(404).send({ message: 'Course not found' });
     }
   } else if (lectureId) {
-    const lecture = db
-      .prepare('SELECT * FROM lectures WHERE id = ?')
-      .get(lectureId);
+    const [lecture] = await db.query(
+      'SELECT * FROM lectures WHERE id = ?', [lectureId]);
     if (!lecture) {
       return res.status(404).send({ message: 'Lecture not found' });
     }
@@ -507,28 +506,22 @@ router.post('/questions/diff', verifyToken, (req, res) => {
   const entriesUpdatedAt = new Map(
     entries.map((entry) => [entry.id, entry.updatedAt])
   );
-  const existingQuestions = db
-    .prepare(
+  const existingQuestions = await db.query(
       `SELECT id, updatedAt, title, body, repliesCount, upvotes
       FROM questions
     WHERE ${courseId ? 'courseId' : 'lectureId'} = ?
       AND createdAt <= ?
-    ORDER BY updatedAt DESC;
-    `
-    )
-    .all(courseId ? courseId : lectureId, lastFetched);
-  const userVotes = db
-    .prepare(
-      `
-    SELECT questionId FROM votes
+    ORDER BY updatedAt DESC;`,
+    [courseId ? courseId : lectureId, lastFetched]
+    );
+  const userVotes = await db.query(
+      `SELECT questionId FROM votes
     -- If you are wondering... take a look at the vots table and you will see
     -- Ther is replyId and questionId..
-    WHERE userId = ? AND questionId IS NOT NULL;
-    `
-    )
-    .pluck()
-    .all(userId);
-
+    WHERE userId = ? AND questionId IS NOT NULL;`,
+    [userId],
+    pluck=true
+    );
   const results = {
     existing: {},
     deleted: [],
