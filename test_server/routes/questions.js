@@ -247,7 +247,7 @@ router.post('/questions/:id/vote', verifyToken, async (req, res) => {
     return res.status(400).send({ message: 'Missing or invalid action field' });
   }
 
-  const question = await db.query(
+  const [question] = await db.query(
     'SELECT * FROM questions WHERE id = ?', [questionId]
   );
 
@@ -321,13 +321,13 @@ router.post('/questions/:id/vote', verifyToken, async (req, res) => {
 });
 
 // Edit a question
-router.put('/questions/:id', verifyToken, (req, res) => {
+router.put('/questions/:id', verifyToken, async (req, res) => {
   const { id } = req.params;
   const { title, body } = req.body;
   const io = req.app.get('io');
   const userId = req.userId;
 
-  const question = db.prepare('SELECT * FROM questions WHERE id = ?').get(id);
+  const [question] = await db.query('SELECT * FROM questions WHERE id = ?', [id]);
 
   if (!question) {
     return res.status(404).send({ message: 'Question not found' });
@@ -339,8 +339,8 @@ router.put('/questions/:id', verifyToken, (req, res) => {
       .send({ message: 'User is not authorized to edit this question' });
   }
   try {
-    db.transaction(() => {
-      db.prepare(
+    await db.transaction(async (connection) => {
+      await connection.queryWithPluck(
         `
         UPDATE questions
         SET title = ?, body = ?
@@ -348,12 +348,11 @@ router.put('/questions/:id', verifyToken, (req, res) => {
       `
       ).run(title, body, id);
 
-      const updatedQuestion = db
-        .prepare(
+      const [updatedQuestion] = await connection.queryWithPluck(
           `SELECT id, title, body, updatedAt, lectureId ,repliesCount, upvotes
-         FROM questions WHERE id = ?`
-        )
-        .get(id);
+          FROM questions WHERE id = ?`
+          [id]
+        );
 
       // What a consitency here!
       // God.. what was I thinking.!
@@ -381,7 +380,7 @@ router.put('/questions/:id', verifyToken, (req, res) => {
         userId,
       });
 
-    })();
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).send({ message: 'Error updating question' });
