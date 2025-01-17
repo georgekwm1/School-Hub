@@ -22,18 +22,14 @@ const { verifyToken } = require('../middlewares/authMiddlewares');
 
 const router = express.Router();
 function getQuestionCourseId(questionId) {
-  const query = db.prepare(
-    `
+  const query = `
     SELECT 
       courseId AS courseIdFromQuestion,
       -- Oh, I love this slick trick...
       (SELECT courseId FROM lectures WHERE id = lectureId) AS courseIdFromLecture
     FROM questions
-    WHERE id = ?;
-    `
-  );
-
-  const { courseIdFromQuestion, courseIdFromLecture } = query.get(questionId);
+    WHERE id = ?;`;
+  const [{ courseIdFromQuestion, courseIdFromLecture }] = db.execute(query, [questionId]);
   return courseIdFromQuestion || courseIdFromLecture;
 }
 
