@@ -119,7 +119,7 @@ router.get('/questions/:id/replies', verifyToken, async (req, res) => {
 });
 
 // Change user vote for a replies
-router.post('/replies/:id/vote', verifyToken, (req, res) => {
+router.post('/replies/:id/vote', verifyToken, async (req, res) => {
   const replyId = req.params.id;
   const io = req.app.get('io');
   const { action } = req.body;
@@ -130,33 +130,35 @@ router.post('/replies/:id/vote', verifyToken, (req, res) => {
   }
 
   // Is this a better way? I don't know.
-  const reply =
-    db.prepare(`SELECT id, questionId FROM replies WHERE id = ?`).get(replyId);
+  const [reply] = await db.query(
+    `SELECT id, questionId FROM replies WHERE id = ?`, [replyId]
+  );
 
   if (!reply) {
     return res.status(404).send({ message: 'Reply not found' });
   }
 
   try {
-    db.transaction(() => {
+    await db.transaction(async (connection) => {
       if (action === 'upvote') {
-        db.prepare(
+        await connection.query(
           `INSERT INTO votes (userId, replyId)
-          VALUES (?, ?)`
-        ).run(userId, replyId);
+          VALUES (?, ?)`,
+          [userId, replyId]
+        );
       } else if (action === 'downvote') {
-        db.prepare(`DELETE FROM votes WHERE userId = ? AND replyId = ?`).run(
-          userId,
-          replyId
+        await connection.query(
+          `DELETE FROM votes WHERE userId = ? AND replyId = ?`,
+          [userId, replyId]
         );
       }
-      db.prepare(
-        `
-        UPDATE replies
+
+      await connection.query(
+        `UPDATE replies
         SET upvotes = upvotes + ${action == 'upvote' ? 1 : -1}
-        WHERE id = ?
-        `
-      ).run(replyId);
+        WHERE id = ?`,
+        [replyId]
+      );
 
       let message;
       if (action == 'upvote') {
@@ -175,7 +177,7 @@ router.post('/replies/:id/vote', verifyToken, (req, res) => {
         },
         userId,
       })
-    })();
+    });
   } catch (err) {
     console.error(err);
     res.status(500).send({ message: 'Error voting' });
