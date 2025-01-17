@@ -21,7 +21,7 @@ const {
 const { verifyToken } = require('../middlewares/authMiddlewares');
 
 const router = express.Router();
-function getQuestionCourseId(questionId) {
+async function getQuestionCourseId(questionId) {
   const query = `
     SELECT 
       courseId AS courseIdFromQuestion,
@@ -29,16 +29,16 @@ function getQuestionCourseId(questionId) {
       (SELECT courseId FROM lectures WHERE id = lectureId) AS courseIdFromLecture
     FROM questions
     WHERE id = ?;`;
-  const [{ courseIdFromQuestion, courseIdFromLecture }] = db.execute(query, [questionId]);
+  const [{ courseIdFromQuestion, courseIdFromLecture }] = await db.execute(query, [questionId]);
   return courseIdFromQuestion || courseIdFromLecture;
 }
 
 // Get a course general forum questions
-router.get('/courses/:id/general_discussion', verifyToken, (req, res) => {
+router.get('/courses/:id/general_discussion', verifyToken, async (req, res) => {
   const id = req.params.id;
   const userId = req.userId;
   const { lastFetched } = req.query;
-  const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(id);
+  const [course] = await db.query('SELECT * FROM courses WHERE id = ?', [id]);
   if (!course) {
     res.status(404).send({ message: 'Course not found' });
   }
@@ -50,23 +50,19 @@ router.get('/courses/:id/general_discussion', verifyToken, (req, res) => {
   }
 
   const params = [course.id, ...(lastFetched ? [lastFetched] : [])];
-  const questionEntries = db
-    .prepare(
-      `
+  const questionEntries = await db.query(`
     SELECT id, title, body, updatedAt, upvotes, repliesCount, userId
       FROM questions 
       WHERE courseId = ?
       ${lastFetched ? 'AND createdAt > ?' : ''}
       ORDER BY updatedAt DESC;
-    `
-    )
-    .all(...params);
+    `, [...params]);
   const newLastFetched = getCurrentTimeInDBFormat();
 
   // Now, here I'll get the userData + is it upvoted or not
   const questions = questionEntries.map((entry) => {
-    const user = getUserData(entry.userId);
-    const upvoted = getUpvoteStatus(user.id, entry.id, 'question');
+    const user = await getUserData(entry.userId);
+    const upvoted = await getUpvoteStatus(user.id, entry.id, 'question');
 
     return {
       ...entry,
