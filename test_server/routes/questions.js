@@ -43,7 +43,7 @@ router.get('/courses/:id/general_discussion', verifyToken, async (req, res) => {
     res.status(404).send({ message: 'Course not found' });
   }
 
-  if (!isUserEnroledInCourse(userId, id) && !isCourseAdmin(userId, id)) {
+  if (! await isUserEnroledInCourse(userId, id) && !isCourseAdmin(userId, id)) {
     return res
       .status(403)
       .send({ message: 'User is not enrolled in this course' });
