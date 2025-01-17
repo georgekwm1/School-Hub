@@ -32,7 +32,7 @@ async function getReplyCourseId(replyId) {
 
   const [{ courseIdFromQuestion, courseIdFromLecture }] = db.query(query, [replyId]);
   return courseIdFromQuestion ? courseIdFromQuestion : courseIdFromLecture;
-}G
+}
 
 /**
  * Returns the parent of a question, either the courseId or lectureId,
@@ -40,16 +40,16 @@ async function getReplyCourseId(replyId) {
  * @param {string} questionId - The id of the question
  * @returns {{courseId: string, lectureId: string} | null}
  */
-function getQuestionParentId(questionId) {
-  const query = db.prepare(
-    `
-    SELECT 
+async function getQuestionParentId(questionId) {
+  const [result] = db.query(
+    `SELECT 
       courseId, lectureId 
     FROM questions
-    WHERE id = ?;
-    `);
+    WHERE id = ?;`,
+    [questionId]
+  );
 
-  return query.get(questionId);Create 
+  return result; 
 }
 
 // Get question replies
