@@ -60,16 +60,17 @@ router.get('/courses/:id/general_discussion', verifyToken, async (req, res) => {
   const newLastFetched = getCurrentTimeInDBFormat();
 
   // Now, here I'll get the userData + is it upvoted or not
-  const questions = questionEntries.map((entry) => {
+  let questions = [];
+  for (let entry of questionEntries) {
     const user = await getUserData(entry.userId);
     const upvoted = await getUpvoteStatus(user.id, entry.id, 'question');
 
-    return {
+    questions.push({
       ...entry,
       user,
       upvoted,
-    };
-  });
+    });
+  }
 
   res.json({
     questions,
