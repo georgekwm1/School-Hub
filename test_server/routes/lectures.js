@@ -51,7 +51,7 @@ router.get('/courses/:id/lectures', verifyToken, async (req, res) => {
 
     if (
       !isUserEnroledInCourse(userId, courseId) &&
-      !isCourseAdmin(userId, courseId)
+      !await isCourseAdmin(userId, courseId)
     ) {
       return res
         .status(403)
@@ -105,7 +105,7 @@ router.get(
 
     if (
       !isUserEnroledInCourse(userId, courseId) &&
-      !isCourseAdmin(userId, courseId)
+      !await isCourseAdmin(userId, courseId)
     ) {
       return res
         .status(403)
@@ -182,7 +182,7 @@ router.post('/courses/:id/lectures', verifyToken, async (req, res) => {
   const [course] = await db.execute('SELECT * FROM courses WHERE id = ?', [courseId]);
   if (!course) return res.status(404).send({ message: 'Course not found' });
 
-  if (!isCourseAdmin(userId, courseId))
+  if (!await isCourseAdmin(userId, courseId))
     return res.status(403).send({ message: 'User is not a course admin' });
 
   try {
@@ -327,7 +327,7 @@ router.put('/lectures/:id', verifyToken, async (req, res) => {
     return res.status(404).send({ message: 'Lecture not found' });
   }
 
-  if (!isCourseAdmin(userId, lecture.courseId))
+  if (!await isCourseAdmin(userId, lecture.courseId))
     return res
       .status(403)
       .send({ message: "User don't have previlate to delete this lecture" });
@@ -426,7 +426,7 @@ router.delete('/lectures/:id', verifyToken, async (req, res) => {
       return res.status(404).send({ message: 'Lecture not found' });
     }
 
-    if (!isCourseAdmin(userId, lecture.courseId))
+    if (!await isCourseAdmin(userId, lecture.courseId))
       return res.status(403).send({ message: 'User is not a course admin' });
 
     await db.transaction(async (connection) => {
