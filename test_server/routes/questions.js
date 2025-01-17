@@ -177,7 +177,7 @@ router.post('/courses/:id/general_discussion', verifyToken, async (req, res) => 
 });
 
 // Create a new question for a lecture
-router.post('/lectures/:id/discussion', verifyToken, (req, res) => {
+router.post('/lectures/:id/discussion', verifyToken, async (req, res) => {
   const lectureId = req.params.id;
   const { title, body } = req.body;
   const userId = req.userId;
@@ -191,12 +191,11 @@ router.post('/lectures/:id/discussion', verifyToken, (req, res) => {
 
   try {
     const createTime = new Date().toISOString();
-    db.prepare(
-      `
+    await db.query(`
       INSERT INTO questions (id, title, body, userId, lectureId)
-      VALUES (?, ?, ?, ?, ?)
-    `
-    ).run(newEntryId, title, body, userId, lectureId);
+      VALUES (?, ?, ?, ?, ?)`,
+      [newEntryId, title, body, userId, lectureId]
+    );
 
     const lastFetched = getCurrentTimeInDBFormat();
 
@@ -204,7 +203,7 @@ router.post('/lectures/:id/discussion', verifyToken, (req, res) => {
       id: newEntryId,
       title,
       body,
-      user: getUserData(userId),
+      user: await getUserData(userId),
       updatedAt: createTime,
       upvotes: 0,
       upvoted: false,
