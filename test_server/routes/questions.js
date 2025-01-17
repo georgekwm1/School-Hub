@@ -116,7 +116,7 @@ router.get('/lectures/:id/discussion', verifyToken, async (req, res) => {
 });
 
 // Create a question in a course general forum
-router.post('/courses/:id/general_discussion', verifyToken, (req, res) => {
+router.post('/courses/:id/general_discussion', verifyToken, async (req, res) => {
   const courseId = req.params.id;
   const { title, body } = req.body;
   const userId = req.userId;
@@ -126,19 +126,18 @@ router.post('/courses/:id/general_discussion', verifyToken, (req, res) => {
     return res.status(400).send({ message: 'Missing required fields' });
   }
 
-  const user = getUserData(userId);
+  const user = await getUserData(userId);
   const newEntryId = uuidv4();
 
   try {
     const createTime = new Date().toISOString();
     // I have a concern about what i'm doing here regarding teh time..
     // connected to the next comment below
-    db.prepare(
-      `
+    await db.query(`
       INSERT INTO questions (id, title, body, userId, courseId)
-      VALUES (?, ?, ?, ?, ?)
-    `
-    ).run(newEntryId, title, body, userId, courseId);
+      VALUES (?, ?, ?, ?, ?)`,
+      [newEntryId, title, body, userId, courseId]
+    );
 
     const lastFetched = getCurrentTimeInDBFormat();
     // Here, i'm not 100% sure if I sould do this here..
