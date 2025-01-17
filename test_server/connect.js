@@ -247,6 +247,22 @@ const db = require('./db');
 			WHERE id = OLD.announcementId;
 		END	
 	`);
+
+	// await db.query(`
+	// 	CREATE TRIGGER IF NOT EXISTS delete_empty_sections
+	// 	AFTER UPDATE ON lectures
+	// 	FOR EACH ROW
+	// 	WHEN OLD.sectionId <> NEW.sectionId
+	// 	BEGIN
+	// 		DELETE FROM sections
+	// 		WHERE id = OLD.sectionId
+	// 		AND NOT EXISTS (
+	// 			SELECT 1
+	// 			FROM lectures
+	// 			WHERE sectionId = OLD.sectionId
+	// 		);
+	// 	END
+	// `);
 })()
 
 process.on('exit', async () => await db.pool.end());
