@@ -125,7 +125,7 @@ router.post('/oauth/google', async (req, res) => {
         ]
       );
     }
-    if (!isUserEnroledInCourse(user.id, courseId)) {
+    if (! await isUserEnroledInCourse(user.id, courseId)) {
       // Again.. on of the wierd things...
       // Because if you a user of the model of one course one prof.. using this..
       // for him.. the entire platform or app. is tihs course..
