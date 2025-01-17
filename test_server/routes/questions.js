@@ -79,37 +79,35 @@ router.get('/courses/:id/general_discussion', verifyToken, async (req, res) => {
 });
 
 // Get a lecture discussions/qustions
-router.get('/lectures/:id/discussion', verifyToken, (req, res) => {
+router.get('/lectures/:id/discussion', verifyToken, async (req, res) => {
   const id = req.params.id;
   const userId = req.userId;
   const { lastFetched } = req.query;
 
-  const lecture = db.prepare('SELECT * FROM lectures WHERE id = ?').get(id);
+  const [lecture] = await db.query('SELECT * FROM lectures WHERE id = ?', [id]);
   if (lecture) {
-    const discussionWithLectureId = db
-      .prepare(
-        `
+    const discussionWithLectureId = await db.query(`
       SELECT id, title, body, userId, upvotes, repliesCount, lectureId, updatedAt
         FROM questions 
         WHERE lectureId = ?
         ${lastFetched ? 'AND createdAt > ?' : ''}
-        ORDER BY updatedAt DESC;
-      `
-      )
-      .all(...[id].concat(lastFetched ? [lastFetched] : []));
+        ORDER BY updatedAt DESC;`,
+      [id].concat(lastFetched ? [lastFetched] : [])
+    );
 
     const newLastFetchedTime = getCurrentTimeInDBFormat();
 
-    const results = discussionWithLectureId.map((entry) => {
-      const user = getUserData(entry.userId);
-      const upvoted = getUpvoteStatus(userId, entry.id, 'question');
+    let results = [];
+    for (const entry of results) {
+      const user = await getUserData(entry.userId);
+      const upvoted = await getUpvoteStatus(userId, entry.id, 'question');
 
-      return {
+      results.push({
         ...entry,
         user,
         upvoted,
-      };
-    });
+      })
+    }
 
     res.json({ results, lastFetched: newLastFetchedTime });
   } else {
