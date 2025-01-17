@@ -230,7 +230,7 @@ router.post('/lectures/:id/discussion', verifyToken, async (req, res) => {
 });
 
 // Change user vote in a question?
-router.post('/questions/:id/vote', verifyToken, (req, res) => {
+router.post('/questions/:id/vote', verifyToken, async (req, res) => {
   // I think sinse this is only toggling upvotes
   // not upvote, donwvote or nutralize.. then no action is needed
   // and it could just be done.. checking if there is a vote..
@@ -247,38 +247,35 @@ router.post('/questions/:id/vote', verifyToken, (req, res) => {
     return res.status(400).send({ message: 'Missing or invalid action field' });
   }
 
-  const question = db
-    .prepare('SELECT * FROM questions WHERE id = ?')
-    .get(questionId);
+  const question = await db.query(
+    'SELECT * FROM questions WHERE id = ?', [questionId]
+  );
 
   if (!question) {
     return res.status(404).send({ message: 'Question not found' });
   }
 
   try {
-    db.transaction(() => {
-      db.prepare(
-        `
-        UPDATE questions
+    await db.transaction(async (connection) => {
+      await connection.queryWithPluck(
+        `UPDATE questions
         SET upvotes = upvotes + ${action == 'upvote' ? 1 : -1}
-        WHERE id = ?
-      `
-      ).run(questionId);
+        WHERE id = ?`,
+        [questionId]
+      );
 
       if (action === 'upvote') {
         // TODO.. what if user already upvoted;
-        db.prepare(
-          `
-          INSERT INTO votes (userId, questionId)
-          VALUES (?, ?)
-        `
-        ).run(userId, questionId);
+        await connection.queryWithPluck(
+          `INSERT INTO votes (userId, questionId)
+          VALUES (?, ?)`,
+          [userId, questionId]
+        );
       } else if (action === 'downvote') {
-        db.prepare(
-          `
-          DELETE FROM votes WHERE userId = ? AND questionId = ?
-        `
-        ).run(userId, questionId);
+        await connection.queryWithPluck(
+          `DELETE FROM votes WHERE userId = ? AND questionId = ?`,
+          [userId, questionId]
+        );
       }
 
       const { courseId, lectureId } = question;
@@ -316,7 +313,7 @@ router.post('/questions/:id/vote', verifyToken, (req, res) => {
       // Now another thing.. I'm juggling between 201.. 200, and 204?
       // Sinse i'm already creating a resource.. which is the votes.. and updating somehting
       res.status(201).json({ message });
-    })();
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).send({ message: 'Error updating vote' });
