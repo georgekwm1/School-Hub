@@ -388,29 +388,31 @@ router.put('/questions/:id', verifyToken, async (req, res) => {
 });
 
 // delete a question
-router.delete('/questions/:id', verifyToken, (req, res) => {
+router.delete('/questions/:id', verifyToken, async (req, res) => {
   const questionId = req.params.id;
   const userId = req.userId;
   const io = req.app.get('io');
 
-  const question = db
-    .prepare('SELECT * FROM questions WHERE id = ?')
-    .get(questionId);
+  const [question] = await db.query(
+    'SELECT * FROM questions WHERE id = ?', [questionId]
+  );
 
   if (!question) {
     return res.status(404).send({ message: 'Question not found' });
   }
 
-  const courseId = getQuestionCourseId(question.id);
-  const isAdmin = isCourseAdmin(userId, courseId);
+  const courseId = await getQuestionCourseId(question.id);
+  const isAdmin = await isCourseAdmin(userId, courseId);
   if (question.userId !== userId && !isAdmin) {
     // As if this is a descriptive message now?!..
     return res.status(403).send({ message: 'User is not authorized' });
   }
 
   try {
-    db.transaction(() => {
-      db.prepare('DELETE FROM questions WHERE id = ?').run(questionId);
+    await db.transaction(async (connection) => {
+      await connection.queryWithPluck(
+        'DELETE FROM questions WHERE id = ?', [questionId]
+      );
       // useless if the cascade works.. whey did i forget this?!
       // db.prepare('DELETE FROM replies WHERE questionId = ?').run(questionId);
 
@@ -439,7 +441,7 @@ router.delete('/questions/:id', verifyToken, (req, res) => {
         userId,
       });
       
-    })();
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).send({ message: 'Error deleting question' });
