@@ -21,22 +21,18 @@ const { verifyToken } = require('../middlewares/authMiddlewares');
 
 const router = express.Router();
 
-function getReplyCourseId(replyId) {
-  const query = db.prepare(
-    `
-    -- Oh, boy... this is crazy... 
+async function getReplyCourseId(replyId) {
+  const query = `-- Oh, boy... this is crazy... 
     SELECT 
       q.courseId AS courseIdFromQuestion,
       (SELECT courseId FROM lectures WHERE id = q.lectureId) AS courseIdFromLecture
     FROM replies r
       JOIN questions q ON r.questionId = q.id
-    WHERE r.id = ?;
-    `
-  );
+    WHERE r.id = ?;`
 
-  const { courseIdFromQuestion, courseIdFromLecture } = query.get(replyId);
+  const [{ courseIdFromQuestion, courseIdFromLecture }] = db.query(query, [replyId]);
   return courseIdFromQuestion ? courseIdFromQuestion : courseIdFromLecture;
-}
+}G
 
 /**
  * Returns the parent of a question, either the courseId or lectureId,
