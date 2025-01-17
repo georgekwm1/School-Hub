@@ -53,25 +53,24 @@ async function getQuestionParentId(questionId) {
 }
 
 // Get question replies
-router.get('/questions/:id/replies', verifyToken, (req, res) => {
+router.get('/questions/:id/replies', verifyToken, async (req, res) => {
   const questionId = req.params.id;
   const userId = req.userId;
   const { lastFetched } = req.query;
 
-  const question = db
-    .prepare(
-      // Assuming it's a lecture question this won't the lecturId won't be null.
-      `SELECT id, title, body, updatedAt, upvotes, repliesCount, userId, lectureId, (updatedAt >= ?) AS isNew
+  const [question] = await db.query(
+    // Assuming it's a lecture question this won't the lecturId won't be null.
+    `SELECT id, title, body, updatedAt, upvotes, repliesCount, userId, lectureId, (updatedAt >= ?) AS isNew
     FROM questions
-    WHERE id = ?`
-    )
-    .get(lastFetched, questionId);
+    WHERE id = ?`,
+    [lastFetched, questionId]
+  );
 
   if (!question) {
     return res.status(404).send({ message: 'Question not found' });
   }
 
-  question.upvoted = getUpvoteStatus(userId, question.id, 'question');
+  question.upvoted = await getUpvoteStatus(userId, question.id, 'question');
   // Save some bandwidth
   let questionResponse = question;
   if (!question.isNew) {
@@ -83,32 +82,33 @@ router.get('/questions/:id/replies', verifyToken, (req, res) => {
       updatedAt: question.updatedAt,
     }
   } else {
-    questionResponse.user = getUserData(question.userId);
+    questionResponse.user = await getUserData(question.userId);
     delete questionResponse.userId;
     delete questionResponse.isNew;
   }
 
   const params = [questionId].concat(lastFetched ? [lastFetched] : []);
-  const replies = db
-    .prepare(
-      `SELECT id, body, userId, updatedAt, upvotes
+  const replies = await db.query(
+    `SELECT id, body, userId, updatedAt, upvotes
     FROM replies
     WHERE questionId = ?
       ${lastFetched ? 'AND createdAt > ?' : ''}
-    ORDER BY updatedAt DESC`
-    ).all(...params);
+    ORDER BY updatedAt DESC`,
+    params
+  );
 
   const newLastFetched = getCurrentTimeInDBFormat();
-  const repliesList = replies.map((reply) => {
-    const user = getUserData(reply.userId);
-    const upvoted = getUpvoteStatus(userId, reply.id, 'reply');
+  let repliesList = [];
+  for (const reply of replies) {
+    const user = await getUserData(reply.userId);
+    const upvoted = await getUpvoteStatus(userId, reply.id, 'reply');
 
-    return {
+    repliesList.push({
       ...reply,
       user,
-      upvoted,
-    };
-  });
+      upvoted
+    })
+  }
 
 
   res.json({
