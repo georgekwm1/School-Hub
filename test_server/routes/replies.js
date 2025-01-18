@@ -30,7 +30,7 @@ async function getReplyCourseId(replyId) {
       JOIN questions q ON r.questionId = q.id
     WHERE r.id = ?;`
 
-  const [{ courseIdFromQuestion, courseIdFromLecture }] = db.query(query, [replyId]);
+  const [{ courseIdFromQuestion, courseIdFromLecture }] = await db.query(query, [replyId]);
   return courseIdFromQuestion ? courseIdFromQuestion : courseIdFromLecture;
 }
 
@@ -41,7 +41,7 @@ async function getReplyCourseId(replyId) {
  * @returns {{courseId: string, lectureId: string} | null}
  */
 async function getQuestionParentId(questionId) {
-  const [result] = db.query(
+  const [result] = await db.query(
     `SELECT 
       courseId, lectureId 
     FROM questions
@@ -337,7 +337,6 @@ router.post('/questions/:questionId/replies/diff', verifyToken, async (req, res)
   const userVotes = await db.query(
     `SELECT replyId, userId FROM votes WHERE userId = ? ;`,
     [userId],
-    pluck=true
   );
 
   const results = {
