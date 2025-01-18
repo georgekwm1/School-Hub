@@ -279,28 +279,26 @@ router.put('/replies/:id', verifyToken, async (req, res) => {
 });
 
 // Delete a reply
-router.delete('/replies/:id', verifyToken, (req, res) => {
+router.delete('/replies/:id', verifyToken, async (req, res) => {
   const replyId = req.params.id;
   const io = req.app.get('io');
   const userId = req.userId;
 
   try {
-    const reply = db
-      .prepare('SELECT id, userId, questionId FROM replies WHERE id = ?')
-      .get(replyId);
+    const [reply] = await db.query('SELECT id, userId, questionId FROM replies WHERE id = ?', [replyId]);
 
     if (!reply) {
       return res.status(404).send({ message: 'Reply not found' });
     }
 
-    const replyCourseId = getReplyCourseId(replyId);
-    if (reply.userId !== userId && !isCourseAdmin(userId, replyCourseId)) {
+    const replyCourseId = await getReplyCourseId(replyId);
+    if (reply.userId !== userId && ! await isCourseAdmin(userId, replyCourseId)) {
       return res
         .status(403)
         .send({ message: 'User is not authorized to delete this reply' });
     }
 
-    db.prepare('DELETE FROM replies WHERE id = ?').run(replyId);
+    await db.query('DELETE FROM replies WHERE id = ?', [replyId]);
 
     res.status(200).json({ message: 'Reply deleted successfully' });
 
@@ -309,7 +307,7 @@ router.delete('/replies/:id', verifyToken, (req, res) => {
       userId
     });
 
-    const { lectureId, courseId} = getQuestionParentId(reply.questionId);
+    const { lectureId, courseId} = await getQuestionParentId(reply.questionId);
     const room = lectureId ? `lectureDiscussion-${lectureId}` : `generalDiscussion-${courseId}`;
     io.to(room).emit('replyDeleted', {
       payload: {questionId: reply.questionId, lectureId, courseId },
