@@ -251,6 +251,8 @@ export const syncExistingAnnouncements = () => async (dispatch, getState) => {
   const state = getState();
   const courseId = state.ui.getIn(['course', 'id']);
   const allAnnouncements = state.announcements.get('announcements');
+  if (!allAnnouncements?.size) return;
+
   const body = allAnnouncements
     .map((entry) => ({
       id: entry.get('id'),

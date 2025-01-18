@@ -22,53 +22,59 @@ const { verifyToken } = require('../middlewares/authMiddlewares');
 const router = express.Router();
 
 // Get course announcements
-router.get('/courses/:id/announcements', verifyToken, (req, res) => {
+router.get('/courses/:id/announcements', verifyToken, async(req, res) => {
   const courseId = req.params.id;
   const userId = req.userId;
   const { lastFetched } = req.query;
 
-  const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(courseId);
-  if (!course) {
-    return res.status(404).send({ message: 'Course not found' });
+  try {
+    const [course] = await db.query('SELECT * FROM courses WHERE id = ?', [courseId]);
+    if (!course) {
+      return res.status(404).send({ message: 'Course not found' });
+    }
+
+    if (
+      ! await isUserEnroledInCourse(userId, courseId) &&
+      ! await isCourseAdmin(userId, courseId)
+    ) {
+      return res
+        .status(403)
+        .send({ message: 'User is not enrolled in this course' });
+    }
+
+    const query = `
+        SELECT * FROM announcements
+          WHERE courseId = ? 
+          ${lastFetched ? 'AND createdAt > ?' : ''}
+          ORDER BY createdAt DESC;
+        `;
+    const params = [courseId, ...(lastFetched ? [lastFetched] : [])];
+    const announcements = await db.query(query, params);
+
+    let results = [];
+    for (const announcement of announcements) {
+      const user = getUserData(announcement.userId);
+      delete announcement.userId;
+      // I'm going to leave createdAt there.. may be will be shown
+      // besides the updatedAt
+      results.push({
+        ...announcement,
+        user,
+      });
+    }
+
+    res.json({
+      announcements: results,
+      lastFetched: getCurrentTimeInDBFormat(),
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: 'Internal server error' });
   }
-
-  if (
-    !isUserEnroledInCourse(userId, courseId) &&
-    !isCourseAdmin(userId, courseId)
-  ) {
-    return res
-      .status(403)
-      .send({ message: 'User is not enrolled in this course' });
-  }
-
-  const query = `
-      SELECT * FROM announcements
-        WHERE courseId = ? 
-        ${lastFetched ? 'AND createdAt > ?' : ''}
-        ORDER BY createdAt DESC;
-      `;
-  const params = [courseId, ...(lastFetched ? [lastFetched] : [])];
-  const announcements = db.prepare(query).all(...params);
-
-  const results = announcements.map((announcement) => {
-    const user = getUserData(announcement.userId);
-    delete announcement.userId;
-    // I'm going to leave createdAt there.. may be will be shown
-    // besides the updatedAt
-    return {
-      ...announcement,
-      user,
-    };
-  });
-
-  res.json({
-    announcements: results,
-    lastFetched: getCurrentTimeInDBFormat(),
-  });
 });
 
 // Create a course announcement
-router.post('/courses/:id/announcements', verifyToken, (req, res) => {
+router.post('/courses/:id/announcements', verifyToken, async (req, res) => {
   const courseId = req.params.id;
   const io = req.app.get('io');
   const { title, details } = req.body;
@@ -78,22 +84,21 @@ router.post('/courses/:id/announcements', verifyToken, (req, res) => {
     return res.status(400).send({ message: 'Missing required fields' });
   }
 
-  if (!isCourseAdmin(userId, courseId))
-    return res.status(403).send({ message: 'User is not a course admin' });
-
   try {
-    const id = uuidv4();
-    db.prepare(
-      `
-      INSERT INTO announcements (id, courseId, userId, title, body)
-      VALUES (?, ?, ?, ?, ?)
-    `
-    ).run(id, courseId, userId, title, details);
+    if (!await isCourseAdmin(userId, courseId))
+      return res.status(403).send({ message: 'User is not a course admin' });
 
-    const user = getUserData(userId);
-    const newAnnouncement = db
-      .prepare('SELECT * FROM announcements WHERE id = ?')
-      .get(id);
+    const id = uuidv4();
+    await db.query(
+      `INSERT INTO announcements (id, courseId, userId, title, body)
+      VALUES (?, ?, ?, ?, ?)`,
+      [id, courseId, userId, title, details]
+    );
+
+    const user = await getUserData(userId);
+    const [newAnnouncement] = await db.query(
+      'SELECT * FROM announcements WHERE id = ?', [id]
+    );
     delete newAnnouncement.userId;
 
     const lastFetched = getCurrentTimeInDBFormat();
@@ -117,34 +122,34 @@ router.post('/courses/:id/announcements', verifyToken, (req, res) => {
 });
 
 // Edit an announcement
-router.put('/announcements/:id', verifyToken, (req, res) => {
+router.put('/announcements/:id', verifyToken, async (req, res) => {
   const { id } = req.params;
   const { title, details } = req.body;
   const io = req.app.get('io');
   const userId = req.userId;
 
   try {
-    const { courseId } = db
-      .prepare('SELECT courseId FROM announcements WHERE id = ?')
-      .get(id);
+    const [{ courseId }] = await db.query(
+      'SELECT courseId FROM announcements WHERE id = ?', [id]
+    );
+
     if (!courseId) {
       return res.status(404).send({ message: 'Announcement not found' });
     }
 
-    if (!isCourseAdmin(userId, courseId)) {
+    if (!await isCourseAdmin(userId, courseId)) {
       return res.status(403).send({ message: 'User is not a course admin' });
     }
 
-    db.prepare('UPDATE announcements SET title = ?, body = ? WHERE id = ?').run(
-      title,
-      details,
-      id
+    await db.query(
+      'UPDATE announcements SET title = ?, body = ? WHERE id = ?',
+      [title, details, id]
     );
 
-    const updatedAnnouncement = db
-      .prepare('SELECT * FROM announcements WHERE id = ?')
-      .get(id);
-    const user = getUserData(updatedAnnouncement.userId);
+    const [updatedAnnouncement] = await db.query(
+      'SELECT * FROM announcements WHERE id = ?', [id]
+    );
+    const user = await getUserData(updatedAnnouncement.userId);
     delete updatedAnnouncement.userId;
     updatedAnnouncement.user = user;
 
@@ -164,24 +169,24 @@ router.put('/announcements/:id', verifyToken, (req, res) => {
 });
 
 // Delete an announcement
-router.delete('/announcements/:id', verifyToken, (req, res) => {
+router.delete('/announcements/:id', verifyToken, async (req, res) => {
   const announcementId = req.params.id;
   const userId = req.userId;
   const io = req.app.get('io');
 
   try {
-    const announcement = db
-      .prepare('SELECT * FROM announcements WHERE id = ?')
-      .get(announcementId);
+    const [announcement] = await db.query(
+      'SELECT * FROM announcements WHERE id = ?', [announcementId]
+    );
     if (!announcement) {
       return res.status(404).send({ message: 'Announcement not found' });
     }
 
     const courseId = announcement.courseId;
-    if (!isCourseAdmin(userId, courseId)) {
+    if (! await isCourseAdmin(userId, courseId)) {
       return res.status(403).send({ message: 'User is not a course admin' });
     }
-    db.prepare('DELETE FROM announcements WHERE id = ?').run(announcementId);
+    await db.query('DELETE FROM announcements WHERE id = ?', [announcementId]);
 
     io.to(`announcements-${courseId}`)
       .except(`user-${userId}`)
@@ -206,11 +211,11 @@ router.delete('/announcements/:id', verifyToken, (req, res) => {
  * Sinse i'm talking about deletion and updates..
  * Is 'diff' better?
  */
-router.post('/courses/:id/announcements/diff', verifyToken, (req, res) => {
+router.post('/courses/:id/announcements/diff', verifyToken, async (req, res) => {
   const userId = req.userId;
   const courseId = req.params.id;
 
-  const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(courseId);
+  const [course] = await db.query('SELECT * FROM courses WHERE id = ?', [courseId]);
   if (!course) {
     return res.status(404).send({ message: 'Course not found' });
   }
@@ -219,8 +224,8 @@ router.post('/courses/:id/announcements/diff', verifyToken, (req, res) => {
   // If the user already have the IDs and data. then he is ligid anyway.
   // Or not?,, but it means he is already logged in and have htings in his state cached
   if (
-    !isUserEnroledInCourse(userId, courseId) &&
-    !isCourseAdmin(userId, courseId)
+    ! await isUserEnroledInCourse(userId, courseId) &&
+    ! await isCourseAdmin(userId, courseId)
   ) {
     return res
       .status(403)
@@ -242,9 +247,10 @@ router.post('/courses/:id/announcements/diff', verifyToken, (req, res) => {
   const placeholders = Array.from(announcements.keys())
     .map(() => '?')
     .join(', ');
-  const DBAnnouncements = db
-    .prepare(`SELECT * FROM announcements WHERE id IN (${placeholders})`)
-    .all(...Array.from(announcements.keys()));
+  const DBAnnouncements = await db.query(
+    `SELECT * FROM announcements WHERE id IN (${placeholders})`,
+    Array.from(announcements.keys())
+  );
 
   const results = {
     updated: [],

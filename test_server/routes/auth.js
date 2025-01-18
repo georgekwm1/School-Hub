@@ -42,8 +42,7 @@ router.post('/login', async (req, res) => {
   console.log(req.body);
   const { email, password, courseId } = req.body;
 
-  const query = db.prepare('SELECT * FROM users WHERE email = ?');
-  const user = query.get(email);
+  const [user] = await db.execute('SELECT * FROM users WHERE email = ?', [email]);
 
   if (!user) {
     return res.status(401).send({ message: 'Email not found' });
@@ -68,11 +67,10 @@ router.post('/login', async (req, res) => {
     return res.status(401).json({ message });
   }
 
-  const enrollment = db
-    .prepare(
-      'SELECT * FROM courseEnrollments WHERE userId = ? AND courseId = ?'
-    )
-    .get(user.id, courseId);
+  const [enrollment] = await db.execute(
+      'SELECT * FROM courseEnrollments WHERE userId = ? AND courseId = ?',
+      [user.id, courseId]
+    );
 
   if (!enrollment) {
     return res
@@ -116,17 +114,18 @@ router.post('/oauth/google', async (req, res) => {
       res.status(401).send({ message: 'Email not verified' });
     }
 
-    const getUser = db.prepare('SELECT * FROM users WHERE email = ?');
-    const user = getUser.get(data.email);
+    const [user] = await db.execute('SELECT * FROM users WHERE email = ?', [data.email]);
     if (!user) {
       return res.status(401).json({ message: 'User not found' });
     } else if (!user.googleId) {
-      db.prepare(`UPDATE users SET googleId = ? WHERE email = ?`).run(
-        data.sub,
-        data.email
+      await db.execute(`UPDATE users SET googleId = ? WHERE email = ?`,
+        [
+          data.sub,
+          data.email
+        ]
       );
     }
-    if (!isUserEnroledInCourse(user.id, courseId)) {
+    if (! await isUserEnroledInCourse(user.id, courseId)) {
       // Again.. on of the wierd things...
       // Because if you a user of the model of one course one prof.. using this..
       // for him.. the entire platform or app. is tihs course..
@@ -189,30 +188,31 @@ router.post('/oauth/googleRegister', async (req, res) => {
     console.log(userData);
     console.log(userData.email);
 
-    const existingUser = db
-      .prepare('SELECT 1 FROM users WHERE email = ?')
-      .get(userData.email);
+    const [existingUser] = await db
+      .execute('SELECT 1 FROM users WHERE email = ?', [userData.email]);
     if (existingUser) {
       return res.status(409).send({ message: 'Email already exists' });
     }
 
-    db.transaction(() => {
+    await db.transaction(async (connection) => {
       const userId = userData.sub;
-      db.prepare(
+      await connection.executeWithPluck(
         `INSERT INTO users (id, googleId, email, firstName, lastName, pictureUrl, pictureThumbnail)
-        VALUES (?, ?, ?, ?, ?, ?, ?)`
-      ).run(
-        userId,
-        userId,
-        userData.email,
-        userData.given_name,
-        userData.family_name,
-        userData.picture,
-        userData.picture
+        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          userId,
+          userId,
+          userData.email,
+          userData.given_name,
+          userData.family_name,
+          userData.picture,
+          userData.picture
+        ]
       );
-      db.prepare(
-        'INSERT INTO courseEnrollments (userId, courseId) VALUES (?, ?)'
-      ).run(userId, courseId);
+      await connection.executeWithPluck(
+        'INSERT INTO courseEnrollments (userId, courseId) VALUES (?, ?)',
+        [userId, courseId]
+      );
 
       const accessToken = jwt.sign(
         { userId, courseId, role: 'student' },
@@ -232,7 +232,7 @@ router.post('/oauth/googleRegister', async (req, res) => {
         },
         message: 'User registered and logged in successfully',
       });
-    })();
+    });
   } catch (error) {
     console.error(error);
     res.status(500).send({ message: 'Server Error while registering' });
@@ -253,9 +253,9 @@ router.post('/register', async (req, res) => {
     pictureThumbnail,
   } = userData;
   try {
-    const existingUser = db
-      .prepare(`SELECT * FROM users WHERE email = ?`)
-      .get(email);
+    const [existingUser] = await db.execute(
+      `SELECT * FROM users WHERE email = ?`, [email]
+    );
     if (existingUser) {
       res.status(409).json({ message: 'Email already exists' });
       return;
@@ -263,31 +263,31 @@ router.post('/register', async (req, res) => {
     const id = uuidv4();
     const passwordHash = await bcrypt.hash(password, 10);
 
-    db.transaction(() => {
-      const query = db.prepare(
+    await db.transaction(async (connection) => {
+      await connection.executeWithPluck(
         `INSERT INTO users (
           id, email, passwordHash, firstName, lastName, username, pictureId,
           pictureUrl, pictureThumbnail
         ) VALUES (
           ?, ?, ?, ?, ?, ?, ?, ?, ?
-        )`
+        )`,
+        [
+          id,
+          email,
+          passwordHash,
+          firstName,
+          lastName,
+          username,
+          pictureId ?? '',
+          pictureURL ?? '',
+          pictureThumbnail ?? '',
+        ]
       );
 
-      query.run(
-        id,
-        email,
-        passwordHash,
-        firstName,
-        lastName,
-        username,
-        pictureId,
-        pictureURL,
-        pictureThumbnail
-      );
-
-      db.prepare(
-        `INSERT INTO courseEnrollments (userId, courseId) VALUES (?, ?)`
-      ).run(id, courseId);
+      await connection.executeWithPluck(
+        `INSERT INTO courseEnrollments (userId, courseId) VALUES (?, ?)`,
+        [id, courseId]
+      )
       // Student is the default of the role for now.. admins will be added amnaully when instantiating
       // and instance for the course.. and seeting things up and if there are customizations..
       const accessToken = jwt.sign(
@@ -308,7 +308,7 @@ router.post('/register', async (req, res) => {
         },
         message: 'User created successfully',
       });
-    })();
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Internal server error' });
@@ -317,8 +317,9 @@ router.post('/register', async (req, res) => {
 
 router.post('/admin/login', async (req, res) => {
   const { email, password, courseId } = req.body;
-  const query = db.prepare('SELECT * FROM users WHERE email = ? AND role = ?');
-  const user = query.get(email, 'admin');
+  const [user] = await db.execute(
+    'SELECT * FROM users WHERE email = ? AND role = ?', [email, 'admin']
+  );
   if (!user) {
     res.status(401).send({ message: 'Invalid credentials' });
     return;
@@ -331,9 +332,10 @@ router.post('/admin/login', async (req, res) => {
     return;
   }
 
-  const enrollment = db
-    .prepare('SELECT * FROM courseAdmins WHERE userId = ? AND courseId = ?')
-    .get(user.id, courseId);
+  const [enrollment] = await db.execute(
+    'SELECT * FROM courseAdmins WHERE userId = ? AND courseId = ?',
+    [user.id, courseId]
+  );
   if (!enrollment) {
     return res.status(403).send({ message: 'User is not a course admin' });
   }
@@ -359,6 +361,11 @@ router.post('/admin/login', async (req, res) => {
 });
 
 router.post('/admin/OAuth/google', (req, res) => {
+  // I have one simple question ❓❔❓❔❓❔❓❔❓❔❓
+  // How on earth i just moved on without checking if the user
+  // Exists in the database or not.. 
+  // I really have no idea...
+  // TODO: Fix this stupid bug..
   const idToken = req.body.token;
   const googleVerifyUrl = `https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`;
   fetch(googleVerifyUrl)

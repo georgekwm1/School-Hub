@@ -180,7 +180,7 @@ export const syncExistingLectures = () => async (dispatch, getState) => {
   const currentLastSynced = new Date(
     state.lectures.get('sectionsLastSyncedAt') + 'Z'
   );
-  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+  const fiveMinutesAgo = new Date(Date.now() - 5 );
   if (new Date(currentLastSynced) > fiveMinutesAgo) return;
 
   let entries = state.lectures.get('sections');

@@ -21,20 +21,16 @@ const { verifyToken } = require('../middlewares/authMiddlewares');
 
 const router = express.Router();
 
-function getReplyCourseId(replyId) {
-  const query = db.prepare(
-    `
-    -- Oh, boy... this is crazy... 
+async function getReplyCourseId(replyId) {
+  const query = `-- Oh, boy... this is crazy... 
     SELECT 
       q.courseId AS courseIdFromQuestion,
       (SELECT courseId FROM lectures WHERE id = q.lectureId) AS courseIdFromLecture
     FROM replies r
       JOIN questions q ON r.questionId = q.id
-    WHERE r.id = ?;
-    `
-  );
+    WHERE r.id = ?;`
 
-  const { courseIdFromQuestion, courseIdFromLecture } = query.get(replyId);
+  const [{ courseIdFromQuestion, courseIdFromLecture }] = await db.query(query, [replyId]);
   return courseIdFromQuestion ? courseIdFromQuestion : courseIdFromLecture;
 }
 
@@ -44,38 +40,38 @@ function getReplyCourseId(replyId) {
  * @param {string} questionId - The id of the question
  * @returns {{courseId: string, lectureId: string} | null}
  */
-function getQuestionParentId(questionId) {
-  const query = db.prepare(
-    `
-    SELECT 
+async function getQuestionParentId(questionId) {
+  const [result] = await db.query(
+    `SELECT 
       courseId, lectureId 
     FROM questions
-    WHERE id = ?;
-    `);
+    WHERE id = ?;`,
+    [questionId]
+  );
 
-  return query.get(questionId);Create 
+  return result; 
 }
 
 // Get question replies
-router.get('/questions/:id/replies', verifyToken, (req, res) => {
+router.get('/questions/:id/replies', verifyToken, async (req, res) => {
   const questionId = req.params.id;
   const userId = req.userId;
   const { lastFetched } = req.query;
 
-  const question = db
-    .prepare(
-      // Assuming it's a lecture question this won't the lecturId won't be null.
-      `SELECT id, title, body, updatedAt, upvotes, repliesCount, userId, lectureId, (updatedAt >= ?) AS isNew
+  const [question] = await db.query(
+    // Assuming it's a lecture question this won't the lecturId won't be null.
+    `SELECT id, title, body, updatedAt, upvotes, repliesCount, userId, lectureId,
+      ${lastFetched? '(updatedAt >= :lastFetched)' : '1'} AS isNew
     FROM questions
-    WHERE id = ?`
-    )
-    .get(lastFetched, questionId);
+    WHERE id = :questionId`,
+    {lastFetched, questionId}
+  );
 
   if (!question) {
     return res.status(404).send({ message: 'Question not found' });
   }
 
-  question.upvoted = getUpvoteStatus(userId, question.id, 'question');
+  question.upvoted = await getUpvoteStatus(userId, question.id, 'question');
   // Save some bandwidth
   let questionResponse = question;
   if (!question.isNew) {
@@ -87,32 +83,33 @@ router.get('/questions/:id/replies', verifyToken, (req, res) => {
       updatedAt: question.updatedAt,
     }
   } else {
-    questionResponse.user = getUserData(question.userId);
+    questionResponse.user = await getUserData(question.userId);
     delete questionResponse.userId;
     delete questionResponse.isNew;
   }
 
   const params = [questionId].concat(lastFetched ? [lastFetched] : []);
-  const replies = db
-    .prepare(
-      `SELECT id, body, userId, updatedAt, upvotes
+  const replies = await db.query(
+    `SELECT id, body, userId, updatedAt, upvotes
     FROM replies
     WHERE questionId = ?
       ${lastFetched ? 'AND createdAt > ?' : ''}
-    ORDER BY updatedAt DESC`
-    ).all(...params);
+    ORDER BY updatedAt DESC`,
+    params
+  );
 
   const newLastFetched = getCurrentTimeInDBFormat();
-  const repliesList = replies.map((reply) => {
-    const user = getUserData(reply.userId);
-    const upvoted = getUpvoteStatus(userId, reply.id, 'reply');
+  let repliesList = [];
+  for (const reply of replies) {
+    const user = await getUserData(reply.userId);
+    const upvoted = await getUpvoteStatus(userId, reply.id, 'reply');
 
-    return {
+    repliesList.push({
       ...reply,
       user,
-      upvoted,
-    };
-  });
+      upvoted
+    })
+  }
 
 
   res.json({
@@ -123,7 +120,7 @@ router.get('/questions/:id/replies', verifyToken, (req, res) => {
 });
 
 // Change user vote for a replies
-router.post('/replies/:id/vote', verifyToken, (req, res) => {
+router.post('/replies/:id/vote', verifyToken, async (req, res) => {
   const replyId = req.params.id;
   const io = req.app.get('io');
   const { action } = req.body;
@@ -134,33 +131,35 @@ router.post('/replies/:id/vote', verifyToken, (req, res) => {
   }
 
   // Is this a better way? I don't know.
-  const reply =
-    db.prepare(`SELECT id, questionId FROM replies WHERE id = ?`).get(replyId);
+  const [reply] = await db.query(
+    `SELECT id, questionId FROM replies WHERE id = ?`, [replyId]
+  );
 
   if (!reply) {
     return res.status(404).send({ message: 'Reply not found' });
   }
 
   try {
-    db.transaction(() => {
+    await db.transaction(async (connection) => {
       if (action === 'upvote') {
-        db.prepare(
+        await connection.query(
           `INSERT INTO votes (userId, replyId)
-          VALUES (?, ?)`
-        ).run(userId, replyId);
+          VALUES (?, ?)`,
+          [userId, replyId]
+        );
       } else if (action === 'downvote') {
-        db.prepare(`DELETE FROM votes WHERE userId = ? AND replyId = ?`).run(
-          userId,
-          replyId
+        await connection.query(
+          `DELETE FROM votes WHERE userId = ? AND replyId = ?`,
+          [userId, replyId]
         );
       }
-      db.prepare(
-        `
-        UPDATE replies
+
+      await connection.query(
+        `UPDATE replies
         SET upvotes = upvotes + ${action == 'upvote' ? 1 : -1}
-        WHERE id = ?
-        `
-      ).run(replyId);
+        WHERE id = ?`,
+        [replyId]
+      );
 
       let message;
       if (action == 'upvote') {
@@ -179,7 +178,7 @@ router.post('/replies/:id/vote', verifyToken, (req, res) => {
         },
         userId,
       })
-    })();
+    });
   } catch (err) {
     console.error(err);
     res.status(500).send({ message: 'Error voting' });
@@ -187,7 +186,7 @@ router.post('/replies/:id/vote', verifyToken, (req, res) => {
 });
 
 // Create a reply for a question
-router.post('/questions/:id/replies', verifyToken, (req, res) => {
+router.post('/questions/:id/replies', verifyToken, async (req, res) => {
   const questionId = req.params.id;
   const io = req.app.get('io');
   const { body } = req.body;
@@ -199,20 +198,19 @@ router.post('/questions/:id/replies', verifyToken, (req, res) => {
 
   try {
     const id = uuidv4();
-    db.prepare(
-      `
-      INSERT INTO replies (id, questionId, userId, body)
-      VALUES (?, ?, ?, ?)
-    `
-    ).run(id, questionId, userId, body);
+    await db.query(
+      `INSERT INTO replies (id, questionId, userId, body)
+      VALUES (?, ?, ?, ?)`,
+      [id, questionId, userId, body]
+    );
 
     // I feel I'm doing something wronge here.
     // I iether get all the data
     // Or use teh data I already have from the variables above
     // and if for the updatedAt property.. I can just get Date().now()
     // I just don't know
-    const newReply = db.prepare(`SELECT * FROM replies WHERE id = ?`).get(id);
-    const user = getUserData(newReply.userId);
+    const [newReply] = await db.query(`SELECT * FROM replies WHERE id = ?`, [id]);
+    const user = await getUserData(newReply.userId);
 
     delete newReply.userId;
     const response = {
@@ -230,7 +228,7 @@ router.post('/questions/:id/replies', verifyToken, (req, res) => {
       userId,
     });
 
-    const { lectureId, courseId } = getQuestionParentId(newReply.questionId);
+    const { lectureId, courseId } = await getQuestionParentId(newReply.questionId);
     const room = lectureId ? `lectureDiscussion-${lectureId}` : `generalDiscussion-${courseId}`;
     io.to(room).emit('replyCreated', {
       payload: {questionId: newReply.questionId, lectureId, courseId },
@@ -243,14 +241,14 @@ router.post('/questions/:id/replies', verifyToken, (req, res) => {
 });
 
 // Edit a reply
-router.put('/replies/:id', verifyToken, (req, res) => {
+router.put('/replies/:id', verifyToken, async (req, res) => {
   const { id } = req.params;
   const io = req.app.get('io');
   const { body } = req.body;
   const userId = req.userId;
 
   try {
-    const reply = db.prepare('SELECT id, userId FROM replies WHERE id = ?').get(id);
+    const [reply] = await db.query('SELECT id, userId FROM replies WHERE id = ?', [id]);
     if (!reply) {
       return res.status(404).send({ message: 'Reply not found' });
     }
@@ -261,11 +259,12 @@ router.put('/replies/:id', verifyToken, (req, res) => {
         .send({ message: 'User is not authorized to edit this reply' });
     }
 
-    db.prepare('UPDATE replies SET body = ? WHERE id = ?').run(body, id);
+    await db.query('UPDATE replies SET body = ? WHERE id = ?', [body, id]);
 
-    const updatedReply = db
-      .prepare('SELECT id, questionId, body, updatedAt FROM replies WHERE id = ?')
-      .get(id);
+    const [updatedReply] = await db.query(
+      'SELECT id, questionId, body, updatedAt FROM replies WHERE id = ?',
+      [id]
+    );
 
     res.status(200).json(updatedReply);
 
@@ -280,28 +279,26 @@ router.put('/replies/:id', verifyToken, (req, res) => {
 });
 
 // Delete a reply
-router.delete('/replies/:id', verifyToken, (req, res) => {
+router.delete('/replies/:id', verifyToken, async (req, res) => {
   const replyId = req.params.id;
   const io = req.app.get('io');
   const userId = req.userId;
 
   try {
-    const reply = db
-      .prepare('SELECT id, userId, questionId FROM replies WHERE id = ?')
-      .get(replyId);
+    const [reply] = await db.query('SELECT id, userId, questionId FROM replies WHERE id = ?', [replyId]);
 
     if (!reply) {
       return res.status(404).send({ message: 'Reply not found' });
     }
 
-    const replyCourseId = getReplyCourseId(replyId);
-    if (reply.userId !== userId && !isCourseAdmin(userId, replyCourseId)) {
+    const replyCourseId = await getReplyCourseId(replyId);
+    if (reply.userId !== userId && ! await isCourseAdmin(userId, replyCourseId)) {
       return res
         .status(403)
         .send({ message: 'User is not authorized to delete this reply' });
     }
 
-    db.prepare('DELETE FROM replies WHERE id = ?').run(replyId);
+    await db.query('DELETE FROM replies WHERE id = ?', [replyId]);
 
     res.status(200).json({ message: 'Reply deleted successfully' });
 
@@ -310,7 +307,7 @@ router.delete('/replies/:id', verifyToken, (req, res) => {
       userId
     });
 
-    const { lectureId, courseId} = getQuestionParentId(reply.questionId);
+    const { lectureId, courseId} = await getQuestionParentId(reply.questionId);
     const room = lectureId ? `lectureDiscussion-${lectureId}` : `generalDiscussion-${courseId}`;
     io.to(room).emit('replyDeleted', {
       payload: {questionId: reply.questionId, lectureId, courseId },
@@ -323,7 +320,7 @@ router.delete('/replies/:id', verifyToken, (req, res) => {
 });
 
 // Sync existing replies
-router.post('/questions/:questionId/replies/diff', verifyToken, (req, res) => {
+router.post('/questions/:questionId/replies/diff', verifyToken, async (req, res) => {
   const {questionId} = req.params;
   const userId = req.userId;
   const { entries, lastFetched } = req.body;
@@ -332,13 +329,15 @@ router.post('/questions/:questionId/replies/diff', verifyToken, (req, res) => {
     reply => [reply.id, reply.updatedAt]
   ));
 
-  const dbEntries = db.prepare(
+  const dbEntries = await db.query(
     `SELECT id, updatedAt, body, upvotes FROM replies 
-      WHERE questionId = ? AND createdAt <= ?;`
-  ).all(questionId, lastFetched);
-  const userVotes = db.prepare(
-    `SELECT replyId, userId FROM votes WHERE userId = ? ;`
-  ).pluck().all(userId);
+      WHERE questionId = ? AND createdAt <= ?;`,
+    [questionId, lastFetched]
+  );
+  const userVotes = await db.query(
+    `SELECT replyId, userId FROM votes WHERE userId = ? ;`,
+    [userId],
+  );
 
   const results = {
     existing: {},

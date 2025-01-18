@@ -1,13 +1,13 @@
 const db = require('./connect');
 
-function getUserData(userId) {
-  const user = db
-    .prepare(
+async function getUserData(userId) {
+  const [user] = await db.execute(
       `SELECT id, firstName, lastName, pictureThumbnail
-    FROM users
-    WHERE id = ?`
-    )
-    .get(userId);
+      FROM users
+      WHERE id = ?`,
+      [userId]
+    );
+
 
   return {
     id: user.id,
@@ -16,28 +16,28 @@ function getUserData(userId) {
   };
 }
 
-function getUpvoteStatus(userId, resourceId, resourceType) {
+async function getUpvoteStatus(userId, resourceId, resourceType) {
   const idColumn = resourceType === 'question' ? 'questionId' : 'replyId';
 
-  return (
-    db
-      .prepare(`SELECT userId FROM votes WHERE userId = ? AND ${idColumn} = ?`)
-      .get(userId, resourceId) !== undefined
+  const result = await db.execute(
+    `SELECT userId FROM votes WHERE userId = ? AND ${idColumn} = ?`,
+    [userId, resourceId],
+    pluck=true
   );
+  return result.length !== 0;
 }
 
-function isCourseAdmin(userId, courseId) {
-  const stmt = db.prepare(
-    'SELECT 1 FROM courseAdmins WHERE courseId = ? AND userId = ?'
-  );
-  return stmt.get(courseId, userId) !== undefined;
+async function isCourseAdmin(userId, courseId) {
+  const stmt = 
+    'SELECT 1 FROM courseAdmins WHERE courseId = ? AND userId = ?';
+  return await db.execute(stmt, [courseId, userId]).length !== 0;
 }
 
-function isUserEnroledInCourse(userId, courseId) {
-  const stmt = db.prepare(
-    'SELECT 1 FROM courseEnrollments WHERE courseId = ? AND userId = ?'
-  );
-  return stmt.get(courseId, userId) !== undefined;
+async function isUserEnroledInCourse(userId, courseId) {
+  const stmt =
+    'SELECT 1 FROM courseEnrollments WHERE courseId = ? AND userId = ?';
+
+  return await db.execute(stmt,[courseId, userId]).length !== 0;
 }
 
 function getCurrentTimeInDBFormat() {
