@@ -17,11 +17,11 @@ const { verifyToken } = require('../middlewares/authMiddlewares');
 const router = express.Router();
 
 // Get all comments for an announcement
-router.get('/announcements/:id/comments', verifyToken, (req, res) => {
+router.get('/announcements/:id/comments', verifyToken, async (req, res) => {
   const announcementId = req.params.id;
-  const announcement = db
-    .prepare('SELECT 1 FROM announcements WHERE id = ?')
-    .get(announcementId);
+  const [announcement] = await db.query(
+    'SELECT 1 FROM announcements WHERE id = ?', [announcementId]
+  );
 
   if (!announcement) {
     return res.status(404).send({ message: 'Announcement not found' });
@@ -29,30 +29,27 @@ router.get('/announcements/:id/comments', verifyToken, (req, res) => {
 
   // I'm really not sure if i have to check for user enrollment here or not
 
-  const comments = db
-    .prepare(
-      `
-      SELECT * FROM comments
-        WHERE announcementId = ?
-        ORDER BY createdAt DESC;
-      `
-    )
-    .all(announcementId);
-
-  const results = comments.map((comment) => {
-    const user = getUserData(comment.userId);
+  const comments = await db.query(
+    `SELECT * FROM comments
+      WHERE announcementId = ?
+      ORDER BY createdAt DESC;`,
+    [announcementId]
+  )
+  const results = [];
+  for (const comment of comments) {
+    const user = await getUserData(comment.userId);
     delete comment.userId;
-    return {
+    results.push({
       ...comment,
       user,
-    };
-  });
+    });
+  }
 
   res.status(200).json(results);
 });
 
 // Create a comment for an announcement
-router.post('/announcements/:id/comments', verifyToken, (req, res) => {
+router.post('/announcements/:id/comments', verifyToken, async (req, res) => {
   const announcementId = req.params.id;
   const io = req.app.get('io');
   const { comment: body } = req.body;
@@ -63,27 +60,25 @@ router.post('/announcements/:id/comments', verifyToken, (req, res) => {
   }
 
   try {
-    const { courseId } = db
-      .prepare(
-        `
-        SELECT courseId FROM announcements
-        WHERE id = ?
-      `
-      )
-      .get(announcementId);
+    const [{ courseId }] = await db.query(
+      `SELECT courseId FROM announcements
+        WHERE id = ?`,
+      [announcementId]
+    );
     if (!courseId) {
       return res.status(404).send({ message: 'Announcement not found' });
     }
 
     const id = uuidv4();
-    db.prepare(
-      `INSERT INTO comments (id, announcementId, userId, body) VALUES (?, ?, ?, ?)`
-    ).run(id, announcementId, userId, body);
+    await db.query(
+      `INSERT INTO comments (id, announcementId, userId, body) VALUES (?, ?, ?, ?)`,
+      [id, announcementId, userId, body]
+    );
 
-    const newComment = db
-      .prepare('SELECT * FROM comments WHERE id = ?')
-      .get(id);
-    newComment.user = getUserData(userId);
+    const [newComment] = await db.query(
+      'SELECT * FROM comments WHERE id = ?', [id]
+    );
+    newComment.user = await getUserData(userId);
     delete newComment.userId;
 
     res.status(201).json(newComment);
@@ -98,22 +93,22 @@ router.post('/announcements/:id/comments', verifyToken, (req, res) => {
     })
 
   } catch (err) {
-    console.error(err);
+  console.error(err);
     res.status(500).send({ message: 'Internal server error' });
   }
 });
 
 // Edit an announcement
-router.put('/comments/:id', verifyToken, (req, res) => {
+router.put('/comments/:id', verifyToken, async (req, res) => {
   const { id } = req.params;
   const io = req.app.get('io');
   const { body } = req.body;
   const userId = req.userId;
 
   try {
-    const comment = db
-      .prepare('SELECT userId FROM comments WHERE id = ?')
-      .get(id);
+    const [comment] = await db.query(
+      'SELECT userId FROM comments WHERE id = ?', [id]
+    );
 
     if (!comment) {
       return res.status(404).send({ message: 'Comment not found' });
@@ -125,12 +120,10 @@ router.put('/comments/:id', verifyToken, (req, res) => {
         .send({ message: 'User is not authorized to edit this comment' });
     }
 
-    db.prepare('UPDATE comments SET body = ? WHERE id = ?').run(body, id);
+    await db.query('UPDATE comments SET body = ? WHERE id = ?', [body, id]);
 
-    const updatedComment = db
-      .prepare('SELECT * FROM comments WHERE id = ?')
-      .get(id);
-    updatedComment.user = getUserData(updatedComment.userId);
+    const [updatedComment] = await db.query('SELECT * FROM comments WHERE id = ?', [id]);
+    updatedComment.user = await getUserData(updatedComment.userId);
     delete updatedComment.userId;
 
     res.status(200).json(updatedComment);
@@ -145,33 +138,30 @@ router.put('/comments/:id', verifyToken, (req, res) => {
 });
 
 // Delete an announcement;
-router.delete('/comments/:commentId', verifyToken, (req, res) => {
+router.delete('/comments/:commentId', verifyToken, async(req, res) => {
   const io = req.app.get('io');
   const { commentId } = req.params;
   const userId = req.userId;
 
   try {
-    const comment = db
-      .prepare('SELECT userId, announcementId FROM comments WHERE id = ?')
-      .get(commentId);
+    const [comment] = await db.query(
+      'SELECT userId, announcementId FROM comments WHERE id = ?',
+      [commentId]
+    )
     if (!comment) {
       return res.status(404).send({ message: 'Comment not found' });
     }
     const announcementId = comment.announcementId;
-    const { courseId } = db
-      .prepare(
-        `
-        SELECT courseId FROM announcements
-        WHERE id = ?
-      `
-      )
-      .get(announcementId);
+    const [{ courseId }] = await db.query(
+      'SELECT courseId FROM announcements WHERE id = ?',
+      [announcementId]
+    );
 
-    if (comment.userId !== userId && !isCourseAdmin(userId, courseId)) {
+    if (comment.userId !== userId && ! await isCourseAdmin(userId, courseId)) {
       return res.status(403).send({ message: 'User is not a course admin' });
     }
 
-    db.prepare('DELETE FROM comments WHERE id = ?').run(commentId);
+    await db.query('DELETE FROM comments WHERE id = ?', [commentId]);
 
     res.status(200).json({ message: 'Comment deleted successfully' });
 
