@@ -13,7 +13,7 @@ export const getLectureDiscussions =
       state.discussions.getIn(
         ['lectureDiscussionsLastFetchedAt', lectureId]
         // Somehow and till now couln't tell why.. if this is undefined..
-        // the server on the otherside sees it as 'undefined'.. like a string?!!?!?!?!?!?!
+        // the server on the otherside sees it as 'undefined'.. like a string\
       ) || '';
 
     try {
@@ -623,7 +623,7 @@ export const syncExistingQuestions =
     console.log(entries, lectureId, lastFetched);
 
     // There is not entries existing to sync it
-    if (!entries) return;
+    if (!entries?.length) return;
 
     try {
       const data = await toast.promise(
@@ -674,7 +674,7 @@ export const syncExistingReplies = (questionId) => async (dispatch, getState) =>
     reply => ({id: reply.get('id'), updatedAt: reply.get('updatedAt')})
   ).toJS();
   
-  if (!entries) return;
+  if (!entries?.length) return;
 
   try {
     const data = await toast.promise(

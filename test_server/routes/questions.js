@@ -21,63 +21,56 @@ const {
 const { verifyToken } = require('../middlewares/authMiddlewares');
 
 const router = express.Router();
-function getQuestionCourseId(questionId) {
-  const query = db.prepare(
-    `
+async function getQuestionCourseId(questionId) {
+  const query = `
     SELECT 
       courseId AS courseIdFromQuestion,
       -- Oh, I love this slick trick...
       (SELECT courseId FROM lectures WHERE id = lectureId) AS courseIdFromLecture
     FROM questions
-    WHERE id = ?;
-    `
-  );
-
-  const { courseIdFromQuestion, courseIdFromLecture } = query.get(questionId);
+    WHERE id = ?;`;
+  const [{ courseIdFromQuestion, courseIdFromLecture }] = await db.execute(query, [questionId]);
   return courseIdFromQuestion || courseIdFromLecture;
 }
 
 // Get a course general forum questions
-router.get('/courses/:id/general_discussion', verifyToken, (req, res) => {
+router.get('/courses/:id/general_discussion', verifyToken, async (req, res) => {
   const id = req.params.id;
   const userId = req.userId;
   const { lastFetched } = req.query;
-  const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(id);
+  const [course] = await db.query('SELECT * FROM courses WHERE id = ?', [id]);
   if (!course) {
     res.status(404).send({ message: 'Course not found' });
   }
 
-  if (!isUserEnroledInCourse(userId, id) && !isCourseAdmin(userId, id)) {
+  if (! await isUserEnroledInCourse(userId, id) && ! await isCourseAdmin(userId, id)) {
     return res
       .status(403)
       .send({ message: 'User is not enrolled in this course' });
   }
 
   const params = [course.id, ...(lastFetched ? [lastFetched] : [])];
-  const questionEntries = db
-    .prepare(
-      `
+  const questionEntries = await db.query(`
     SELECT id, title, body, updatedAt, upvotes, repliesCount, userId
       FROM questions 
       WHERE courseId = ?
       ${lastFetched ? 'AND createdAt > ?' : ''}
       ORDER BY updatedAt DESC;
-    `
-    )
-    .all(...params);
+    `, [...params]);
   const newLastFetched = getCurrentTimeInDBFormat();
 
   // Now, here I'll get the userData + is it upvoted or not
-  const questions = questionEntries.map((entry) => {
-    const user = getUserData(entry.userId);
-    const upvoted = getUpvoteStatus(user.id, entry.id, 'question');
+  let questions = [];
+  for (let entry of questionEntries) {
+    const user = await getUserData(entry.userId);
+    const upvoted = await getUpvoteStatus(userId, entry.id, 'question');
 
-    return {
+    questions.push({
       ...entry,
       user,
       upvoted,
-    };
-  });
+    });
+  }
 
   res.json({
     questions,
@@ -86,37 +79,34 @@ router.get('/courses/:id/general_discussion', verifyToken, (req, res) => {
 });
 
 // Get a lecture discussions/qustions
-router.get('/lectures/:id/discussion', verifyToken, (req, res) => {
+router.get('/lectures/:id/discussion', verifyToken, async (req, res) => {
   const id = req.params.id;
   const userId = req.userId;
   const { lastFetched } = req.query;
 
-  const lecture = db.prepare('SELECT * FROM lectures WHERE id = ?').get(id);
+  const [lecture] = await db.query('SELECT * FROM lectures WHERE id = ?', [id]);
   if (lecture) {
-    const discussionWithLectureId = db
-      .prepare(
-        `
+    const discussionWithLectureId = await db.query(`
       SELECT id, title, body, userId, upvotes, repliesCount, lectureId, updatedAt
         FROM questions 
         WHERE lectureId = ?
         ${lastFetched ? 'AND createdAt > ?' : ''}
-        ORDER BY updatedAt DESC;
-      `
-      )
-      .all(...[id].concat(lastFetched ? [lastFetched] : []));
-
+        ORDER BY updatedAt DESC;`,
+      [id].concat(lastFetched ? [lastFetched] : [])
+    );
     const newLastFetchedTime = getCurrentTimeInDBFormat();
 
-    const results = discussionWithLectureId.map((entry) => {
-      const user = getUserData(entry.userId);
-      const upvoted = getUpvoteStatus(userId, entry.id, 'question');
+    let results = [];
+    for (const entry of discussionWithLectureId) {
+      const user = await getUserData(entry.userId);
+      const upvoted = await getUpvoteStatus(userId, entry.id, 'question');
 
-      return {
+      results.push({
         ...entry,
         user,
         upvoted,
-      };
-    });
+      })
+    }
 
     res.json({ results, lastFetched: newLastFetchedTime });
   } else {
@@ -125,7 +115,7 @@ router.get('/lectures/:id/discussion', verifyToken, (req, res) => {
 });
 
 // Create a question in a course general forum
-router.post('/courses/:id/general_discussion', verifyToken, (req, res) => {
+router.post('/courses/:id/general_discussion', verifyToken, async (req, res) => {
   const courseId = req.params.id;
   const { title, body } = req.body;
   const userId = req.userId;
@@ -135,19 +125,18 @@ router.post('/courses/:id/general_discussion', verifyToken, (req, res) => {
     return res.status(400).send({ message: 'Missing required fields' });
   }
 
-  const user = getUserData(userId);
+  const user = await getUserData(userId);
   const newEntryId = uuidv4();
 
   try {
-    const createTime = new Date().toISOString();
+    const createTime = getCurrentTimeInDBFormat();
     // I have a concern about what i'm doing here regarding teh time..
     // connected to the next comment below
-    db.prepare(
-      `
+    await db.query(`
       INSERT INTO questions (id, title, body, userId, courseId)
-      VALUES (?, ?, ?, ?, ?)
-    `
-    ).run(newEntryId, title, body, userId, courseId);
+      VALUES (?, ?, ?, ?, ?)`,
+      [newEntryId, title, body, userId, courseId]
+    );
 
     const lastFetched = getCurrentTimeInDBFormat();
     // Here, i'm not 100% sure if I sould do this here..
@@ -187,7 +176,7 @@ router.post('/courses/:id/general_discussion', verifyToken, (req, res) => {
 });
 
 // Create a new question for a lecture
-router.post('/lectures/:id/discussion', verifyToken, (req, res) => {
+router.post('/lectures/:id/discussion', verifyToken, async (req, res) => {
   const lectureId = req.params.id;
   const { title, body } = req.body;
   const userId = req.userId;
@@ -200,13 +189,12 @@ router.post('/lectures/:id/discussion', verifyToken, (req, res) => {
   const newEntryId = uuidv4();
 
   try {
-    const createTime = new Date().toISOString();
-    db.prepare(
-      `
+    const createTime = getCurrentTimeInDBFormat();
+    await db.query(`
       INSERT INTO questions (id, title, body, userId, lectureId)
-      VALUES (?, ?, ?, ?, ?)
-    `
-    ).run(newEntryId, title, body, userId, lectureId);
+      VALUES (?, ?, ?, ?, ?)`,
+      [newEntryId, title, body, userId, lectureId]
+    );
 
     const lastFetched = getCurrentTimeInDBFormat();
 
@@ -214,7 +202,7 @@ router.post('/lectures/:id/discussion', verifyToken, (req, res) => {
       id: newEntryId,
       title,
       body,
-      user: getUserData(userId),
+      user: await getUserData(userId),
       updatedAt: createTime,
       upvotes: 0,
       upvoted: false,
@@ -241,7 +229,7 @@ router.post('/lectures/:id/discussion', verifyToken, (req, res) => {
 });
 
 // Change user vote in a question?
-router.post('/questions/:id/vote', verifyToken, (req, res) => {
+router.post('/questions/:id/vote', verifyToken, async (req, res) => {
   // I think sinse this is only toggling upvotes
   // not upvote, donwvote or nutralize.. then no action is needed
   // and it could just be done.. checking if there is a vote..
@@ -258,38 +246,35 @@ router.post('/questions/:id/vote', verifyToken, (req, res) => {
     return res.status(400).send({ message: 'Missing or invalid action field' });
   }
 
-  const question = db
-    .prepare('SELECT * FROM questions WHERE id = ?')
-    .get(questionId);
+  const [question] = await db.query(
+    'SELECT * FROM questions WHERE id = ?', [questionId]
+  );
 
   if (!question) {
     return res.status(404).send({ message: 'Question not found' });
   }
 
   try {
-    db.transaction(() => {
-      db.prepare(
-        `
-        UPDATE questions
+    await db.transaction(async (connection) => {
+      await connection.queryWithPluck(
+        `UPDATE questions
         SET upvotes = upvotes + ${action == 'upvote' ? 1 : -1}
-        WHERE id = ?
-      `
-      ).run(questionId);
+        WHERE id = ?`,
+        [questionId]
+      );
 
       if (action === 'upvote') {
         // TODO.. what if user already upvoted;
-        db.prepare(
-          `
-          INSERT INTO votes (userId, questionId)
-          VALUES (?, ?)
-        `
-        ).run(userId, questionId);
+        await connection.queryWithPluck(
+          `INSERT INTO votes (userId, questionId)
+          VALUES (?, ?)`,
+          [userId, questionId]
+        );
       } else if (action === 'downvote') {
-        db.prepare(
-          `
-          DELETE FROM votes WHERE userId = ? AND questionId = ?
-        `
-        ).run(userId, questionId);
+        await connection.queryWithPluck(
+          `DELETE FROM votes WHERE userId = ? AND questionId = ?`,
+          [userId, questionId]
+        );
       }
 
       const { courseId, lectureId } = question;
@@ -327,7 +312,7 @@ router.post('/questions/:id/vote', verifyToken, (req, res) => {
       // Now another thing.. I'm juggling between 201.. 200, and 204?
       // Sinse i'm already creating a resource.. which is the votes.. and updating somehting
       res.status(201).json({ message });
-    })();
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).send({ message: 'Error updating vote' });
@@ -335,13 +320,13 @@ router.post('/questions/:id/vote', verifyToken, (req, res) => {
 });
 
 // Edit a question
-router.put('/questions/:id', verifyToken, (req, res) => {
+router.put('/questions/:id', verifyToken, async (req, res) => {
   const { id } = req.params;
   const { title, body } = req.body;
   const io = req.app.get('io');
   const userId = req.userId;
 
-  const question = db.prepare('SELECT * FROM questions WHERE id = ?').get(id);
+  const [question] = await db.query('SELECT * FROM questions WHERE id = ?', [id]);
 
   if (!question) {
     return res.status(404).send({ message: 'Question not found' });
@@ -353,28 +338,26 @@ router.put('/questions/:id', verifyToken, (req, res) => {
       .send({ message: 'User is not authorized to edit this question' });
   }
   try {
-    db.transaction(() => {
-      db.prepare(
-        `
-        UPDATE questions
+    await db.transaction(async (connection) => {
+      await connection.queryWithPluck(
+        `UPDATE questions
         SET title = ?, body = ?
-        WHERE id = ?
-      `
-      ).run(title, body, id);
+        WHERE id = ?`,
+        [title, body, id]
+      );
 
-      const updatedQuestion = db
-        .prepare(
+      const [updatedQuestion] = await connection.queryWithPluck(
           `SELECT id, title, body, updatedAt, lectureId ,repliesCount, upvotes
-         FROM questions WHERE id = ?`
-        )
-        .get(id);
+          FROM questions WHERE id = ?`,
+          [id]
+        );
 
       // What a consitency here!
       // God.. what was I thinking.!
       const editedQuestion = {
         ...updatedQuestion,
-        user: getUserData(userId),
-        upvoted: getUpvoteStatus(userId, id, 'question'),
+        user: await getUserData(userId),
+        upvoted: await getUpvoteStatus(userId, id, 'question'),
       };
 
       res.status(200).json(editedQuestion);
@@ -395,7 +378,7 @@ router.put('/questions/:id', verifyToken, (req, res) => {
         userId,
       });
 
-    })();
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).send({ message: 'Error updating question' });
@@ -403,29 +386,31 @@ router.put('/questions/:id', verifyToken, (req, res) => {
 });
 
 // delete a question
-router.delete('/questions/:id', verifyToken, (req, res) => {
+router.delete('/questions/:id', verifyToken, async (req, res) => {
   const questionId = req.params.id;
   const userId = req.userId;
   const io = req.app.get('io');
 
-  const question = db
-    .prepare('SELECT * FROM questions WHERE id = ?')
-    .get(questionId);
+  const [question] = await db.query(
+    'SELECT * FROM questions WHERE id = ?', [questionId]
+  );
 
   if (!question) {
     return res.status(404).send({ message: 'Question not found' });
   }
 
-  const courseId = getQuestionCourseId(question.id);
-  const isAdmin = isCourseAdmin(userId, courseId);
+  const courseId = await getQuestionCourseId(question.id);
+  const isAdmin = await isCourseAdmin(userId, courseId);
   if (question.userId !== userId && !isAdmin) {
     // As if this is a descriptive message now?!..
     return res.status(403).send({ message: 'User is not authorized' });
   }
 
   try {
-    db.transaction(() => {
-      db.prepare('DELETE FROM questions WHERE id = ?').run(questionId);
+    await db.transaction(async (connection) => {
+      await connection.queryWithPluck(
+        'DELETE FROM questions WHERE id = ?', [questionId]
+      );
       // useless if the cascade works.. whey did i forget this?!
       // db.prepare('DELETE FROM replies WHERE questionId = ?').run(questionId);
 
@@ -454,7 +439,7 @@ router.delete('/questions/:id', verifyToken, (req, res) => {
         userId,
       });
       
-    })();
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).send({ message: 'Error deleting question' });
@@ -462,7 +447,7 @@ router.delete('/questions/:id', verifyToken, (req, res) => {
 });
 
 // Sync existing questions
-router.post('/questions/diff', verifyToken, (req, res) => {
+router.post('/questions/diff', verifyToken, async (req, res) => {
   // After writing this endpoint....
   // I sometimes think that this is an overkill
   // and it's even better to fetch teh whole data without all these comparisons here..
@@ -492,88 +477,86 @@ router.post('/questions/diff', verifyToken, (req, res) => {
   const userId = req.userId;
   const { entries, lastFetched, courseId, lectureId } = req.body;
 
-  if (courseId && lectureId) {
-    return res.status(401).json({
+  try {
+    if (courseId && lectureId) {
+      return res.status(401).json({
       message:
         'courseId and lectureId are both defined?!.. which category are the questions?',
     });
-  } else if (courseId) {
-    const course = db
-      .prepare('SELECT * FROM courses WHERE id = ?')
-      .get(courseId);
-    if (!course) {
-      return res.status(404).send({ message: 'Course not found' });
+    } else if (courseId) {
+      const [course] = await db.query(
+        'SELECT * FROM courses WHERE id = ?', [courseId]
+      );
+      if (!course) {
+        return res.status(404).send({ message: 'Course not found' });
+      }
+    } else if (lectureId) {
+      const [lecture] = await db.query(
+        'SELECT * FROM lectures WHERE id = ?', [lectureId]);
+      if (!lecture) {
+        return res.status(404).send({ message: 'Lecture not found' });
+      }
+    } else {
+      // I don't konw why here i'm using .json and above .send?!  .. .... anyways..
+      return res.status(401).json({ message: 'Missing course or lecture id' });
     }
-  } else if (lectureId) {
-    const lecture = db
-      .prepare('SELECT * FROM lectures WHERE id = ?')
-      .get(lectureId);
-    if (!lecture) {
-      return res.status(404).send({ message: 'Lecture not found' });
-    }
-  } else {
-    // I don't konw why here i'm using .json and above .send?!  .. .... anyways..
-    return res.status(401).json({ message: 'Missing course or lecture id' });
-  }
 
-  // for ease or access and speed of retrieval and removal
-  const entriesUpdatedAt = new Map(
-    entries.map((entry) => [entry.id, entry.updatedAt])
-  );
-  const existingQuestions = db
-    .prepare(
-      `SELECT id, updatedAt, title, body, repliesCount, upvotes
-      FROM questions
-    WHERE ${courseId ? 'courseId' : 'lectureId'} = ?
-      AND createdAt <= ?
-    ORDER BY updatedAt DESC;
-    `
-    )
-    .all(courseId ? courseId : lectureId, lastFetched);
-  const userVotes = db
-    .prepare(
-      `
-    SELECT questionId FROM votes
-    -- If you are wondering... take a look at the vots table and you will see
-    -- Ther is replyId and questionId..
-    WHERE userId = ? AND questionId IS NOT NULL;
-    `
-    )
-    .pluck()
-    .all(userId);
-
-  const results = {
-    existing: {},
-    deleted: [],
-  };
-
-  for (const entry of existingQuestions) {
-    const { id, updatedAt, repliesCount, upvotes } = entry;
-    const questionEntry = {
-      id,
-      updatedAt,
-      repliesCount,
-      upvotes,
+    // for ease or access and speed of retrieval and removal
+    const entriesUpdatedAt = new Map(
+      entries.map((entry) => [entry.id, entry.updatedAt])
+    );
+    const existingQuestions = await db.query(
+        `SELECT id, updatedAt, title, body, repliesCount, upvotes
+        FROM questions
+      WHERE ${courseId ? 'courseId' : 'lectureId'} = ?
+        AND createdAt <= ?
+      ORDER BY updatedAt DESC;`,
+      [courseId ? courseId : lectureId, lastFetched]
+      );
+    const userVotes = await db.query(
+        `SELECT questionId FROM votes
+      -- If you are wondering... take a look at the vots table and you will see
+      -- Ther is replyId and questionId..
+      WHERE userId = ? AND questionId IS NOT NULL;`,
+      [userId],
+      pluck=true
+      );
+    const results = {
+      existing: {},
+      deleted: [],
     };
-    if (updatedAt !== entriesUpdatedAt.get(id)) {
-      questionEntry.updatedAt = updatedAt;
-      questionEntry.title = entry.title;
-      questionEntry.body = entry.body;
+
+    for (const entry of existingQuestions) {
+      const { id, updatedAt, repliesCount, upvotes } = entry;
+      const questionEntry = {
+        id,
+        updatedAt,
+        repliesCount,
+        upvotes,
+      };
+      if (updatedAt !== entriesUpdatedAt.get(id)) {
+        questionEntry.updatedAt = updatedAt;
+        questionEntry.title = entry.title;
+        questionEntry.body = entry.body;
+      }
+      
+      entriesUpdatedAt.delete(id);
+      results.existing[id] = questionEntry;
     }
+  
+    existingQuestions.forEach((entry) => {
+      entry.upvoted = userVotes.includes(entry.id);
+    });
 
-    entriesUpdatedAt.delete(id);
-    results.existing[id] = questionEntry;
+    results.deleted = Array.from(entriesUpdatedAt.keys());
+    res.status(201).json({
+      results,
+      lastSynced: getCurrentTimeInDBFormat(),
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: 'Error syncing questions' });
   }
-
-  existingQuestions.forEach((entry) => {
-    entry.upvoted = userVotes.includes(entry.id);
-  });
-
-  results.deleted = Array.from(entriesUpdatedAt.keys());
-  res.status(201).json({
-    results,
-    lastSynced: getCurrentTimeInDBFormat(),
-  });
 });
 
 module.exports = router;
