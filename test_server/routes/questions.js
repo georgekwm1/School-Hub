@@ -477,81 +477,86 @@ router.post('/questions/diff', verifyToken, async (req, res) => {
   const userId = req.userId;
   const { entries, lastFetched, courseId, lectureId } = req.body;
 
-  if (courseId && lectureId) {
-    return res.status(401).json({
+  try {
+    if (courseId && lectureId) {
+      return res.status(401).json({
       message:
         'courseId and lectureId are both defined?!.. which category are the questions?',
     });
-  } else if (courseId) {
-    const [course] = await db.query(
-      'SELECT * FROM courses WHERE id = ?', [courseId]
-    );
-    if (!course) {
-      return res.status(404).send({ message: 'Course not found' });
+    } else if (courseId) {
+      const [course] = await db.query(
+        'SELECT * FROM courses WHERE id = ?', [courseId]
+      );
+      if (!course) {
+        return res.status(404).send({ message: 'Course not found' });
+      }
+    } else if (lectureId) {
+      const [lecture] = await db.query(
+        'SELECT * FROM lectures WHERE id = ?', [lectureId]);
+      if (!lecture) {
+        return res.status(404).send({ message: 'Lecture not found' });
+      }
+    } else {
+      // I don't konw why here i'm using .json and above .send?!  .. .... anyways..
+      return res.status(401).json({ message: 'Missing course or lecture id' });
     }
-  } else if (lectureId) {
-    const [lecture] = await db.query(
-      'SELECT * FROM lectures WHERE id = ?', [lectureId]);
-    if (!lecture) {
-      return res.status(404).send({ message: 'Lecture not found' });
-    }
-  } else {
-    // I don't konw why here i'm using .json and above .send?!  .. .... anyways..
-    return res.status(401).json({ message: 'Missing course or lecture id' });
-  }
 
-  // for ease or access and speed of retrieval and removal
-  const entriesUpdatedAt = new Map(
-    entries.map((entry) => [entry.id, entry.updatedAt])
-  );
-  const existingQuestions = await db.query(
-      `SELECT id, updatedAt, title, body, repliesCount, upvotes
-      FROM questions
-    WHERE ${courseId ? 'courseId' : 'lectureId'} = ?
-      AND createdAt <= ?
-    ORDER BY updatedAt DESC;`,
-    [courseId ? courseId : lectureId, lastFetched]
+    // for ease or access and speed of retrieval and removal
+    const entriesUpdatedAt = new Map(
+      entries.map((entry) => [entry.id, entry.updatedAt])
     );
-  const userVotes = await db.query(
-      `SELECT questionId FROM votes
-    -- If you are wondering... take a look at the vots table and you will see
-    -- Ther is replyId and questionId..
-    WHERE userId = ? AND questionId IS NOT NULL;`,
-    [userId],
-    pluck=true
-    );
-  const results = {
-    existing: {},
-    deleted: [],
-  };
-
-  for (const entry of existingQuestions) {
-    const { id, updatedAt, repliesCount, upvotes } = entry;
-    const questionEntry = {
-      id,
-      updatedAt,
-      repliesCount,
-      upvotes,
+    const existingQuestions = await db.query(
+        `SELECT id, updatedAt, title, body, repliesCount, upvotes
+        FROM questions
+      WHERE ${courseId ? 'courseId' : 'lectureId'} = ?
+        AND createdAt <= ?
+      ORDER BY updatedAt DESC;`,
+      [courseId ? courseId : lectureId, lastFetched]
+      );
+    const userVotes = await db.query(
+        `SELECT questionId FROM votes
+      -- If you are wondering... take a look at the vots table and you will see
+      -- Ther is replyId and questionId..
+      WHERE userId = ? AND questionId IS NOT NULL;`,
+      [userId],
+      pluck=true
+      );
+    const results = {
+      existing: {},
+      deleted: [],
     };
-    if (updatedAt !== entriesUpdatedAt.get(id)) {
-      questionEntry.updatedAt = updatedAt;
-      questionEntry.title = entry.title;
-      questionEntry.body = entry.body;
+
+    for (const entry of existingQuestions) {
+      const { id, updatedAt, repliesCount, upvotes } = entry;
+      const questionEntry = {
+        id,
+        updatedAt,
+        repliesCount,
+        upvotes,
+      };
+      if (updatedAt !== entriesUpdatedAt.get(id)) {
+        questionEntry.updatedAt = updatedAt;
+        questionEntry.title = entry.title;
+        questionEntry.body = entry.body;
+      }
+      
+      entriesUpdatedAt.delete(id);
+      results.existing[id] = questionEntry;
     }
+  
+    existingQuestions.forEach((entry) => {
+      entry.upvoted = userVotes.includes(entry.id);
+    });
 
-    entriesUpdatedAt.delete(id);
-    results.existing[id] = questionEntry;
+    results.deleted = Array.from(entriesUpdatedAt.keys());
+    res.status(201).json({
+      results,
+      lastSynced: getCurrentTimeInDBFormat(),
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: 'Error syncing questions' });
   }
-
-  existingQuestions.forEach((entry) => {
-    entry.upvoted = userVotes.includes(entry.id);
-  });
-
-  results.deleted = Array.from(entriesUpdatedAt.keys());
-  res.status(201).json({
-    results,
-    lastSynced: getCurrentTimeInDBFormat(),
-  });
 });
 
 module.exports = router;
