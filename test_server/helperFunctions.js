@@ -22,7 +22,8 @@ async function getUpvoteStatus(userId, resourceId, resourceType) {
   return (
     await db.execute(
         `SELECT userId FROM votes WHERE userId = ? AND ${idColumn} = ?`,
-        [userId, resourceId]
+        [userId, resourceId],
+        pluck=true
       ).length !== 0
   );
 }

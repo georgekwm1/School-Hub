@@ -43,7 +43,7 @@ router.get('/courses/:id/general_discussion', verifyToken, async (req, res) => {
     res.status(404).send({ message: 'Course not found' });
   }
 
-  if (! await isUserEnroledInCourse(userId, id) && !isCourseAdmin(userId, id)) {
+  if (! await isUserEnroledInCourse(userId, id) && ! await isCourseAdmin(userId, id)) {
     return res
       .status(403)
       .send({ message: 'User is not enrolled in this course' });
@@ -94,11 +94,10 @@ router.get('/lectures/:id/discussion', verifyToken, async (req, res) => {
         ORDER BY updatedAt DESC;`,
       [id].concat(lastFetched ? [lastFetched] : [])
     );
-
     const newLastFetchedTime = getCurrentTimeInDBFormat();
 
     let results = [];
-    for (const entry of results) {
+    for (const entry of discussionWithLectureId) {
       const user = await getUserData(entry.userId);
       const upvoted = await getUpvoteStatus(userId, entry.id, 'question');
 
@@ -130,7 +129,7 @@ router.post('/courses/:id/general_discussion', verifyToken, async (req, res) => 
   const newEntryId = uuidv4();
 
   try {
-    const createTime = new Date().toISOString();
+    const createTime = getCurrentTimeInDBFormat();
     // I have a concern about what i'm doing here regarding teh time..
     // connected to the next comment below
     await db.query(`
@@ -190,7 +189,7 @@ router.post('/lectures/:id/discussion', verifyToken, async (req, res) => {
   const newEntryId = uuidv4();
 
   try {
-    const createTime = new Date().toISOString();
+    const createTime = getCurrentTimeInDBFormat();
     await db.query(`
       INSERT INTO questions (id, title, body, userId, lectureId)
       VALUES (?, ?, ?, ?, ?)`,
