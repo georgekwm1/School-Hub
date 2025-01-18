@@ -186,7 +186,7 @@ router.post('/replies/:id/vote', verifyToken, async (req, res) => {
 });
 
 // Create a reply for a question
-router.post('/questions/:id/replies', verifyToken, (req, res) => {
+router.post('/questions/:id/replies', verifyToken, async (req, res) => {
   const questionId = req.params.id;
   const io = req.app.get('io');
   const { body } = req.body;
@@ -198,20 +198,19 @@ router.post('/questions/:id/replies', verifyToken, (req, res) => {
 
   try {
     const id = uuidv4();
-    db.prepare(
-      `
-      INSERT INTO replies (id, questionId, userId, body)
-      VALUES (?, ?, ?, ?)
-    `
-    ).run(id, questionId, userId, body);
+    await db.query(
+      `INSERT INTO replies (id, questionId, userId, body)
+      VALUES (?, ?, ?, ?)`,
+      [id, questionId, userId, body]
+    );
 
     // I feel I'm doing something wronge here.
     // I iether get all the data
     // Or use teh data I already have from the variables above
     // and if for the updatedAt property.. I can just get Date().now()
     // I just don't know
-    const newReply = db.prepare(`SELECT * FROM replies WHERE id = ?`).get(id);
-    const user = getUserData(newReply.userId);
+    const [newReply] = await db.query(`SELECT * FROM replies WHERE id = ?`, [id]);
+    const user = await getUserData(newReply.userId);
 
     delete newReply.userId;
     const response = {
@@ -229,7 +228,7 @@ router.post('/questions/:id/replies', verifyToken, (req, res) => {
       userId,
     });
 
-    const { lectureId, courseId } = getQuestionParentId(newReply.questionId);
+    const { lectureId, courseId } = await getQuestionParentId(newReply.questionId);
     const room = lectureId ? `lectureDiscussion-${lectureId}` : `generalDiscussion-${courseId}`;
     io.to(room).emit('replyCreated', {
       payload: {questionId: newReply.questionId, lectureId, courseId },
