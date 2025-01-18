@@ -340,16 +340,15 @@ router.put('/questions/:id', verifyToken, async (req, res) => {
   try {
     await db.transaction(async (connection) => {
       await connection.queryWithPluck(
-        `
-        UPDATE questions
+        `UPDATE questions
         SET title = ?, body = ?
-        WHERE id = ?
-      `
-      ).run(title, body, id);
+        WHERE id = ?`,
+        [title, body, id]
+      );
 
       const [updatedQuestion] = await connection.queryWithPluck(
           `SELECT id, title, body, updatedAt, lectureId ,repliesCount, upvotes
-          FROM questions WHERE id = ?`
+          FROM questions WHERE id = ?`,
           [id]
         );
 
