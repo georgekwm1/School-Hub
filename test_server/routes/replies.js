@@ -320,7 +320,7 @@ router.delete('/replies/:id', verifyToken, async (req, res) => {
 });
 
 // Sync existing replies
-router.post('/questions/:questionId/replies/diff', verifyToken, (req, res) => {
+router.post('/questions/:questionId/replies/diff', verifyToken, async (req, res) => {
   const {questionId} = req.params;
   const userId = req.userId;
   const { entries, lastFetched } = req.body;
@@ -329,13 +329,16 @@ router.post('/questions/:questionId/replies/diff', verifyToken, (req, res) => {
     reply => [reply.id, reply.updatedAt]
   ));
 
-  const dbEntries = db.prepare(
+  const dbEntries = await db.query(
     `SELECT id, updatedAt, body, upvotes FROM replies 
-      WHERE questionId = ? AND createdAt <= ?;`
-  ).all(questionId, lastFetched);
-  const userVotes = db.prepare(
-    `SELECT replyId, userId FROM votes WHERE userId = ? ;`
-  ).pluck().all(userId);
+      WHERE questionId = ? AND createdAt <= ?;`,
+    [questionId, lastFetched]
+  );
+  const userVotes = await db.query(
+    `SELECT replyId, userId FROM votes WHERE userId = ? ;`,
+    [userId],
+    pluck=true
+  );
 
   const results = {
     existing: {},
