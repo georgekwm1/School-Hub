@@ -63,7 +63,7 @@ router.get('/courses/:id/general_discussion', verifyToken, async (req, res) => {
   let questions = [];
   for (let entry of questionEntries) {
     const user = await getUserData(entry.userId);
-    const upvoted = await getUpvoteStatus(user.id, entry.id, 'question');
+    const upvoted = await getUpvoteStatus(userId, entry.id, 'question');
 
     questions.push({
       ...entry,

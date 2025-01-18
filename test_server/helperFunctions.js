@@ -19,13 +19,12 @@ async function getUserData(userId) {
 async function getUpvoteStatus(userId, resourceId, resourceType) {
   const idColumn = resourceType === 'question' ? 'questionId' : 'replyId';
 
-  return (
-    await db.execute(
-        `SELECT userId FROM votes WHERE userId = ? AND ${idColumn} = ?`,
-        [userId, resourceId],
-        pluck=true
-      ).length !== 0
+  const result = await db.execute(
+    `SELECT userId FROM votes WHERE userId = ? AND ${idColumn} = ?`,
+    [userId, resourceId],
+    pluck=true
   );
+  return result.length !== 0;
 }
 
 async function isCourseAdmin(userId, courseId) {
