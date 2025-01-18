@@ -60,10 +60,11 @@ router.get('/questions/:id/replies', verifyToken, async (req, res) => {
 
   const [question] = await db.query(
     // Assuming it's a lecture question this won't the lecturId won't be null.
-    `SELECT id, title, body, updatedAt, upvotes, repliesCount, userId, lectureId, (updatedAt >= ?) AS isNew
+    `SELECT id, title, body, updatedAt, upvotes, repliesCount, userId, lectureId,
+      ${lastFetched? '(updatedAt >= :lastFetched)' : '1'} AS isNew
     FROM questions
-    WHERE id = ?`,
-    [lastFetched, questionId]
+    WHERE id = :questionId`,
+    {lastFetched, questionId}
   );
 
   if (!question) {
