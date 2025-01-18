@@ -241,14 +241,14 @@ router.post('/questions/:id/replies', verifyToken, async (req, res) => {
 });
 
 // Edit a reply
-router.put('/replies/:id', verifyToken, (req, res) => {
+router.put('/replies/:id', verifyToken, async (req, res) => {
   const { id } = req.params;
   const io = req.app.get('io');
   const { body } = req.body;
   const userId = req.userId;
 
   try {
-    const reply = db.prepare('SELECT id, userId FROM replies WHERE id = ?').get(id);
+    const [reply] = await db.query('SELECT id, userId FROM replies WHERE id = ?', [id]);
     if (!reply) {
       return res.status(404).send({ message: 'Reply not found' });
     }
@@ -259,11 +259,12 @@ router.put('/replies/:id', verifyToken, (req, res) => {
         .send({ message: 'User is not authorized to edit this reply' });
     }
 
-    db.prepare('UPDATE replies SET body = ? WHERE id = ?').run(body, id);
+    await db.query('UPDATE replies SET body = ? WHERE id = ?', [body, id]);
 
-    const updatedReply = db
-      .prepare('SELECT id, questionId, body, updatedAt FROM replies WHERE id = ?')
-      .get(id);
+    const [updatedReply] = await db.query(
+      'SELECT id, questionId, body, updatedAt FROM replies WHERE id = ?',
+      [id]
+    );
 
     res.status(200).json(updatedReply);
 
