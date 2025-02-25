@@ -6,3 +6,5 @@ node_modules/
 /schoolhub/passkeys.py
 
 *.sqlite3
+test_server/.env
+front-end/.env
