@@ -18,7 +18,7 @@ require('dotenv').config();
 const key = fs.readFileSync('./key.pem');
 const cert = fs.readFileSync('./cert.pem');
 const port = 3000;
-const useHttps = process.env.USE_HTTPS === 'true';
+let useHttps = process.env.USE_HTTPS === 'true';
 
 
 const app = express();
