@@ -1,1 +1,1 @@
-export const DOMAIN = 'https://localhost:3000';
+export const DOMAIN = process.env.BACKEND_DOMAIN;
