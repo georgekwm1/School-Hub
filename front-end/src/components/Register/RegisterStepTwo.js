@@ -85,7 +85,7 @@ export default function RegisterStepTwo({
       try {
         dispatch(toggleLoading());
         const { id, url } = await uploadImage(file);
-        dispatch(formRegister({ ...userData, pictureId: id, pictureURL: url }));
+        dispatch(formRegister({ ...userData, pictureId: id, pictureURL: url }, courseId));
       } catch (error) {
         console.error("Error uploading image:", error);
         return;
