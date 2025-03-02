@@ -75,7 +75,7 @@ export default function RegisterStepTwo({
       console.error("Error uploading image:", error);
     }
     dispatch(toggleLoading());
-    return { id, url };
+    return { id, url, thumbnail };
   }
 
   async function handleSubmit(event) {
@@ -84,8 +84,8 @@ export default function RegisterStepTwo({
     if (file) {
       try {
         dispatch(toggleLoading());
-        const { id, url } = await uploadImage(file);
-        dispatch(formRegister({ ...userData, pictureId: id, pictureURL: url }, courseId));
+        const { id, url, thumbnail } = await uploadImage(file);
+        dispatch(formRegister({ ...userData, pictureId: id, pictureURL: url, pictureThumbnail: thumbnail }, courseId));
       } catch (error) {
         console.error("Error uploading image:", error);
         return;
