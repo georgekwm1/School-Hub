@@ -241,7 +241,6 @@ router.post('/oauth/googleRegister', async (req, res) => {
 
 router.post('/register', async (req, res) => {
   const { userData, courseId } = req.body;
-  console.log(userData);
   const {
     email,
     password,
@@ -278,9 +277,9 @@ router.post('/register', async (req, res) => {
           firstName,
           lastName,
           username,
-          pictureId ?? '',
-          pictureURL ?? '',
-          pictureThumbnail ?? '',
+          pictureId ?? null,
+          pictureURL ?? null,
+          pictureThumbnail ?? null,
         ]
       );
 

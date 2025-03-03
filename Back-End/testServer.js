@@ -1,4 +1,5 @@
 const express = require('express');
+const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const ImageKit = require('imagekit');
@@ -17,6 +18,7 @@ require('dotenv').config();
 const key = fs.readFileSync('./key.pem');
 const cert = fs.readFileSync('./cert.pem');
 const port = 3000;
+let useHttps = process.env.USE_HTTPS === 'true';
 
 
 const app = express();
@@ -28,9 +30,22 @@ app.use((req, res, next) => {
   next();
 });
 
-const httpsServer = https.createServer({ key, cert }, app);
+const httpServer = http.createServer(app);
 
-const io = new IO(httpsServer, {
+let httpsServer;
+if (useHttps) {
+  try {
+    const key = fs.readFileSync('./key.pem');
+    const cert = fs.readFileSync('./cert.pem');
+    httpsServer = https.createServer({ key, cert }, app);
+    console.log('✅ HTTPS enabled');
+  } catch (error) {
+    console.error('❌ HTTPS certificates missing or invalid, falling back to HTTP.');
+    useHttps = false;
+  }
+}
+
+const io = new IO(useHttps ? httpsServer : httpServer, {
   cors: {
     // Don't forget to set this properly
     origin: '*',
@@ -51,6 +66,12 @@ app.use((req, res, next) => {
   res.status(404).send({ message: 'Not found' });
 });
 
-httpsServer.listen(port, () => {
-  console.log(`Server started on https://localhost:${port}`);
-});
+if (useHttps) {
+  httpsServer.listen(port, () => {
+    console.log(`🚀 HTTPS Server running on https://localhost:${port}`);
+  });
+} else {
+  httpServer.listen(port, () => {
+    console.log(`🚀 HTTP Server running on http://localhost:${port}`);
+  });
+}

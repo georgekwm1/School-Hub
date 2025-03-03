@@ -133,7 +133,7 @@ export default function RegisterStepOne({ setStep, userData, handleInputChange }
               />
             </div>
           </form>
-          <div className="login100-more" style={{ backgroundImage: "url('books.jpg')" }}></div>
+          <div className="login100-more" style={{ backgroundImage: `url(${process.env.PUBLIC_URL}/books.jpg)` }}></div>
         </div>
       </div>
     </div>
