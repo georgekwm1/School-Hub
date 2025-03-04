@@ -1,0 +1,10 @@
+{% extends 'authentication/base.html' %}
+
+{% block content %}
+    <h2>Login</h2>
+    <div>
+        <a href="{% url 'login' %}">Go to login</a>
+        <a href="{% url 'register' %}">Go to register</a>
+    </div>
+    
+{% endblock content %}

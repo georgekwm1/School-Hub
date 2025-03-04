@@ -1,0 +1,23 @@
+{% extends 'authentication/base.html' %}
+
+{% block content %}
+    <h2>Login</h2>
+    <div>
+        <a href="{% url 'home' %}">Home</a>
+    </div>
+    <form method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+        <input type="text" name="email" placeholder="email" required>
+        <input type="password" name="password" placeholder="password" required>
+        <button type="submit">Submit</button>
+        {% if Info %}
+        {{ Info }}
+        {% endif %}
+
+    <a href="{% url 'forgot_password' %}">Forgot Password</a>
+    </form>
+{% endblock content %}
+
+
+
+

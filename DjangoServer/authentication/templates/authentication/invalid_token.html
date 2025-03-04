@@ -1,0 +1,8 @@
+{% extends 'authentication/base.html' %}
+
+{% block content %}
+    <h2>Invalid Token</h2>
+    <p>Token is invalid or expired. Please quest another token.</p>
+    <a href="{% url 'login' %}">Return to Login</a>
+ 
+{% endblock content %}

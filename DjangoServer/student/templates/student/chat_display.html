@@ -1,0 +1,18 @@
+{% extends 'authentication/dashboard.html' %}
+
+{% block dashboard %}
+<h2>Chat Display</h2>
+    {% csrf_token %}
+    <div>
+        {% for user in all_users %}
+        {% if user != current_user %}
+            <a href="{% url 'messages' user.user_id %}"> {{ user.first_name }} {{ user.last_name }}</a>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% block chat_area %}
+ 
+    {% endblock chat_area %}
+
+
+{% endblock dashboard %}

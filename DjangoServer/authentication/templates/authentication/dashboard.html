@@ -1,0 +1,15 @@
+{% extends 'authentication/base.html' %}
+
+{% block content %}
+    <h2>Dashboard</h2>
+
+    <p>Welcome {{ name }}</p>
+    <div>
+        <a href="{% url 'home' %}">Go home</a>
+        <a href="{% url 'logout' %}">Logout</a>
+        <a href="{% url 'delete' %}">Delete</a>
+        {% block dashboard %}
+        {% endblock dashboard %}
+    </div>
+    <a href="{% url 'chat' %}">Chat</a>
+{% endblock content %}

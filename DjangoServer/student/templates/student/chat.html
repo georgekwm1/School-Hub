@@ -1,0 +1,20 @@
+{% extends 'student/chat_display.html' %}
+
+{% block chat_area %}
+<h2>Chat with {{ receiver.first_name }} {{ receiver.last_name }}</h2>
+       
+    <div>
+        <form action="{% url 'messages' receiver.user_id %}" method="post">
+            {% csrf_token %} 
+            <input type="text" name="message" placeholder="Enter your message">
+            <input type="submit" value="Send">
+        </form>
+        
+    </div>
+    <div>
+        {% for message in messages %}
+            <p>{{ message.sender.first_name }}: {{ message.message }}</p>
+        {% endfor %}
+    </div>
+    
+{% endblock chat_area %}

@@ -1,2 +1,10 @@
 newenv/
 .venv/
+*.pyc
+node_modules/
+*.cpython-312.pyc
+/schoolhub/passkeys.py
+
+*.sqlite3
+test_server/.env
+front-end/.env
