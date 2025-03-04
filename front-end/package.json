@@ -69,6 +69,5 @@
   },
   "devDependencies": {
     "gh-pages": "^6.2.0"
-  },
-  "homepage": "https://georgekwm1.github.io/School-Hub"
+  }
 }
